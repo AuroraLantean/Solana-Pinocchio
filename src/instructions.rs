@@ -37,6 +37,56 @@ pub enum ProgramIx {
     Withdraw {},
 }
 
+// Deposit SOL to program PDA
+// make and rent-funds the vault PDA
+// check the PDA exists and is owned by the program
+// transfer the SOL amount to the vault
+pub struct Deposit<'a> {
+    pub owner: &'a AccountInfo,
+    pub vault: &'a AccountInfo,
+    pub amount: u64,
+}
+impl<'a> Deposit<'a> {
+    pub const DISCRIMINATOR: &'a u8 = &0;
+
+    pub fn process(self) -> ProgramResult {
+        let Deposit {
+            owner,
+            vault,
+            amount,
+        } = self;
+
+        ensure_vault_exists(owner, vault)?;
+
+        SystemTransfer {
+            from: owner,
+            to: vault,
+            lamports: amount,
+        }
+        .invoke()?;
+        log!("{} Lamports deposited to vault", amount);
+        Ok(())
+    }
+}
+impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Deposit<'a> {
+    type Error = ProgramError;
+
+    fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+        let (data, accounts) = value;
+        if accounts.len() < 2 {
+            return Err(ProgramError::NotEnoughAccountKeys);
+        }
+        let owner = &accounts[0];
+        let vault = &accounts[1];
+        let amount = parse_amount(data)?;
+        Ok(Self {
+            owner,
+            vault,
+            amount,
+        })
+    }
+}
+
 //-------------==
 /// Parse a u64 from instruction data.
 /// amount must be non-zero,
