@@ -34,7 +34,7 @@ fn process_instruction(
     //reads the first byte as a discriminator to determine which method to call (here: 0 = Deposit, 1 = Withdraw).
     match discriminator {
         Deposit::DISCRIMINATOR => Deposit::try_from((data, accounts))?.process(),
-        Withdraw::DISCRIMINATOR => Withdraw::try_from(accounts)?.process(),
+        Withdraw::DISCRIMINATOR => Withdraw::try_from((data, accounts))?.process(),
         _ => Err(ProgramError::InvalidArgument),
     }
 }

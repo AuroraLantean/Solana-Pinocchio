@@ -23,8 +23,17 @@ import {
 import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
 import * as vault from "../clients/js/src/generated/index";
 
-const LAMPORTS_PER_SOL = BigInt(1_000_000_000);
 const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
+const ACCOUNT_DISCRIMINATOR_SIZE = 8; // same as Anchor/Rust
+const U64_SIZE = 8; // u64 is 8 bytes
+const VAULT_SIZE = ACCOUNT_DISCRIMINATOR_SIZE + U64_SIZE; // 16
+const decimalsSOL = BigInt(9);
+const baseSOL = BigInt(10) ** decimalsSOL;
+//const LAMPORTS_PER_SOL = baseSOL;
+const ll = console.log;
+const amtAirdrop = BigInt(100) * baseSOL;
+const amtDeposit = BigInt(10) * baseSOL;
+const amtWithdraw = BigInt(9) * baseSOL;
 
 //BunJs Tests: https://bun.com/docs/test/writing-tests
 describe("Vault Program", () => {
@@ -33,12 +42,7 @@ describe("Vault Program", () => {
 	let signer: any;
 	let vaultRent: bigint;
 	let vaultPDA: any;
-
-	const ACCOUNT_DISCRIMINATOR_SIZE = 8; // same as Anchor/Rust
-	const U64_SIZE = 8; // u64 is 8 bytes
-	const VAULT_SIZE = ACCOUNT_DISCRIMINATOR_SIZE + U64_SIZE; // 16
-	const DEPOSIT_AMOUNT = BigInt(100000000);
-	const ll = console.log;
+	let airdrop: any;
 
 	//https://bun.com/docs/test: beforeAll, beforeEach
 	before(async () => {
@@ -53,11 +57,9 @@ describe("Vault Program", () => {
 			.getAccountInfo(vaultProgAddr, { encoding: "base64" })
 			.send();
 		if (!value || !value?.data) {
-			throw new Error(
-				`Program account does not exist: ${vaultProgAddr.toString()}`,
-			);
+			throw new Error(`Program does not exist: ${vaultProgAddr.toString()}`);
 		}
-		ll("✅ - program exits!");
+		ll("✅ - Program exits!");
 		/*const base64Encoder = getBase64Encoder();
     let bytes = base64Encoder.encode(value.data[0]);
     const decoded = ammConfigDecoder.decode(bytes);
@@ -72,10 +74,10 @@ describe("Vault Program", () => {
 		ll(`✅ - New signer address: ${signerAddress}`);
 
 		// Airdrop SOL to signer
-		const airdrop = airdropFactory({ rpc, rpcSubscriptions });
+		airdrop = airdropFactory({ rpc, rpcSubscriptions });
 		await airdrop({
 			commitment: "confirmed",
-			lamports: lamports(LAMPORTS_PER_SOL),
+			lamports: lamports(amtAirdrop),
 			recipientAddress: signerAddress,
 		});
 		ll(`✅ - Airdropped SOL to Signer: ${signerAddress}`);
@@ -88,24 +90,24 @@ describe("Vault Program", () => {
 		const seedTag = getUtf8Encoder().encode("vault");
 
 		ll("vaultProgAddr:", vaultProgAddr);
-		vaultPDA = await getProgramDerivedAddress({
+		const pdas = await getProgramDerivedAddress({
 			programAddress: vaultProgAddr,
 			seeds: [seedTag, seedSigner],
 		});
-		ll(`✅ - Vault PDA: ${vaultPDA[0]}`);
+		vaultPDA = pdas[0];
+		ll(`✅ - Vault PDA: ${vaultPDA}`);
 	});
 
 	//------------------==
 	it("can deposit to vault", async () => {
-		ll("here deposit-01");
-		//  Deposit transaction using generated client
+		ll("------== To Deposit");
 		const depositIx = vault.getDepositInstruction(
 			{
 				owner: signer,
-				vault: vaultPDA[0],
+				vault: vaultPDA,
 				program: vaultProgAddr,
 				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				amount: lamports(DEPOSIT_AMOUNT),
+				amount: lamports(amtDeposit),
 			},
 			{
 				programAddress: vaultProgAddr,
@@ -113,22 +115,23 @@ describe("Vault Program", () => {
 		);
 
 		ll("here deposit-02");
-		const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+		const { value: latestBlockhash1 } = await rpc.getLatestBlockhash().send();
 
 		ll("here deposit-03");
-		const txnMesg = pipe(
+		const txnMesg1 = pipe(
 			createTransactionMessage({ version: 0 }),
 			(tx) => setTransactionMessageFeePayer(signer.address, tx),
-			(tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+			(tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash1, tx),
 			(tx) => appendTransactionMessageInstruction(depositIx, tx),
 		);
 
 		ll("here deposit-04");
 		//https://www.solanakit.com/docs/getting-started/send-transaction#confirmation-strategies
 		// Sign and send transaction
-		const signedTransaction = await signTransactionMessageWithSigners(txnMesg);
+		const signedTransaction1 =
+			await signTransactionMessageWithSigners(txnMesg1);
 
-		assertIsTransactionWithBlockhashLifetime(signedTransaction);
+		assertIsTransactionWithBlockhashLifetime(signedTransaction1);
 
 		const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
 			rpc,
@@ -136,17 +139,21 @@ describe("Vault Program", () => {
 		});
 		//lastValidBlockHeight
 		ll("here deposit-05");
-		await sendAndConfirmTransaction(signedTransaction, {
+		await sendAndConfirmTransaction(signedTransaction1, {
 			commitment: "confirmed",
 		}); //"confirmRecentTransaction" | "rpc" | "transaction"
 
 		ll("here deposit-06");
-		const signature = getSignatureFromTransaction(signedTransaction);
-		ll("Transaction signature:", signature);
+		const signature1 = getSignatureFromTransaction(signedTransaction1);
+		ll("Transaction signature:", signature1);
 
 		ll("here deposit-07");
-		const { value } = await rpc.getBalance(vaultPDA[0].toString()).send();
-		assert.equal(DEPOSIT_AMOUNT, Number(value) - Number(vaultRent));
+		const { value: balc1 } = await rpc.getBalance(vaultPDA.toString()).send();
+		ll("Vault Rent:", vaultRent);
+		ll("amtDeposit:", amtDeposit);
+		ll("Vault balc:", balc1);
+		assert.equal(balc1, vaultRent + amtDeposit);
+		//expect(vaultRent + amtDeposit).toBe(value);
 	}); //can deposit to vault
 	/* BunJs
   test.serial("first test", ()=>{...})
@@ -156,10 +163,15 @@ describe("Vault Program", () => {
  */
 	//------------------==
 	it("can withdraw from vault", async () => {
+		ll("------== To Withdraw");
+		const { value: balc21 } = await rpc.getBalance(vaultPDA.toString()).send();
+		ll("Vault balc:", balc21);
+
 		const withdrawIx = vault.getWithdrawInstruction({
 			owner: signer,
-			vault: vaultPDA[0],
+			vault: vaultPDA,
 			program: vaultProgAddr,
+			amount: lamports(amtWithdraw),
 		});
 
 		const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
@@ -182,11 +194,14 @@ describe("Vault Program", () => {
 			commitment: "confirmed",
 		});
 
-		const signature = getSignatureFromTransaction(signedTransaction);
-		ll("Transaction signature:", signature);
+		const signature2 = getSignatureFromTransaction(signedTransaction);
+		ll("Transaction signature:", signature2);
 
-		const { value } = await rpc.getBalance(vaultPDA[0].toString()).send();
-		assert.equal(Number(vaultRent), value);
+		const { value: balc22 } = await rpc.getBalance(vaultPDA.toString()).send();
+		ll("Vault Rent:", vaultRent);
+		ll("Vault amtWithdraw:", amtWithdraw);
+		ll("Vault balc:", balc22);
+		assert.equal(balc22, vaultRent + amtDeposit - amtWithdraw);
 	}); //can withdraw from vault
 
 	//------------------==
@@ -197,8 +212,9 @@ describe("Vault Program", () => {
 
 		const withdrawIx = vault.getWithdrawInstruction({
 			owner: otherSigner,
-			vault: vaultPDA[0],
+			vault: vaultPDA,
 			program: vaultProgAddr,
+			amount: lamports(amtWithdraw),
 		});
 
 		const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
