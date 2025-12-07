@@ -35,9 +35,7 @@ fn process_instruction(
     match discriminator {
         DepositSol::DISCRIMINATOR => DepositSol::try_from((data, accounts))?.process(),
         WithdrawSol::DISCRIMINATOR => WithdrawSol::try_from((data, accounts))?.process(),
-        Token2022InitMint::DISCRIMINATOR => {
-            Token2022InitMint::try_from((data, accounts))?.process()
-        }
+        Token2022InitMint::DISCRIMINATOR => Token2022InitMint::try_from((data, accounts))?.init(),
         _ => Err(ProgramError::InvalidArgument),
     }
 }
