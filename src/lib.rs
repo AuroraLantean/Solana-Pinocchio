@@ -31,11 +31,13 @@ fn process_instruction(
         .split_first()
         .ok_or(ProgramError::InvalidInstructionData)?;
 
-    //reads the first byte as a discriminator to determine which method to call (here: 0 = Deposit, 1 = Withdraw).
+    //reads the first byte as a discriminator to determine which method to call (here: 0 = DepositSol, 1 = WithdrawSol).
     match discriminator {
-        Deposit::DISCRIMINATOR => Deposit::try_from((data, accounts))?.process(),
-        Withdraw::DISCRIMINATOR => Withdraw::try_from((data, accounts))?.process(),
-        Token2022::DISCRIMINATOR => Token2022::try_from((data, accounts))?.process(),
+        DepositSol::DISCRIMINATOR => DepositSol::try_from((data, accounts))?.process(),
+        WithdrawSol::DISCRIMINATOR => WithdrawSol::try_from((data, accounts))?.process(),
+        Token2022InitMint::DISCRIMINATOR => {
+            Token2022InitMint::try_from((data, accounts))?.process()
+        }
         _ => Err(ProgramError::InvalidArgument),
     }
 }

@@ -10,17 +10,17 @@ use pinocchio_log::log;
 use crate::instructions::{check_pda, check_signer, derive_vault_pda, parse_amount_u64};
 
 //  vault is owned by the program, matches the PDA derived from the owner, and the owner is the signer of the withdraw transaction. The withdrawn amount is everything above the rent minimum.
-pub struct Withdraw<'a> {
+pub struct WithdrawSol<'a> {
     pub owner: &'a AccountInfo,
     pub vault: &'a AccountInfo,
     pub amount: u64,
 }
-impl<'a> Withdraw<'a> {
+impl<'a> WithdrawSol<'a> {
     pub const DISCRIMINATOR: &'a u8 = &1;
 
     /// Transfer lamports from the vault PDA to the owner, leaving the rent minimum in place.
     pub fn process(self) -> ProgramResult {
-        let Withdraw {
+        let WithdrawSol {
             owner,
             vault,
             amount,
@@ -75,7 +75,7 @@ impl<'a> Withdraw<'a> {
         Ok(())
     }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Withdraw<'a> {
+impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for WithdrawSol<'a> {
     type Error = ProgramError;
 
     fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {

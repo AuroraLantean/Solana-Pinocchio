@@ -3,14 +3,15 @@ use pinocchio::{
     program_error::ProgramError,
     pubkey::{try_find_program_address, Pubkey},
 };
+#[allow(non_snake_case)]
+pub mod depositSol;
+pub mod tok22initmint;
+#[allow(non_snake_case)]
+pub mod withdrawSol;
 
-pub mod deposit;
-pub mod token2022;
-pub mod withdraw;
-
-pub use deposit::*;
-pub use token2022::*;
-pub use withdraw::*;
+pub use depositSol::*;
+pub use tok22initmint::*;
+pub use withdrawSol::*;
 
 use shank::ShankInstruction;
 

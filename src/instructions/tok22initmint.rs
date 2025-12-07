@@ -6,19 +6,19 @@ use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramR
 use crate::instructions::{check_signer, check_str_len};
 //use pinocchio_token::instructions::InitializeMint2;
 
-//Token2022 Accounts
-pub struct Token2022<'a> {
+//Initiate Token2022 Mint Account
+pub struct Token2022InitMint<'a> {
     pub owner: &'a AccountInfo,
     pub name: &'a str,
     pub symbol: &'a str,
     pub uri: &'a str,
     pub decimals: u8,
 }
-impl<'a> Token2022<'a> {
+impl<'a> Token2022InitMint<'a> {
     pub const DISCRIMINATOR: &'a u8 = &2;
 
     pub fn process(self) -> ProgramResult {
-        let Token2022 {
+        let Token2022InitMint {
             owner,
             name,
             symbol,
@@ -65,14 +65,14 @@ impl<'a> Token2022<'a> {
         }
         .invoke()?;
 
-        // Now initialize that account as a Token2022 Mint
+        // Now initialize that account as a Token2022InitMint Mint
         InitializeMint2 {
         mint: mint_account,
         decimals: args.decimals,
         mint_authority: mint_authority.key(),
         freeze_authority: None,
         }
-        .invoke(TokenProgramVariant::Token2022)?;
+        .invoke(TokenProgramVariant::Token2022InitMint)?;
 
         // Set the metadata within the Mint account
         InitializeTokenMetadata {
@@ -89,7 +89,7 @@ impl<'a> Token2022<'a> {
         Ok(())
     }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022<'a> {
+impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitMint<'a> {
     type Error = ProgramError;
 
     fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {

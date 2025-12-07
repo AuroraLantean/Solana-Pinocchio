@@ -18,16 +18,16 @@ use crate::instructions::{check_pda, check_signer, derive_vault_pda, parse_amoun
 // transfer the SOL amount to the vault
 
 //Deposit Accounts
-pub struct Deposit<'a> {
+pub struct DepositSol<'a> {
     pub owner: &'a AccountInfo,
     pub vault: &'a AccountInfo,
     pub amount: u64,
 }
-impl<'a> Deposit<'a> {
+impl<'a> DepositSol<'a> {
     pub const DISCRIMINATOR: &'a u8 = &0;
 
     pub fn process(self) -> ProgramResult {
-        let Deposit {
+        let DepositSol {
             owner,
             vault,
             amount,
@@ -45,7 +45,7 @@ impl<'a> Deposit<'a> {
         Ok(())
     }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Deposit<'a> {
+impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositSol<'a> {
     type Error = ProgramError;
 
     fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
