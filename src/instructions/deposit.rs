@@ -11,7 +11,6 @@ use pinocchio_log::log;
 use pinocchio_system::instructions::{CreateAccount, Transfer as SystemTransfer};
 
 use crate::instructions::{check_pda, check_signer, derive_vault_pda, parse_amount_u64};
-//use pinocchio_token::instructions::InitializeMint2;
 
 // Deposit SOL to program PDA
 // make and rent-funds the vault PDA

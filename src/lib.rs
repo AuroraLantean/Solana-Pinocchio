@@ -35,6 +35,7 @@ fn process_instruction(
     match discriminator {
         Deposit::DISCRIMINATOR => Deposit::try_from((data, accounts))?.process(),
         Withdraw::DISCRIMINATOR => Withdraw::try_from((data, accounts))?.process(),
+        Token2022::DISCRIMINATOR => Token2022::try_from((data, accounts))?.process(),
         _ => Err(ProgramError::InvalidArgument),
     }
 }

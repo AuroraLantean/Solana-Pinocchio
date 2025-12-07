@@ -5,9 +5,11 @@ use pinocchio::{
 };
 
 pub mod deposit;
+pub mod token2022;
 pub mod withdraw;
 
 pub use deposit::*;
+pub use token2022::*;
 pub use withdraw::*;
 
 use shank::ShankInstruction;
@@ -65,6 +67,15 @@ fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
 fn check_pda(account: &AccountInfo) -> Result<(), ProgramError> {
     if !account.is_owned_by(&crate::ID) {
         return Err(ProgramError::InvalidAccountOwner);
+    }
+    Ok(())
+}
+fn check_str_len(s: &str, min_len: usize, max_len: usize) -> Result<(), ProgramError> {
+    if s.len() < min_len {
+        return Err(ProgramError::AccountDataTooSmall);
+    }
+    if s.len() > max_len {
+        return Err(ProgramError::InvalidArgument);
     }
     Ok(())
 }
