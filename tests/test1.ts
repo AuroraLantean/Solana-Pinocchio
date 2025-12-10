@@ -6,17 +6,18 @@ import {
 	createSolanaRpc,
 	createSolanaRpcSubscriptions,
 	generateKeyPairSigner,
-	getAddressEncoder,
-	getProgramDerivedAddress,
-	getUtf8Encoder,
 	lamports,
 } from "@solana/kit";
 import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
-import { findAssociatedTokenPda } from "@solana-program/token";
 import * as vault from "../clients/js/src/generated/index";
-import { ll, sendTxn, TOKEN_PROGRAM_LEGACY } from "./utils";
+import {
+	findPda,
+	ll,
+	sendTxn,
+	TOKEN_PROGRAM_LEGACY,
+	vaultProgAddr,
+} from "./utils";
 
-const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
 const ACCOUNT_DISCRIMINATOR_SIZE = 8; // same as Anchor/Rust
 const U64_SIZE = 8; // u64 is 8 bytes
 const VAULT_SIZE = ACCOUNT_DISCRIMINATOR_SIZE + U64_SIZE; // 16
@@ -53,6 +54,7 @@ describe("Vault Program", () => {
 		rpcSubscriptions = createSolanaRpcSubscriptions(wssProvider);
 		ll(`✅ - Established connection to ${httpProvider}`);
 
+		ll("vaultProgAddr:", vaultProgAddr);
 		const { value } = await rpc
 			.getAccountInfo(vaultProgAddr, { encoding: "base64" })
 			.send();
@@ -86,15 +88,8 @@ describe("Vault Program", () => {
 		vaultRent = await rpc.getMinimumBalanceForRentExemption(VAULT_SIZE).send();
 
 		// Get vault PDA
-		const seedSigner = getAddressEncoder().encode(await signerAddr);
-		const seedTag = getUtf8Encoder().encode("vault");
-
-		ll("vaultProgAddr:", vaultProgAddr);
-		const pdas = await getProgramDerivedAddress({
-			programAddress: vaultProgAddr,
-			seeds: [seedTag, seedSigner],
-		});
-		vaultPDA = pdas[0];
+		const pda_bump = await findPda(signerAddr, "vault");
+		vaultPDA = pda_bump.pda;
 		ll(`✅ - Vault PDA: ${vaultPDA}`);
 	});
 
@@ -164,8 +159,45 @@ describe("Vault Program", () => {
 		await sendTxn(methodIx, hackerKp, rpc, rpcSubscriptions, false);
 	});
 
-	it("init Mint", async () => {
-		ll("------== Init Mint");
+	it("init LgcMint", async () => {
+		ll("------== Init LgcMint");
+		ll("mint_auth & payer:", signerAddr);
+		const pda_bump = await findPda(signerAddr, "mint");
+		const mint = pda_bump.pda;
+
+		// unauthorized signer or writable account
+		const methodIx = vault.getTokenLgcInitMintInstruction(
+			{
+				payer: signerKp,
+				mint: mint,
+				mintAuthority: signerAddr,
+				freezeAuthorityOpt: signerAddr,
+				tokenProgram: TOKEN_PROGRAM_LEGACY,
+				program: vaultProgAddr,
+				systemProgram: SYSTEM_PROGRAM_ADDRESS,
+				decimals: 9,
+			},
+			{
+				programAddress: vaultProgAddr,
+			},
+		);
+		/*		const methodIx = vault.getDepositInstruction(
+			{
+				owner: signerKp,
+				vault: vaultPDA,
+				program: vaultProgAddr,
+				systemProgram: SYSTEM_PROGRAM_ADDRESS,
+				amount: lamports(amtDeposit),
+			},
+			{
+				programAddress: vaultProgAddr,
+			},
+		); */
+		await sendTxn(methodIx, signerKp, rpc, rpcSubscriptions);
+	});
+
+	/*it("init Tok22 Mint", async () => {
+		ll("------== Init Tok22 Mint");
 		const mintKp = await generateKeyPairSigner();
 
 		const [ata] = await findAssociatedTokenPda({
@@ -186,7 +218,7 @@ describe("Vault Program", () => {
 
 		await sendTxn(methodIx, signerKp, rpc, rpcSubscriptions);
 	});
-	/*it("xyz", async () => {
+	it("xyz", async () => {
 		ll("------== To Xyz");
 		await getSol(vaultPDA, "Vault");
 	});*/

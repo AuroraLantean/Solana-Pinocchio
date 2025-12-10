@@ -13,6 +13,8 @@ pub mod tok22InitTokAcct;
 #[allow(non_snake_case)]
 pub mod tok22MintToken;
 #[allow(non_snake_case)]
+pub mod tokLgcInitMint;
+#[allow(non_snake_case)]
 pub mod withdrawSol;
 
 pub use depositSol::*;
@@ -20,6 +22,7 @@ use pinocchio_token_2022::state::{Mint, TokenAccount};
 pub use tok22InitMint::*;
 pub use tok22InitTokAcct::*;
 pub use tok22MintToken::*;
+pub use tokLgcInitMint::*;
 pub use withdrawSol::*;
 
 use shank::ShankInstruction;
@@ -44,13 +47,38 @@ pub enum ProgramIx {
     #[account(2, name = "program", desc = "Program Address")]
     Withdraw { amount: u64 },
 
-    /// Init Token2022 Mint
+    /// Init TokLgc Mint
+    #[account(0, signer, writable, name = "payer", desc = "Payer")]
+    #[account(1, writable, name = "mint", desc = "MintPDA")]
+    #[account(2, name = "mint_authority", desc = "Mint Authority")]
+    #[account(3, name = "token_program", desc = "Token Program")]
+    #[account(4, name = "freeze_authority_opt", desc = "Freeze Authority")]
+    #[account(5, name = "program", desc = "Program Address")]
+    #[account(6, name = "system_program", desc = "System Program")]
+    TokenLgcInitMint { decimals: u8 },
+
+    /// Token2022 Init Mint
     #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]
     #[account(1, writable, name = "mint", desc = "Mint")]
     #[account(2, name = "token_program", desc = "Token Program")]
     #[account(3, name = "freeze_authority_opt", desc = "Freeze Authority")]
     Token2022InitMint { decimals: u8 },
-}
+
+    /// Token2022 Init Token Acct
+    #[account(0, signer, writable, name = "payer", desc = "Payer")]
+    #[account(1, writable, name = "token_acct_owner", desc = "Token Account Owner")]
+    #[account(2, writable, name = "mint", desc = "Mint")]
+    #[account(3, name = "token_account", desc = "Token Account")]
+    #[account(4, name = "token_program", desc = "Token Program")]
+    Token2022InitTokAcct {},
+
+    /// Token2022 Mint Token
+    #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]
+    #[account(1, writable, name = "mint", desc = "Mint")]
+    #[account(2, name = "token_account", desc = "Token Account")]
+    #[account(3, name = "token_program", desc = "Token Program")]
+    Token2022MintToken { decimals: u8, amount: u64 },
+} //update here and lib.rs for new functions
 
 //-------------==
 /// Parse a u64 from instruction data.
@@ -72,10 +100,10 @@ pub fn parse_u64(data: &[u8]) -> Result<u64, ProgramError> {
 }
 
 /// Derive the vault PDA for an user -> (pda, bump)
-pub fn derive_vault_pda(user: &AccountInfo) -> Result<(Pubkey, u8), ProgramError> {
+pub fn derive_pda1(user: &AccountInfo, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
     //find_program_address(&[b"vault", user.key().as_ref()], &crate::ID)
     // let (pda, _bump) =
-    try_find_program_address(&[b"vault", user.key().as_ref()], &crate::ID)
+    try_find_program_address(&[bstr, user.key().as_ref()], &crate::ID)
         .ok_or(ProgramError::InvalidSeeds)
 }
 pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
@@ -146,6 +174,8 @@ pub fn check_str_len(s: &str, min_len: usize, max_len: usize) -> Result<(), Prog
     }
     Ok(())
 }
+
+pub const ACCOUNT_DISCRIMINATOR_SIZE: usize = 8;
 
 /// [4 (extension discriminator) + 32 (update_authority) + 32 (metadata)]
 pub const METADATA_POINTER_SIZE: usize = 4 + 32 + 32;

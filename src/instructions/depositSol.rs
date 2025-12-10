@@ -10,7 +10,10 @@ use pinocchio::{
 use pinocchio_log::log;
 use pinocchio_system::instructions::{CreateAccount, Transfer as SystemTransfer};
 
-use crate::instructions::{check_pda, check_signer, derive_vault_pda, parse_u64};
+use crate::{
+    instructions::{check_pda, check_signer, derive_pda1, parse_u64},
+    ACCOUNT_DISCRIMINATOR_SIZE,
+};
 
 // Deposit SOL to program PDA
 // make and rent-funds the vault PDA
@@ -72,9 +75,7 @@ fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramRe
 
     // Create when empty and fund rent-exempt.
     if vault.lamports() == 0 {
-        const ACCOUNT_DISCRIMINATOR_SIZE: usize = 8;
-
-        let (expected_vault_pda, bump) = derive_vault_pda(user)?;
+        let (expected_vault_pda, bump) = derive_pda1(user, b"vault")?;
         if vault.key() != &expected_vault_pda {
             return Err(ProgramError::InvalidAccountData);
         }

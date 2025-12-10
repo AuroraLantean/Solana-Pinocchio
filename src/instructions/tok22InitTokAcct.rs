@@ -15,24 +15,24 @@ use pinocchio_token_2022::{instructions::InitializeAccount3, state::TokenAccount
 pub struct Token2022InitTokAcct<'a> {
     pub payer: &'a AccountInfo,
     pub tok_acc_owner: &'a AccountInfo,
-    pub mint_account: &'a AccountInfo,
+    pub mint: &'a AccountInfo,
     pub token_account: &'a AccountInfo,
     pub token_program: &'a AccountInfo,
 }
 impl<'a> Token2022InitTokAcct<'a> {
-    pub const DISCRIMINATOR: &'a u8 = &3;
+    pub const DISCRIMINATOR: &'a u8 = &4;
 
     pub fn process(self) -> ProgramResult {
         let Token2022InitTokAcct {
             payer,
             tok_acc_owner,
-            mint_account,
+            mint,
             token_account,
             token_program,
         } = self;
         check_signer(payer)?;
         empty_lamport(token_account)?;
-        rent_exempt(mint_account, 0)?;
+        rent_exempt(mint, 0)?;
         /*find token_account from tok_acc_owner & token mint"
         cargo add spl-associated-token-account
         use spl_associated_token_account::get_associated_token_address;
@@ -53,7 +53,7 @@ impl<'a> Token2022InitTokAcct<'a> {
         log!("Init Token Account");
         InitializeAccount3 {
             account: token_account,
-            mint: mint_account,
+            mint: mint,
             owner: tok_acc_owner.key(),
             token_program: token_program.key(),
         };
@@ -72,7 +72,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitTokAcct<'a> {
     fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
         let (data, accounts) = value;
 
-        let [payer, tok_acc_owner, mint_account, token_account, token_program, _] = accounts else {
+        let [payer, tok_acc_owner, mint, token_account, token_program, _] = accounts else {
             return Err(ProgramError::NotEnoughAccountKeys);
         };
 
@@ -83,7 +83,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitTokAcct<'a> {
         Ok(Self {
             payer,
             tok_acc_owner,
-            mint_account,
+            mint,
             token_account,
             token_program,
         })

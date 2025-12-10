@@ -7,7 +7,7 @@ use pinocchio::{
 };
 use pinocchio_log::log;
 
-use crate::instructions::{check_pda, check_signer, derive_vault_pda, parse_u64};
+use crate::instructions::{check_pda, check_signer, derive_pda1, parse_u64};
 
 //  vault is owned by the program, matches the PDA derived from the owner, and the owner is the signer of the withdraw transaction. The withdrawn amount is everything above the rent minimum.
 pub struct WithdrawSol<'a> {
@@ -32,7 +32,7 @@ impl<'a> WithdrawSol<'a> {
         check_pda(vault)?;
 
         // Validate the vault is the correct PDA for this owner
-        let (expected_vault_pda, _bump) = derive_vault_pda(owner)?;
+        let (expected_vault_pda, _bump) = derive_pda1(owner, b"vault")?;
         if vault.key() != &expected_vault_pda {
             return Err(ProgramError::InvalidAccountData);
         }

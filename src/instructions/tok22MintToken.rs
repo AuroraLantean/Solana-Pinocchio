@@ -7,19 +7,19 @@ use pinocchio_token_2022::instructions::MintToChecked;
 
 /// Token2022 Mint Tokens
 pub struct Token2022MintToken<'a> {
-    pub mint_account: &'a AccountInfo,
-    pub token_account: &'a AccountInfo,
     pub mint_authority: &'a AccountInfo, //signer
+    pub mint: &'a AccountInfo,
+    pub token_account: &'a AccountInfo,
     pub token_program: &'a AccountInfo,
     pub decimals: u8,
     pub amount: u64,
 }
 impl<'a> Token2022MintToken<'a> {
-    pub const DISCRIMINATOR: &'a u8 = &4;
+    pub const DISCRIMINATOR: &'a u8 = &5;
 
     pub fn process(self) -> ProgramResult {
         let Token2022MintToken {
-            mint_account,
+            mint,
             token_account,
             mint_authority,
             token_program,
@@ -29,15 +29,15 @@ impl<'a> Token2022MintToken<'a> {
         log!("decimals: {}, amount: {}", decimals, amount);
 
         check_signer(mint_authority)?;
-        rent_exempt(mint_account, 0)?;
+        rent_exempt(mint, 0)?;
         rent_exempt(token_account, 1)?;
-        empty_data(mint_account)?;
+        empty_data(mint)?;
         writable(token_account)?;
         executable(token_program)?;
 
         log!("Mint Tokens");
         MintToChecked {
-            mint: mint_account,
+            mint: mint,
             account: token_account,
             mint_authority: mint_authority,
             amount,
@@ -53,7 +53,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022MintToken<'a> {
     fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
         let (data, accounts) = value;
 
-        let [mint_account, token_account, mint_authority, token_program, _] = accounts else {
+        let [mint, token_account, mint_authority, token_program, _] = accounts else {
             return Err(ProgramError::NotEnoughAccountKeys);
         };
 
@@ -63,7 +63,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022MintToken<'a> {
         let decimals = data[0];
         let amount = parse_u64(&data[1..])?;
         Ok(Self {
-            mint_account,
+            mint,
             token_account,
             mint_authority,
             token_program,
