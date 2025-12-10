@@ -12,8 +12,9 @@ import {
 	lamports,
 } from "@solana/kit";
 import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
+import { findAssociatedTokenPda } from "@solana-program/token";
 import * as vault from "../clients/js/src/generated/index";
-import { ll, sendTxn } from "./utils";
+import { ll, sendTxn, TOKEN_PROGRAM_LEGACY } from "./utils";
 
 const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
 const ACCOUNT_DISCRIMINATOR_SIZE = 8; // same as Anchor/Rust
@@ -100,7 +101,7 @@ describe("Vault Program", () => {
 	//------------------==
 	it("can deposit to vault", async () => {
 		ll("------== To Deposit");
-		const depositIx = vault.getDepositInstruction(
+		const methodIx = vault.getDepositInstruction(
 			{
 				owner: signerKp,
 				vault: vaultPDA,
@@ -113,7 +114,7 @@ describe("Vault Program", () => {
 			},
 		);
 
-		await sendTxn(depositIx, signerKp, rpc, rpcSubscriptions);
+		await sendTxn(methodIx, signerKp, rpc, rpcSubscriptions);
 
 		ll("Vault Rent:", vaultRent);
 		ll("amtDeposit:", amtDeposit);
@@ -132,14 +133,14 @@ describe("Vault Program", () => {
 		ll("------== To Withdraw");
 		await getSol(vaultPDA, "Vault");
 
-		const withdrawIx = vault.getWithdrawInstruction({
+		const methodIx = vault.getWithdrawInstruction({
 			owner: signerKp,
 			vault: vaultPDA,
 			program: vaultProgAddr,
 			amount: lamports(amtWithdraw),
 		});
 
-		await sendTxn(withdrawIx, signerKp, rpc, rpcSubscriptions);
+		await sendTxn(methodIx, signerKp, rpc, rpcSubscriptions);
 
 		ll("Vault Rent:", vaultRent);
 		ll("Vault amtWithdraw:", amtWithdraw);
@@ -153,14 +154,41 @@ describe("Vault Program", () => {
 		// signer that DOES NOT own the vault
 		const hackerKp = await generateKeyPairSigner();
 
-		const withdrawIx = vault.getWithdrawInstruction({
+		const methodIx = vault.getWithdrawInstruction({
 			owner: hackerKp,
 			vault: vaultPDA,
 			program: vaultProgAddr,
 			amount: lamports(amtWithdraw),
 		});
 
-		await sendTxn(withdrawIx, hackerKp, rpc, rpcSubscriptions, false);
+		await sendTxn(methodIx, hackerKp, rpc, rpcSubscriptions, false);
 	});
+
+	it("init Mint", async () => {
+		ll("------== Init Mint");
+		const mintKp = await generateKeyPairSigner();
+
+		const [ata] = await findAssociatedTokenPda({
+			mint: mintKp.address,
+			owner: signerAddr,
+			tokenProgram: TOKEN_PROGRAM_LEGACY,
+		});
+		ll("ata: ", ata);
+
+		// unauthorized signer or writable account
+		const methodIx = vault.getToken2022InitMintInstruction({
+			mintAuthority: signerKp,
+			mint: mintKp.address,
+			tokenProgram: TOKEN_PROGRAM_LEGACY,
+			freezeAuthorityOpt: signerAddr,
+			decimals: 9,
+		});
+
+		await sendTxn(methodIx, signerKp, rpc, rpcSubscriptions);
+	});
+	/*it("xyz", async () => {
+		ll("------== To Xyz");
+		await getSol(vaultPDA, "Vault");
+	});*/
 });
 //if error: Attempt to load a program that does not exist. You have to deploy the program first before running this test!

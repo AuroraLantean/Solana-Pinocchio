@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import {
+	address,
 	appendTransactionMessageInstruction,
 	assertIsTransactionWithBlockhashLifetime,
 	createTransactionMessage,
@@ -11,6 +12,13 @@ import {
 	signTransactionMessageWithSigners,
 } from "@solana/kit";
 export const ll = console.log;
+
+export const TOKEN_PROGRAM_LEGACY = address(
+	"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+);
+export const TOKEN_PROGRAM_2022 = address(
+	"TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+);
 
 //https://www.solanakit.com/docs/getting-started/send-transaction#confirmation-strategies
 export const sendTxn = async (

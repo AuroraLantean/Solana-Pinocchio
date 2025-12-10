@@ -2,23 +2,21 @@ use core::convert::TryFrom;
 use pinocchio::{
     account_info::AccountInfo,
     program_error::ProgramError,
-    pubkey::Pubkey,
     sysvars::{rent::Rent, Sysvar},
     ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
 
-use crate::{empty_acct, instructions::check_signer, writable_acct};
+use crate::{empty_data, empty_lamport, executable, instructions::check_signer, writable};
 use pinocchio_token_2022::{instructions::InitializeMint2, state::Mint};
 
 //Initiate Token2022 Mint Account
 pub struct Token2022InitMint<'a> {
-    pub payer: &'a AccountInfo,
-    pub mint_account: &'a AccountInfo,
+    pub mint_authority: &'a AccountInfo, //signer
+    pub mint: &'a AccountInfo,
     pub token_program: &'a AccountInfo,
-    pub mint_authority: &'a Pubkey, //[u8; 32]
-    pub freeze_authority_opt: Option<&'a Pubkey>,
+    pub freeze_authority_opt: Option<&'a [u8; 32]>, // or Pubkey
     //pub name: &'a str,
     //pub symbol: &'a str,
     //pub uri: &'a str,
@@ -29,16 +27,22 @@ impl<'a> Token2022InitMint<'a> {
 
     pub fn process(self) -> ProgramResult {
         let Token2022InitMint {
-            payer,
-            mint_account,
-            token_program,
             mint_authority,
+            mint,
+            token_program,
             freeze_authority_opt,
             //name,symbol,uri,
             decimals,
         } = self;
-        log!("decimals: {}", decimals);
-        check_signer(payer)?;
+        log!("process()");
+        check_signer(mint_authority)?;
+        log!("here 2");
+        empty_lamport(mint)?;
+        log!("here 3");
+        empty_data(mint)?;
+        log!("here 4");
+        executable(token_program)?;
+
         if decimals > 18 {
             return Err(ProgramError::InvalidArgument);
         }
@@ -46,69 +50,31 @@ impl<'a> Token2022InitMint<'a> {
         //check_str_len(symbol, 3, 20)?;
         //check_str_len(uri, 3, 20)?;
 
-        empty_acct(mint_account)?;
-        /*if rent_sysvar.key != &solana_program::sysvar::rent::ID {
-            return Err(ProgramError::InvalidAccountData);
-        }*/
         log!("Make Mint Account");
         CreateAccount {
-            from: payer,
-            to: mint_account,
+            from: mint_authority,
+            to: mint,
             owner: token_program.key(),
             lamports: Rent::get()?.minimum_balance(Mint::BASE_LEN),
             space: Mint::BASE_LEN as u64,
         }
         .invoke()?;
-
-        writable_acct(mint_account)?;
+        log!("here 5");
+        writable(mint)?;
 
         log!("Init Mint");
         InitializeMint2 {
-            mint: mint_account,
+            mint: mint,
             decimals: decimals,
-            mint_authority,
+            mint_authority: mint_authority.key(),
             freeze_authority: freeze_authority_opt,
             token_program: token_program.key(),
         }
         .invoke()?;
-
-        /// [4 (extension discriminator) + 32 (update_authority) + 32 (metadata)]
-        const METADATA_POINTER_SIZE: usize = 4 + 32 + 32;
-        /// [4 (extension discriminator) + 32 (update_authority) + 32 (mint) + 4 (size of name ) + 4 (size of symbol) + 4 (size of uri) + 4 (size of additional_metadata)]
-        const METADATA_EXTENSION_BASE_SIZE: usize = 4 + 32 + 32 + 4 + 4 + 4 + 4;
-        /// Padding used so that Mint and Account extensions start at the same index
-        const EXTENSIONS_PADDING_AND_OFFSET: usize = 84;
-        // Initialize MetadataPointer extension pointing to the Mint account
-        /*InitializeMetadataPointer {
-            mint: mint_account,
-            authority: Some(*payer.key()),
-            metadata_address: Some(*mint_account.key()),
-        }
-        .invoke()?;*/
-
-        // Set the metadata within the Mint account
-        /*InitializeTokenMetadata {
-            metadata: mint_account,
-            update_authority: payer,
-            mint: mint_account,
-            mint_authority: payer,
-            name: &name,
-            symbol: &symbol,
-            uri: &uri,
-        }
-        .invoke()?;
-        https://www.helius.dev/blog/pinocchio#pinocchio-vs-steel
-        // within `process_instruction`
-        let extension_size = METADATA_POINTER_SIZE
-                    + METADATA_EXTENSION_BASE_SIZE
-                    + name.len()
-                    + symbol.len()
-                    + uri.len();
-        let total_mint_size = Mint::LEN + EXTENSIONS_PADDING_AND_OFFSET + extension_size;        */
         Ok(())
     }
     pub fn init_if_needed(self) -> ProgramResult {
-        match empty_acct(self.mint_account) {
+        match empty_lamport(self.mint) {
             Ok(_) => Self::process(self),
             Err(_) => Ok(()),
         }
@@ -118,32 +84,70 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitMint<'a> {
     type Error = ProgramError;
 
     fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+        log!("try_from");
         let (data, accounts) = value;
+        log!("accounts len: {}, data len: {}", accounts.len(), data.len());
+        //accounts len: 5, data len: 1
 
-        let [payer, mint_account, token_program, _] = accounts else {
+        if accounts.len() < 3 {
             return Err(ProgramError::NotEnoughAccountKeys);
-        };
+        }
+        let mint_authority = &accounts[0];
+        let mint = &accounts[1];
+        let token_program = &accounts[2];
+        let freeze_authority_opt: Option<&'a [u8; 32]>;
+        if accounts.len() > 3 {
+            freeze_authority_opt = Some(&accounts[3].key());
+        } else {
+            freeze_authority_opt = None;
+        }
 
-        if data.len() < 33 {
+        if data.len() < 1 {
             return Err(ProgramError::AccountDataTooSmall);
         }
         let decimals = data[0];
-
-        //TODO: extract freeze_authority_opt and decimals from data; //name, symbol, uri
-        let mint_authority = &data[1..]; // [u8; 32]
-        let freeze_authority_opt = None;
+        log!("decimals: {}", decimals);
+        //TODO: extract name, symbol, uri
+        //let mint_authority = &data[1..];
         Ok(Self {
-            payer,
-            mint_account,
+            mint_authority, //.try_into()
+            mint,
             token_program,
-            mint_authority: mint_authority
-                .try_into()
-                .expect("invalid mint authority size"),
             freeze_authority_opt,
+            decimals,
             //name: "token_name",
             //symbol: "token_symbol",
             //uri: "token_uri",
-            decimals,
         })
     }
 }
+// Initialize MetadataPointer extension pointing to the Mint account
+/*InitializeMetadataPointer {
+    mint: mint,
+    authority: Some(*payer.key()),
+    metadata_address: Some(*mint.key()),
+}
+.invoke()?;*/
+
+// Set the metadata within the Mint account
+/*InitializeTokenMetadata {
+    metadata: mint,
+    update_authority: payer,
+    mint: mint,
+    mint_authority: payer,
+    name: &name,
+    symbol: &symbol,
+    uri: &uri,
+}
+.invoke()?;
+https://www.helius.dev/blog/pinocchio#pinocchio-vs-steel
+// within `process_instruction`
+let extension_size = METADATA_POINTER_SIZE
+            + METADATA_EXTENSION_BASE_SIZE
+            + name.len()
+            + symbol.len()
+            + uri.len();
+let total_mint_size = Mint::LEN + EXTENSIONS_PADDING_AND_OFFSET + extension_size;        */
+/*if rent_sysvar.key != &solana_program::sysvar::rent::ID {
+    return Err(ProgramError::InvalidAccountData);
+}*/

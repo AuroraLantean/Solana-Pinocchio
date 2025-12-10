@@ -8,11 +8,8 @@ use pinocchio::{
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
 
-use crate::{empty_acct, instructions::check_signer, rent_exampt, writable_acct};
-use pinocchio_token_2022::{
-    instructions::InitializeAccount3,
-    state::{Mint, TokenAccount},
-};
+use crate::{empty_lamport, instructions::check_signer, rent_exempt, writable};
+use pinocchio_token_2022::{instructions::InitializeAccount3, state::TokenAccount};
 
 /// Token2022 Init Token Account
 pub struct Token2022InitTokAcct<'a> {
@@ -34,9 +31,13 @@ impl<'a> Token2022InitTokAcct<'a> {
             token_program,
         } = self;
         check_signer(payer)?;
-        empty_acct(token_account)?;
-        rent_exampt(mint_account, 0)?;
-
+        empty_lamport(token_account)?;
+        rent_exempt(mint_account, 0)?;
+        /*find token_account from tok_acc_owner & token mint"
+        cargo add spl-associated-token-account
+        use spl_associated_token_account::get_associated_token_address;
+        let ata = get_associated_token_address(&wallet, &mint);
+        */
         log!("Make Token Account");
         CreateAccount {
             from: payer,
@@ -47,7 +48,7 @@ impl<'a> Token2022InitTokAcct<'a> {
         }
         .invoke()?;
 
-        writable_acct(token_account)?;
+        writable(token_account)?;
 
         log!("Init Token Account");
         InitializeAccount3 {
@@ -59,7 +60,7 @@ impl<'a> Token2022InitTokAcct<'a> {
         Ok(())
     }
     pub fn init_if_needed(self) -> ProgramResult {
-        match empty_acct(self.token_account) {
+        match empty_lamport(self.token_account) {
             Ok(_) => Self::process(self),
             Err(_) => Ok(()),
         }

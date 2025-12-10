@@ -2,7 +2,7 @@ use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
 use pinocchio_log::log;
 
-use crate::{empty_acct, instructions::check_signer, parse_u64, rent_exampt, writable_acct};
+use crate::{empty_data, executable, instructions::check_signer, parse_u64, rent_exempt, writable};
 use pinocchio_token_2022::instructions::MintToChecked;
 
 /// Token2022 Mint Tokens
@@ -27,11 +27,13 @@ impl<'a> Token2022MintToken<'a> {
             amount,
         } = self;
         log!("decimals: {}, amount: {}", decimals, amount);
-        check_signer(mint_authority)?;
 
-        rent_exampt(mint_account, 0)?;
-        rent_exampt(token_account, 1)?;
-        writable_acct(token_account)?;
+        check_signer(mint_authority)?;
+        rent_exempt(mint_account, 0)?;
+        rent_exempt(token_account, 1)?;
+        empty_data(mint_account)?;
+        writable(token_account)?;
+        executable(token_program)?;
 
         log!("Mint Tokens");
         MintToChecked {

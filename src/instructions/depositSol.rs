@@ -66,15 +66,15 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositSol<'a> {
     }
 }
 
-/// Ensure the vault exists; if not, create it with PDA seeds. owner must be a signer, vault must be writable, and rent minimum must be respected for creation.
-fn ensure_deposit_accounts(owner: &AccountInfo, vault: &AccountInfo) -> ProgramResult {
-    check_signer(owner)?;
+/// Ensure the vault exists; if not, create it with PDA seeds. user must be a signer, vault must be writable, and rent minimum must be respected for creation.
+fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramResult {
+    check_signer(user)?;
 
     // Create when empty and fund rent-exempt.
     if vault.lamports() == 0 {
         const ACCOUNT_DISCRIMINATOR_SIZE: usize = 8;
 
-        let (expected_vault_pda, bump) = derive_vault_pda(owner)?;
+        let (expected_vault_pda, bump) = derive_vault_pda(user)?;
         if vault.key() != &expected_vault_pda {
             return Err(ProgramError::InvalidAccountData);
         }
@@ -82,7 +82,7 @@ fn ensure_deposit_accounts(owner: &AccountInfo, vault: &AccountInfo) -> ProgramR
 
         let signer_seeds = [
             Seed::from(b"vault".as_slice()),
-            Seed::from(owner.key().as_ref()),
+            Seed::from(user.key().as_ref()),
             Seed::from(core::slice::from_ref(&bump)),
         ];
         let signer = Signer::from(&signer_seeds);
@@ -92,7 +92,7 @@ fn ensure_deposit_accounts(owner: &AccountInfo, vault: &AccountInfo) -> ProgramR
         let needed_lamports = Rent::get()?.minimum_balance(VAULT_SIZE);
 
         CreateAccount {
-            from: owner,
+            from: user,
             to: vault,
             lamports: needed_lamports,
             space: VAULT_SIZE as u64,
@@ -102,7 +102,7 @@ fn ensure_deposit_accounts(owner: &AccountInfo, vault: &AccountInfo) -> ProgramR
 
         log!("Vault created");
     } else {
-        // If vault already exists, validate owner matches the program.
+        // If vault already exists
         check_pda(vault)?;
         log!("Vault already exists");
     }
