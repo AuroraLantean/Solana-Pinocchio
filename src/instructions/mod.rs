@@ -52,7 +52,7 @@ pub enum ProgramIx {
 
     /// TokLgc Init Mint
     #[account(0, signer, writable, name = "payer", desc = "Payer")]
-    #[account(1, writable, name = "mint", desc = "MintPDA")]
+    #[account(1, signer, writable, name = "mint", desc = "Mint")]
     #[account(2, name = "mint_authority", desc = "Mint Authority")]
     #[account(3, name = "token_program", desc = "Token Program")]
     #[account(4, name = "freeze_authority_opt", desc = "Freeze Authority")]

@@ -174,13 +174,13 @@ describe("Vault Program", () => {
 		ll("------== Init LgcMint");
 		ll("payer:", adminAddr);
 		ll("mint_auth:", mintAuthority);
-		const pda_bump = await findPda(adminAddr, "mint");
-		const mint = pda_bump.pda;
+		const mintKp = await generateKeyPairSigner();
+		ll("mint:", mintKp.address);
 
 		const methodIx = vault.getTokenLgcInitMintInstruction(
 			{
 				payer: adminKp,
-				mint: mint,
+				mint: mintKp,
 				mintAuthority: mintAuthority,
 				freezeAuthorityOpt: mintAuthority,
 				tokenProgram: TOKEN_PROGRAM_ADDRESS,

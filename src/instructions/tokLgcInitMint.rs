@@ -57,38 +57,27 @@ impl<'a> TokenLgcInitMint<'a> {
         //log!("payer: {}", payer.key());
         //let mint = Keypair::new();
 
-        let (mint_exp, bump) = derive_pda1(payer, b"mint")?;
-        if mint.key() != &mint_exp {
-            return Err(ProgramError::InvalidAccountData);
-        }
-        let signer_seeds = [
-            Seed::from(b"mint".as_slice()),
-            Seed::from(payer.key().as_ref()),
-            Seed::from(core::slice::from_ref(&bump)),
-        ];
-        let signer = Signer::from(&signer_seeds);
-
-        log!("Make Mint Account");
+        log!("Make Mint Account"); //payer and mint are both keypairs!
         CreateAccount {
-            from: payer,                // keypair
-            to: mint,                   // Address
+            from: payer,
+            to: mint,
             owner: token_program.key(), //address("TokenXYZ");
             lamports,
             space,
         }
-        .invoke_signed(&[signer])?;
+        .invoke()?;
 
         log!("TokenLgcInitMint 7");
         writable(mint)?;
 
-        log!("Init Mint"); //authority: Address
+        log!("Init Mint");
         InitializeMint2 {
             mint,
             decimals,
             mint_authority: mint_authority.key(),
             freeze_authority: freeze_authority_opt,
         }
-        .invoke()?;
+        .invoke()?; //authority: Address
         Ok(())
     }
     pub fn init_if_needed(self) -> ProgramResult {
