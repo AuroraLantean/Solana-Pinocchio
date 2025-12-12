@@ -14,10 +14,13 @@ import {
 	signTransactionMessageWithSigners,
 } from "@solana/kit";
 import * as vault from "../clients/js/src/generated/index";
+import { baseSOL } from "./setup";
 
 export const ll = console.log;
 
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
+
+export const makeSolAmt = (amt: number) => BigInt(amt) * baseSOL;
 
 export const findPda = async (
 	userAddr: Address<string>,

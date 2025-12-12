@@ -65,16 +65,17 @@ pub enum ProgramIx {
 
     /// TokLgc Init Associated Token Acct
     #[account(0, signer, writable, name = "payer", desc = "Payer")]
-    #[account(1, signer, writable, name = "to_wallet", desc = "To Wallet")]
+    #[account(1, name = "to_wallet", desc = "To Wallet")]
     #[account(2, name = "mint", desc = "Mint")]
     #[account(3, writable, name = "token_account", desc = "Token Account")]
     #[account(4, name = "token_program", desc = "Token Program")]
-    #[account(5, name = "system_program", desc = "System Program")]
+    #[account(5, name = "program", desc = "This Program")]
+    #[account(6, name = "system_program", desc = "System Program")]
     TokenLgcInitTokAcct { bump: u8 },
 
     /// TokLgc Mint Token
     #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]
-    #[account(1, writable, name = "mint", desc = "Mint")]
+    #[account(1, name = "mint", desc = "Mint")]
     #[account(2, name = "to_wallet", desc = "ToWallet")]
     #[account(3, name = "token_program", desc = "Token Program")]
     #[account(4, name = "system_program", desc = "System Program")]

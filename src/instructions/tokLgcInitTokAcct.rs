@@ -1,4 +1,4 @@
-use crate::{empty_data, empty_lamport, instructions::check_signer, rent_exempt, writable};
+use crate::{empty_data, empty_lamport, instructions::check_signer, rent_exempt};
 use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
 use pinocchio_log::log;
@@ -49,7 +49,7 @@ impl<'a> TokenLgcInitTokAcct<'a> {
         .invoke()?;
         //.invoke_signed(&[signer])?;An account required by the instruction is missin
         //.invoke()?;
-        writable(token_account)?;
+
         /*CreateAccount {
             from: payer,
             to: token_account,
@@ -92,7 +92,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitTokAcct<'a> {
         let mint = &accounts[2];
         let token_account = &accounts[3];
         let token_program = &accounts[4];
-        let system_program = &accounts[5];
+        let _this_program = &accounts[5];
+        let system_program = &accounts[6];
         //let [payer, mint, _] = accounts else {  does not work };
 
         //1+8: u8 takes 1, u64 takes 8 bytes

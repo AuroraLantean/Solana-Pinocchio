@@ -37,19 +37,13 @@ impl<'a> TokLgcMintToken<'a> {
         check_signer(mint_authority)?;
         log!("TokLgcMintToken 1");
         rent_exempt(mint, 0)?;
-        writable(mint)?;
-
+        //writable(mint)?;
         writable(token_account)?;
-        if !token_account.data_is_empty() {
-            let token_account_info = TokenAccount::from_account_info(token_account)?;
-            if !token_account_info.owner().eq(to_wallet.key()) {
-                return Err(ProgramError::InvalidAccountData);
-            }
-        }
+
         if !token_program.executable() {
             return Err(ProgramError::IncorrectProgramId);
         }
-
+        log!("TokLgcMintToken 3");
         if !mint.is_owned_by(token_program.key()) {
             return Err(ProgramError::InvalidAccountData);
         }
@@ -60,6 +54,7 @@ impl<'a> TokLgcMintToken<'a> {
         {
             return Err(ProgramError::IncorrectAuthority);
         }
+        log!("TokLgcMintToken 5");
         if !system_program.key().eq(&pinocchio_system::ID) {
             return Err(ProgramError::IncorrectProgramId);
         }
@@ -70,21 +65,26 @@ impl<'a> TokLgcMintToken<'a> {
                 funding_account: mint_authority,
                 account: token_account,
                 wallet: to_wallet,
-                mint: mint,
-                system_program: system_program,
-                token_program: token_program,
+                mint,
+                system_program,
+                token_program,
             }
             .invoke()?;
+        } else {
+            log!("token_account has data");
+            let token_account_info = TokenAccount::from_account_info(token_account)?;
+            if !token_account_info.owner().eq(to_wallet.key()) {
+                return Err(ProgramError::InvalidAccountData);
+            }
         }
-        log!("Token Account initiated");
-        writable(token_account)?;
-        //rent_exempt(token_account, 1)?;
+        log!("Token Account exists");
+        rent_exempt(token_account, 1)?;
 
         log!("Mint Tokens");
         MintToChecked {
-            mint: mint,
+            mint,
             account: token_account,
-            mint_authority: mint_authority,
+            mint_authority,
             amount,
             decimals,
         }
