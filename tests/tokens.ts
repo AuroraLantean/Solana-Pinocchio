@@ -25,7 +25,7 @@ import {
 	getTokenSize,
 	TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
-import { rpc, rpcSubscriptions } from "./setup";
+import { rpc, rpcSubscriptions } from "./httpws";
 import { ll } from "./utils";
 
 // https://solana.com/docs/tokens/basics/create-token-account

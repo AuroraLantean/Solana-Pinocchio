@@ -78,7 +78,7 @@ You'll see a clients/js/src/generated/ folder in our project with the program ty
 Fast and lightweight library for testing Solana programs.
 
 ```bash
-pnpm add litesvm @solana/web3.js @solana/spl-token
+pnpm add -D litesvm @solana/web3.js @solana/spl-token
 ```
 
 ### Reference

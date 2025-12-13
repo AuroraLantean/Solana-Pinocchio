@@ -1,24 +1,20 @@
 import {
 	type Address,
-	appendTransactionMessageInstruction,
-	assertIsTransactionWithBlockhashLifetime,
-	createTransactionMessage,
 	getAddressEncoder,
 	getProgramDerivedAddress,
-	getSignatureFromTransaction,
 	getUtf8Encoder,
-	pipe,
-	sendAndConfirmTransactionFactory,
-	setTransactionMessageFeePayer,
-	setTransactionMessageLifetimeUsingBlockhash,
-	signTransactionMessageWithSigners,
 } from "@solana/kit";
-import * as vault from "../clients/js/src/generated/index";
-import { baseSOL } from "./setup";
 
 export const ll = console.log;
 
+import * as vault from "../clients/js/src/generated/index";
+
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
+ll("vaultProgAddr:", vaultProgAddr);
+
+export const decimalsSOL = BigInt(9);
+export const baseSOL = BigInt(10) ** decimalsSOL;
+export const amtAirdrop = BigInt(100) * baseSOL;
 
 export const makeSolAmt = (amt: number) => BigInt(amt) * baseSOL;
 
@@ -36,41 +32,4 @@ export const findPda = async (
 	});
 	ll(`${str} pda: ${pda_bump[0]}, bump: ${pda_bump[1]}`);
 	return { pda: pda_bump[0], bump: pda_bump[1] };
-};
-
-//https://www.solanakit.com/docs/getting-started/send-transaction#confirmation-strategies
-export const sendTxn = async (
-	methodIx: any,
-	signerKp: any,
-	rpc: any,
-	rpcSubscriptions: any,
-	isVerbose = false,
-) => {
-	ll("sendTxn() ...");
-	const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
-	if (isVerbose) ll("latestBlockhash:", latestBlockhash);
-	const txnMesg = pipe(
-		createTransactionMessage({ version: 0 }),
-		(tx) => setTransactionMessageFeePayer(signerKp.address, tx),
-		(tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
-		(tx) => appendTransactionMessageInstruction(methodIx, tx),
-		//(tx) => addSignersToTransactionMessage([signerKp], tx), //do we need this?
-	);
-	// Sign and send transaction
-	const signedTransaction = await signTransactionMessageWithSigners(txnMesg);
-	assertIsTransactionWithBlockhashLifetime(signedTransaction);
-
-	const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
-		rpc,
-		rpcSubscriptions,
-	});
-
-	//lastValidBlockHeight
-
-	await sendAndConfirmTransaction(signedTransaction, {
-		commitment: "confirmed",
-	}); //"confirmRecentTransaction" | "rpc" | "transaction"
-
-	const signature = getSignatureFromTransaction(signedTransaction);
-	ll("Transaction signature:", signature);
 };

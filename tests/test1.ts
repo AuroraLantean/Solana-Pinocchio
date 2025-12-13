@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { type Address, generateKeyPairSigner, lamports } from "@solana/kit";
+import type { Address } from "@solana/kit";
+import { generateKeyPairSigner, lamports } from "@solana/kit";
 import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
 import {
 	findAssociatedTokenPda,
@@ -10,53 +11,32 @@ import * as vault from "../clients/js/src/generated/index";
 import {
 	adminAddr,
 	adminKp,
+	getSol,
 	hackerKp,
 	mint,
 	mintAuthority,
 	mintAuthorityKp,
 	mintKp,
 	rpc,
-	rpcSubscriptions,
+	sendTxn,
 	user1Addr,
-} from "./setup";
+	vaultProgAddr,
+	vaultRent,
+} from "./httpws";
 import { makeATA } from "./tokens";
-import { findPda, ll, makeSolAmt, sendTxn, vaultProgAddr } from "./utils";
+import { findPda, ll, makeSolAmt } from "./utils";
 
-const ACCOUNT_DISCRIMINATOR_SIZE = 8; // same as Anchor/Rust
-const U64_SIZE = 8; // u64 is 8 bytes
-const VAULT_SIZE = ACCOUNT_DISCRIMINATOR_SIZE + U64_SIZE; // 16
+export const pda_bump = await findPda(adminAddr, "vault");
+export const vaultPDA: Address = pda_bump.pda;
+ll(`✅ - Vault PDA: ${vaultPDA}`);
 
 const amtDeposit = makeSolAmt(10);
 const amtWithdraw = makeSolAmt(9);
 
-const getSol = async (account: Address, name: string) => {
-	const { value: balc } = await rpc.getBalance(account).send();
-	ll(name, "balc:", balc);
-	return balc;
-};
-
-ll("vaultProgAddr:", vaultProgAddr);
-const { value } = await rpc
-	.getAccountInfo(vaultProgAddr, { encoding: "base64" })
-	.send();
-if (!value || !value?.data) {
-	throw new Error(`Program does not exist: ${vaultProgAddr.toString()}`);
-}
-ll("✅ - Program exits!");
 /*const base64Encoder = getBase64Encoder();
     let bytes = base64Encoder.encode(value.data[0]);
     const decoded = ammConfigDecoder.decode(bytes);
     ll(decoded);*/
-
-// get vault rent
-const vaultRent = await rpc
-	.getMinimumBalanceForRentExemption(BigInt(VAULT_SIZE))
-	.send();
-
-// Get vault PDA
-const pda_bump = await findPda(adminAddr, "vault");
-const vaultPDA: Address = pda_bump.pda;
-ll(`✅ - Vault PDA: ${vaultPDA}`);
 
 //BunJs Tests: https://bun.com/docs/test/writing-tests  expect(true).toBe(true);
 describe("Vault Program", () => {
@@ -74,8 +54,7 @@ describe("Vault Program", () => {
 				programAddress: vaultProgAddr,
 			},
 		);
-
-		await sendTxn(methodIx, adminKp, rpc, rpcSubscriptions);
+		await sendTxn(methodIx, adminKp);
 
 		ll("Vault Rent:", vaultRent);
 		ll("amtDeposit:", amtDeposit);
@@ -95,7 +74,7 @@ describe("Vault Program", () => {
 			amount: lamports(amtWithdraw),
 		});
 
-		await sendTxn(methodIx, adminKp, rpc, rpcSubscriptions);
+		await sendTxn(methodIx, adminKp);
 
 		ll("Vault Rent:", vaultRent);
 		ll("Vault amtWithdraw:", amtWithdraw);
@@ -113,7 +92,7 @@ describe("Vault Program", () => {
 				program: vaultProgAddr,
 				amount: lamports(amtWithdraw),
 			});
-			await sendTxn(methodIx, hackerKp, rpc, rpcSubscriptions);
+			await sendTxn(methodIx, hackerKp);
 		},
 	);
 
@@ -138,7 +117,7 @@ describe("Vault Program", () => {
 				programAddress: vaultProgAddr,
 			},
 		);
-		await sendTxn(methodIx, adminKp, rpc, rpcSubscriptions);
+		await sendTxn(methodIx, adminKp);
 	}, 10000);
 
 	test("init Lgc ata", async () => {
@@ -171,7 +150,7 @@ describe("Vault Program", () => {
 				programAddress: vaultProgAddr,
 			},
 		);
-		await sendTxn(methodIx, payer, rpc, rpcSubscriptions);
+		await sendTxn(methodIx, payer);
 		const _balcTok = await rpc.getTokenAccountBalance(ata).send();
 		//expect(balcTok.value.uiAmountString.toString()).toBe("100");
 	});
@@ -202,7 +181,7 @@ describe("Vault Program", () => {
 				programAddress: vaultProgAddr,
 			},
 		);
-		await sendTxn(methodIx, mintAuthorityKp, rpc, rpcSubscriptions);
+		await sendTxn(methodIx, mintAuthorityKp);
 
 		const balcTok = await rpc.getTokenAccountBalance(ata).send();
 		expect(balcTok.value.uiAmountString.toString()).toBe("100");
@@ -292,8 +271,7 @@ describe("Vault Program", () => {
 				programAddress: vaultProgAddr,
 			},
 		);
-
-		await sendTxn(methodIx, adminKp, rpc, rpcSubscriptions);
+		await sendTxn(methodIx, adminKp);
 	});
 	test("xyz", async () => {
 		ll("------== To Xyz");
