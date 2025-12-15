@@ -4,15 +4,14 @@ use pinocchio::{
     pubkey::{try_find_program_address, Pubkey},
     sysvars::{rent::Rent, Sysvar},
 };
-use pinocchio_log::log;
 use pinocchio_token_2022::state::{Mint as Mint22, TokenAccount as TokenAccount22};
 
 #[allow(non_snake_case)]
 pub mod depositSol;
 #[allow(non_snake_case)]
-pub mod tok22InitMint;
+pub mod tok22InitATA;
 #[allow(non_snake_case)]
-pub mod tok22InitTokAcct;
+pub mod tok22InitMint;
 #[allow(non_snake_case)]
 pub mod tok22MintToken;
 #[allow(non_snake_case)]
@@ -25,8 +24,8 @@ pub mod tokLgcMintToken;
 pub mod withdrawSol;
 
 pub use depositSol::*;
+pub use tok22InitATA::*;
 pub use tok22InitMint::*;
-pub use tok22InitTokAcct::*;
 pub use tok22MintToken::*;
 pub use tokLgcInitATA::*;
 pub use tokLgcInitMint::*;
@@ -73,7 +72,7 @@ pub enum ProgramIx {
     #[account(4, name = "token_program", desc = "Token Program")]
     #[account(5, name = "system_program", desc = "System Program")]
     #[account(6, name = "atoken_program", desc = "AToken Program")]
-    TokenLgcInitTokAcct {},
+    TokenLgcInitATA {},
 
     /// TokLgc Mint Token
     #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]
@@ -95,13 +94,15 @@ pub enum ProgramIx {
     #[account(6, name = "system_program", desc = "System Program")]
     Token2022InitMint { decimals: u8 },
 
-    /// Token2022 Init Token Acct
+    /// Token2022 Init ATA(Associated Token Acct)
     #[account(0, signer, writable, name = "payer", desc = "Payer")]
-    #[account(1, writable, name = "token_acct_owner", desc = "Token Account Owner")]
-    #[account(2, writable, name = "mint", desc = "Mint")]
-    #[account(3, name = "token_account", desc = "Token Account")]
+    #[account(1, name = "to_wallet", desc = "To Wallet")]
+    #[account(2, name = "mint", desc = "Mint")]
+    #[account(3, writable, name = "token_account", desc = "ATA Token Account")]
     #[account(4, name = "token_program", desc = "Token Program")]
-    Token2022InitTokAcct {},
+    #[account(5, name = "system_program", desc = "System Program")]
+    #[account(6, name = "atoken_program", desc = "AToken Program")]
+    Token2022InitATA {},
 
     /// Token2022 Mint Token
     #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]

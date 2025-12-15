@@ -41,9 +41,7 @@ fn process_instruction(
         Token2022InitMint::DISCRIMINATOR => {
             Token2022InitMint::try_from((data, accounts))?.process()
         }
-        Token2022InitTokAcct::DISCRIMINATOR => {
-            Token2022InitTokAcct::try_from((data, accounts))?.process()
-        }
+        Token2022InitAta::DISCRIMINATOR => Token2022InitAta::try_from((data, accounts))?.process(),
         Token2022MintToken::DISCRIMINATOR => {
             Token2022MintToken::try_from((data, accounts))?.process()
         }

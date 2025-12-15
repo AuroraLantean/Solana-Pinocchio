@@ -28,7 +28,7 @@ impl<'a> TokLgcMintToken<'a> {
             token_account,
             token_program,
             system_program,
-            atoken_program,
+            atoken_program: _,
             decimals,
             amount,
         } = self;

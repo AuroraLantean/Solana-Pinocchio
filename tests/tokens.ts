@@ -25,16 +25,25 @@ import {
 	getTokenSize,
 	TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
+import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
 import { checkAcct, rpc, rpcSubscriptions } from "./httpws";
 import { ll } from "./utils";
 
 // https://solana.com/docs/tokens/basics/create-token-account
 
-export const getAta = async (mint: Address, dest: Address) => {
+export const getAta = async (
+	mint: Address,
+	dest: Address,
+	isToken2022 = false,
+) => {
+	const tokenProgram = isToken2022
+		? TOKEN_2022_PROGRAM_ADDRESS
+		: TOKEN_PROGRAM_ADDRESS;
+
 	const [ata, bump] = await findAssociatedTokenPda({
 		mint: mint,
 		owner: dest,
-		tokenProgram: TOKEN_PROGRAM_ADDRESS,
+		tokenProgram: tokenProgram,
 	});
 	ll("ata:", ata, ", bump:", bump);
 	return { ata, bump };

@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import type { Address } from "@solana/kit";
-import { generateKeyPairSigner, lamports } from "@solana/kit";
+import { lamports } from "@solana/kit";
 import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
+import { sleep } from "bun";
 import * as vault from "../clients/js/src/generated/index";
 import {
 	adminAddr,
@@ -13,6 +14,8 @@ import {
 	getTokBalc,
 	hackerKp,
 	mint,
+	mint22,
+	mint22Kp,
 	mintAuthority,
 	mintAuthorityKp,
 	mintKp,
@@ -61,6 +64,7 @@ describe("Vault Program", () => {
 			},
 		);
 		await sendTxn(methodIx, adminKp);
+		ll("program execution successful");
 
 		ll("Vault Rent:", vaultRent);
 		ll("amtDeposit:", amtDeposit);
@@ -79,8 +83,8 @@ describe("Vault Program", () => {
 			program: vaultProgAddr,
 			amount: lamports(amtWithdraw),
 		});
-
 		await sendTxn(methodIx, adminKp);
+		ll("program execution successful");
 
 		ll("Vault Rent:", vaultRent);
 		ll("Vault amtWithdraw:", amtWithdraw);
@@ -102,8 +106,8 @@ describe("Vault Program", () => {
 		},
 	);
 	//------------------==
-	test("init lgc mint", async () => {
-		ll("------== Init Lgc Mint");
+	test("lgc init mint", async () => {
+		ll("------== Lgc Init Mint");
 		ll("payer:", adminAddr);
 		ll("mint_auth:", mintAuthority);
 		ll("mint:", mint);
@@ -124,10 +128,11 @@ describe("Vault Program", () => {
 			},
 		);
 		await sendTxn(methodIx, adminKp);
+		ll("program execution successful");
 	}, 10000);
 	//------------------==
-	test("init Lgc ata", async () => {
-		ll("------== Init Lgc Ata");
+	test("Lgc init ata", async () => {
+		ll("------== Lgc Init Ata");
 		const payer = adminKp;
 		ll("payer:", payer.address);
 		const destAddr = user1Addr;
@@ -137,7 +142,7 @@ describe("Vault Program", () => {
 		const atabump = await getAta(mint, destAddr);
 		const ata = atabump.ata;
 
-		const methodIx = vault.getTokenLgcInitTokAcctInstruction(
+		const methodIx = vault.getTokenLgcInitATAInstruction(
 			{
 				payer: payer,
 				toWallet: destAddr,
@@ -152,12 +157,13 @@ describe("Vault Program", () => {
 			},
 		);
 		await sendTxn(methodIx, payer);
+		ll("program execution successful");
 		const balcTok = await getTokBalc(ata);
 		expect(balcTok).toBe("0");
 	});
 	//------------------==
-	test("mint Lgc token", async () => {
-		ll("------== Mint Lgc Token");
+	test("Lgc mint token", async () => {
+		ll("------== Lgc Mint Token");
 		ll("payer:", adminAddr);
 		const destAddr = user1Addr;
 		ll("destAddr:", destAddr);
@@ -187,74 +193,20 @@ describe("Vault Program", () => {
 			},
 		);
 		await sendTxn(methodIx, mintAuthorityKp);
+		ll("program execution successful");
 
 		const balcTok2 = await getTokBalc(ata, "AF");
 		expect(balcTok2).toBe("100");
 	});
-	//TODO: LiteSVM https://rareskills.io/post/litesvm ; Bankrun: https://www.quicknode.com/guides/solana-development/tooling/bankrun
 	//------------------==
-	/*test.skip("init Lgc token acct LOW LEVEL", async () => {
-		ll("------== Init LgcTokenAcct LOW LEVEL");
-		ll("payer:", adminAddr);
-		const destAddr = user1Addr;
-		ll("destAddr:", destAddr);
-		ll("mint:", mint);
-		const payerKp = adminKp;
+	//TODO: LiteSVM https://rareskills.io/post/litesvm ; Bankrun: https://www.quicknode.com/guides/solana-development/tooling/bankrun
+	//amount: 100 * 10 ** 9,*/
 
-    const atabump = await getAta(mint, destAddr);
-
-		const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
-
-		const transaction = pipe(
-			createTransactionMessage({
-				version: 0,
-			}),
-			(tx) => setTransactionMessageFeePayer(payerKp.address, tx),
-			(tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
-			(tx) =>
-				appendTransactionMessageInstruction(
-					vault.getTokenLgcInitTokAcctInstruction(
-						{
-							payer: payerKp,
-							toWallet: user1Kp,
-							mint: mint,
-							tokenAccount: ata,
-							tokenProgram: TOKEN_PROGRAM_ADDRESS,
-							systemProgram: SYSTEM_PROGRAM_ADDRESS,
-							bump,
-						},
-						{
-							programAddress: vaultProgAddr,
-						},
-					),
-					tx,
-				),
-			(tx) => addSignersToTransactionMessage([payerKp], tx),
-		);
-
-		const signedTransaction =
-			await signTransactionMessageWithSigners(transaction);
-		assertIsTransactionWithBlockhashLifetime(signedTransaction);
-
-		const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
-			rpc,
-			rpcSubscriptions,
-		});
-		await sendAndConfirmTransaction(signedTransaction, {
-			commitment: "confirmed",
-		});
-	});
-	
-	const _balcTok = await rpc.getTokenAccountBalance(ata).send();
-	//expect(balcTok.value.uiAmountString.toString()).toBe("100");
-  //amount: 100 * 10 ** 9,*/
-
-	test("init Tok22 Mint", async () => {
-		ll("------== Init Tok22 Mint");
+	test("tok22 init mint", async () => {
+		ll("------== Tok22 Init Mint");
 		ll("payer:", adminAddr);
 		ll("mint_auth:", mintAuthority);
-		const mint22Kp = await generateKeyPairSigner();
-		ll("mint22:", mint22Kp.address);
+		ll("mint22:", mint22);
 
 		const methodIx = vault.getToken2022InitMintInstruction(
 			{
@@ -272,7 +224,43 @@ describe("Vault Program", () => {
 			},
 		);
 		await sendTxn(methodIx, adminKp);
+		ll("program execution successful");
 	});
+
+	//------------------==
+	test("tok22 init ata", async () => {
+		ll("------== Tok22 Init Ata");
+		const payer = adminKp;
+		ll("payer:", payer.address);
+		const destAddr = user1Addr;
+		ll("destAddr:", destAddr);
+		ll("mint22:", mint22);
+
+		const atabump = await getAta(mint22, destAddr, true);
+		const ata = atabump.ata;
+
+		const methodIx = vault.getToken2022InitATAInstruction(
+			{
+				payer: payer,
+				toWallet: destAddr,
+				mint: mint22,
+				tokenAccount: ata,
+				tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
+				systemProgram: SYSTEM_PROGRAM_ADDRESS,
+				atokenProgram: ATokenGPvbd,
+			},
+			{
+				programAddress: vaultProgAddr,
+			},
+		);
+		await sendTxn(methodIx, payer);
+		ll("program execution successful");
+		await sleep(3000);
+		const balcTok = await getTokBalc(ata);
+		expect(balcTok).toBe("0");
+	});
+
+	//------------------==
 	test("xyz", async () => {
 		ll("------== To Xyz");
 	});

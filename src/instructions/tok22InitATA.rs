@@ -1,12 +1,13 @@
-use crate::{
-    empty_data, empty_lamport, executable, instructions::check_signer, rent_exempt, writable,
-};
 use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
 use pinocchio_log::log;
 
-/// Token Legacy Init ATA(Associated Token Account)
-pub struct TokenLgcInitAta<'a> {
+use crate::{
+    empty_data, empty_lamport, executable, instructions::check_signer, rent_exempt, writable,
+};
+
+/// Token2022 Init ATA(Associated Token Account)
+pub struct Token2022InitAta<'a> {
     pub payer: &'a AccountInfo,
     pub to_wallet: &'a AccountInfo,
     pub mint: &'a AccountInfo,
@@ -15,42 +16,41 @@ pub struct TokenLgcInitAta<'a> {
     pub system_program: &'a AccountInfo,
     pub atoken_program: &'a AccountInfo,
 }
-impl<'a> TokenLgcInitAta<'a> {
-    pub const DISCRIMINATOR: &'a u8 = &3;
+impl<'a> Token2022InitAta<'a> {
+    pub const DISCRIMINATOR: &'a u8 = &6;
 
     pub fn process(self) -> ProgramResult {
-        let TokenLgcInitAta {
-            payer, //signer
+        let Token2022InitAta {
+            payer,
             to_wallet,
             mint,
             token_account,
             token_program,
-            system_program,
+            system_program: _,
             atoken_program: _,
         } = self;
-        log!("TokenLgcInitAta process()");
+        log!("Token2022InitAta process()");
         check_signer(payer)?;
         executable(token_program)?;
 
-        log!("TokenLgcInitAta 1");
+        log!("Token2022InitAta 1");
         rent_exempt(mint, 0)?;
         //writable(mint)?;//Shank IDL definition
 
-        log!("TokenLgcInitAta 2");
+        log!("Token2022InitAta 2");
         empty_lamport(token_account)?;
+        log!("Token2022InitAta 2b");
         empty_data(token_account)?;
+        log!("Token2022InitAta 2c");
         writable(token_account)?;
 
-        log!("Make ATA Token Account");
-        pinocchio_associated_token_account::instructions::Create {
-            funding_account: payer, // Keypair
+        log!("Init ATA Token Account");
+        pinocchio_token_2022::instructions::InitializeAccount3 {
             account: token_account,
-            wallet: to_wallet,
             mint: mint,
-            system_program: system_program,
-            token_program: token_program,
-        }
-        .invoke()?;
+            owner: to_wallet.key(),
+            token_program: token_program.key(),
+        };
         Ok(())
     }
     pub fn init_if_needed(self) -> ProgramResult {
@@ -60,27 +60,19 @@ impl<'a> TokenLgcInitAta<'a> {
         }
     }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitAta<'a> {
+impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitAta<'a> {
     type Error = ProgramError;
 
     fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
-        log!("TokenLgcInitAta try_from");
+        log!("Token2022InitAta try_from");
         let (data, accounts) = value;
         log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-        if accounts.len() < 7 {
+        let [payer, to_wallet, mint, token_account, token_program, system_program, atoken_program] =
+            accounts
+        else {
             return Err(ProgramError::NotEnoughAccountKeys);
-        }
-        let payer = &accounts[0];
-        let to_wallet = &accounts[1];
-        let mint = &accounts[2];
-        let token_account = &accounts[3];
-        let token_program = &accounts[4];
-        let system_program = &accounts[5];
-        let atoken_program = &accounts[6];
-        //let [payer, mint, _] = accounts else {  does not work };
-
-        log!("TokenLgcInitAta try_from end");
+        };
         Ok(Self {
             payer,
             to_wallet,
@@ -92,7 +84,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitAta<'a> {
         })
     }
 }
-/*find token_account from to_wallet & token mint ... but ignored because this make the program bigger
+/*find token_account from to_wallet & token mint"
 cargo add spl-associated-token-account
 use spl_associated_token_account::get_associated_token_address;
-let ata = get_associated_token_address(&to_wallet, &mint);*/
+let ata = get_associated_token_address(&wallet, &mint); */

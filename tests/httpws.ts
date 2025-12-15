@@ -34,10 +34,12 @@ export const user2Kp = await generateKeyPairSigner();
 export const user3Kp = await generateKeyPairSigner();
 export const hackerKp = await generateKeyPairSigner();
 export const mintKp = await generateKeyPairSigner();
+export const mint22Kp = await generateKeyPairSigner();
 //import secret from './my-keypair.json';
 //const user2 = await createKeyPairSignerFromBytes(new Uint8Array(secret));
 export const adminAddr = adminKp.address;
 export const mint = mintKp.address;
+export const mint22 = mint22Kp.address;
 export const mintAuthority = mintAuthorityKp.address;
 export const user1Addr = user1Kp.address;
 export const user2Addr = user2Kp.address;
@@ -98,7 +100,7 @@ export const checkAcct = async (target: Address, name: string) => {
 		ll(`${name} does not exist`);
 		return false;
 	}
-	ll(`✅ - ${name} program exits!`);
+	ll(`${name} program exits!`);
 	return true;
 };
 
