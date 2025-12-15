@@ -2,11 +2,8 @@ use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
 use pinocchio_log::log;
 
-use crate::{instructions::check_signer, parse_u64, rent_exempt, writable};
-use pinocchio_token::{
-    instructions::MintToChecked,
-    state::{Mint, TokenAccount},
-};
+use crate::{check_mint, executable, instructions::check_signer, parse_u64, rent_exempt, writable};
+use pinocchio_token::{instructions::MintToChecked, state::TokenAccount};
 
 /// TokLgc Mint Tokens
 pub struct TokLgcMintToken<'a> {
@@ -37,23 +34,18 @@ impl<'a> TokLgcMintToken<'a> {
         } = self;
         log!("TokLgcMintToken process()");
         check_signer(mint_authority)?;
+        executable(token_program)?;
+
         log!("TokLgcMintToken 1");
         rent_exempt(mint, 0)?;
+        writable(mint)?;
+        check_mint(mint, mint_authority)?;
 
-        if !token_program.executable() {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        log!("TokLgcMintToken 3");
+        log!("TokLgcMintToken 4");
         if !mint.is_owned_by(token_program.key()) {
             return Err(ProgramError::InvalidAccountData);
         }
-        let mint_info = Mint::from_account_info(mint)?;
-        if mint_info
-            .mint_authority()
-            .is_some_and(|authority| !mint_authority.key().eq(authority))
-        {
-            return Err(ProgramError::IncorrectAuthority);
-        }
+
         log!("TokLgcMintToken 5");
         if !system_program.key().eq(&pinocchio_system::ID) {
             return Err(ProgramError::IncorrectProgramId);
@@ -82,15 +74,7 @@ impl<'a> TokLgcMintToken<'a> {
         rent_exempt(token_account, 1)?;
         log!("Token Account found/verified");
 
-        log!("Drop Borrowed Reference");
-        drop(mint);
-        drop(token_account);
-        drop(mint_authority);
-        drop(token_program);
-        drop(system_program);
-        drop(atoken_program);
         log!("Mint Tokens");
-        //instruction tries to borrow reference for an account which is already borrowed
         MintToChecked {
             mint,
             account: token_account,

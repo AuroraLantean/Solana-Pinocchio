@@ -166,6 +166,8 @@ describe("Vault Program", () => {
 
 		const atabump = await makeATA(user1Kp, destAddr, mint);
 		const ata = atabump.ata;
+		const balcTok1 = await getTokBalc(ata, "B4");
+		expect(balcTok1).toBe("0");
 
 		ll("before calling program");
 		const methodIx = vault.getTokLgcMintTokenInstruction(
@@ -186,8 +188,8 @@ describe("Vault Program", () => {
 		);
 		await sendTxn(methodIx, mintAuthorityKp);
 
-		const balcTok = await getTokBalc(ata);
-		expect(balcTok).toBe("100");
+		const balcTok2 = await getTokBalc(ata, "AF");
+		expect(balcTok2).toBe("100");
 	});
 	//TODO: LiteSVM https://rareskills.io/post/litesvm ; Bankrun: https://www.quicknode.com/guides/solana-development/tooling/bankrun
 	//------------------==

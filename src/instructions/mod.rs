@@ -4,6 +4,9 @@ use pinocchio::{
     pubkey::{try_find_program_address, Pubkey},
     sysvars::{rent::Rent, Sysvar},
 };
+use pinocchio_log::log;
+use pinocchio_token_2022::state::{Mint as Mint22, TokenAccount as TokenAccount22};
+
 #[allow(non_snake_case)]
 pub mod depositSol;
 #[allow(non_snake_case)]
@@ -22,7 +25,6 @@ pub mod tokLgcMintToken;
 pub mod withdrawSol;
 
 pub use depositSol::*;
-use pinocchio_token_2022::state::{Mint, TokenAccount};
 pub use tok22InitMint::*;
 pub use tok22InitTokAcct::*;
 pub use tok22MintToken::*;
@@ -76,7 +78,7 @@ pub enum ProgramIx {
     /// TokLgc Mint Token
     #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]
     #[account(1, name = "to_wallet", desc = "ToWallet")]
-    #[account(2, name = "mint", desc = "Mint")]
+    #[account(2, writable, name = "mint", desc = "Mint")]
     #[account(3, writable, name = "token_account", desc = "ATA Token Account")]
     #[account(4, name = "token_program", desc = "Token Program")]
     #[account(5, name = "system_program", desc = "System Program")]
@@ -141,6 +143,17 @@ pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
     }
     Ok(())
 }
+pub fn check_mint(mint: &AccountInfo, mint_authority: &AccountInfo) -> Result<(), ProgramError> {
+    let mint_info = pinocchio_token::state::Mint::from_account_info(mint)?;
+
+    if mint_info
+        .mint_authority()
+        .is_some_and(|authority| !mint_authority.key().eq(authority))
+    {
+        return Err(ProgramError::IncorrectAuthority);
+    }
+    Ok(())
+}
 //TODO
 pub fn check_tok_acct(
     account: &AccountInfo,
@@ -182,13 +195,14 @@ pub fn executable(account: &AccountInfo) -> Result<(), ProgramError> {
     }
     Ok(())
 }
-//TODO: does Mint and TokenAcct sizes differ between TokenLgc and Token2022?
+//TODO: Mint and ATA from TokenLgc works. For mint and ATA from Token2022?
 /// acc_type: 0 Mint, 1 TokenAccount
 pub fn rent_exempt(account: &AccountInfo, acc_type: u8) -> Result<(), ProgramError> {
-    if acc_type == 0 && account.lamports() < Rent::get()?.minimum_balance(Mint::BASE_LEN) {
+    if acc_type == 0 && account.lamports() < Rent::get()?.minimum_balance(Mint22::BASE_LEN) {
         return Err(ProgramError::AccountNotRentExempt);
     }
-    if acc_type == 1 && account.lamports() < Rent::get()?.minimum_balance(TokenAccount::BASE_LEN) {
+    if acc_type == 1 && account.lamports() < Rent::get()?.minimum_balance(TokenAccount22::BASE_LEN)
+    {
         return Err(ProgramError::AccountNotRentExempt);
     }
     if acc_type > 1 {
