@@ -2,8 +2,10 @@ use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
 use pinocchio_log::log;
 
-use crate::{check_mint, executable, instructions::check_signer, parse_u64, rent_exempt, writable};
-use pinocchio_token::state::TokenAccount;
+use crate::{
+    check_ata, check_mint, check_sysprog, executable, instructions::check_signer, parse_u64,
+    rent_exempt, writable,
+};
 
 /// TokLgc Mint Tokens
 pub struct TokLgcMintToken<'a> {
@@ -39,17 +41,10 @@ impl<'a> TokLgcMintToken<'a> {
         log!("TokLgcMintToken 1");
         rent_exempt(mint, 0)?;
         writable(mint)?;
-        check_mint(mint, mint_authority, decimals)?;
-
-        log!("TokLgcMintToken 4");
-        if !mint.is_owned_by(token_program.key()) {
-            return Err(ProgramError::InvalidAccountData);
-        }
+        check_mint(mint, mint_authority, token_program, decimals)?;
 
         log!("TokLgcMintToken 5");
-        if !system_program.key().eq(&pinocchio_system::ID) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        check_sysprog(system_program)?;
 
         if token_account.data_is_empty() {
             log!("Make token_account");
@@ -65,10 +60,7 @@ impl<'a> TokLgcMintToken<'a> {
             //Please upgrade to SPL Token 2022 for immutable owner support
         } else {
             log!("token_account has data");
-            let token_account_info = TokenAccount::from_account_info(token_account)?;
-            if !token_account_info.owner().eq(to_wallet.key()) {
-                return Err(ProgramError::InvalidAccountData);
-            }
+            check_ata(token_account, to_wallet, mint)?;
         }
         writable(token_account)?;
         rent_exempt(token_account, 1)?;

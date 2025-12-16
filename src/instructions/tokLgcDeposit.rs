@@ -3,9 +3,9 @@ use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramR
 use pinocchio_log::log;
 
 use crate::{
-    check_decimals, executable, instructions::check_signer, parse_u64, rent_exempt, writable,
+    check_ata, check_decimals, check_sysprog, executable, instructions::check_signer, parse_u64,
+    rent_exempt, writable,
 };
-use pinocchio_token::state::TokenAccount;
 
 /// TokLgc Deposit Tokens
 pub struct TokLgcDeposit<'a> {
@@ -21,7 +21,7 @@ pub struct TokLgcDeposit<'a> {
     pub amount: u64,
 }
 impl<'a> TokLgcDeposit<'a> {
-    pub const DISCRIMINATOR: &'a u8 = &8;
+    pub const DISCRIMINATOR: &'a u8 = &5;
 
     pub fn process(self) -> ProgramResult {
         let TokLgcDeposit {
@@ -39,21 +39,15 @@ impl<'a> TokLgcDeposit<'a> {
         log!("TokLgcDeposit process()");
         check_signer(authority)?;
         executable(token_program)?;
+        writable(from_ata)?;
+        check_ata(from_ata, authority, mint)?;
 
         log!("TokLgcDeposit 1");
         rent_exempt(mint, 0)?;
-        //writable(mint)?;
-        check_decimals(mint, decimals)?;
-
-        log!("TokLgcDeposit 4");
-        if !mint.is_owned_by(token_program.key()) {
-            return Err(ProgramError::InvalidAccountData);
-        }
+        check_decimals(mint, token_program, decimals)?;
 
         log!("TokLgcDeposit 5");
-        if !system_program.key().eq(&pinocchio_system::ID) {
-            return Err(ProgramError::IncorrectProgramId);
-        }
+        check_sysprog(system_program)?;
 
         if to_ata.data_is_empty() {
             log!("Make to_ata");
@@ -69,14 +63,11 @@ impl<'a> TokLgcDeposit<'a> {
             //Please upgrade to SPL Token 2022 for immutable owner support
         } else {
             log!("to_ata has data");
-            let to_ata_info = TokenAccount::from_account_info(to_ata)?;
-            if !to_ata_info.owner().eq(to_wallet.key()) {
-                return Err(ProgramError::InvalidAccountData);
-            }
+            check_ata(to_ata, to_wallet, mint)?;
         }
         writable(to_ata)?;
         rent_exempt(to_ata, 1)?;
-        log!("T=_ATA is found/verified");
+        log!("ToATA is found/verified");
 
         log!("Transfer Tokens");
         pinocchio_token::instructions::TransferChecked {

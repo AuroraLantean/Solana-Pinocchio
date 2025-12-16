@@ -4,6 +4,7 @@ use pinocchio::{
     pubkey::{try_find_program_address, Pubkey},
     sysvars::{rent::Rent, Sysvar},
 };
+use pinocchio_token::state::TokenAccount;
 use pinocchio_token_2022::state::{Mint as Mint22, TokenAccount as TokenAccount22};
 
 #[allow(non_snake_case)]
@@ -91,7 +92,7 @@ pub enum ProgramIx {
     #[account(0, signer, name = "authority", desc = "Authority")]
     #[account(1, writable, name = "from", desc = "From ATA")]
     #[account(2, writable, name = "to", desc = "To ATA")]
-    #[account(3, writable, name = "to_wallet", desc = "To Wallet")]
+    #[account(3, name = "to_wallet", desc = "To Wallet")]
     #[account(4, name = "mint", desc = "Mint")]
     #[account(5, name = "token_program", desc = "Token Program")]
     #[account(6, name = "system_program", desc = "System Program")]
@@ -164,6 +165,7 @@ pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
 pub fn check_mint(
     mint: &AccountInfo,
     mint_authority: &AccountInfo,
+    token_program: &AccountInfo,
     decimals: u8,
 ) -> Result<(), ProgramError> {
     let mint_info = pinocchio_token::state::Mint::from_account_info(mint)?;
@@ -176,6 +178,9 @@ pub fn check_mint(
     if decimals != mint_info.decimals() {
         return Err(ProgramError::InvalidArgument);
     }
+    if !mint.is_owned_by(token_program.key()) {
+        return Err(ProgramError::InvalidAccountData);
+    }
     //TODO: over mint supply?
     Ok(())
 }
@@ -183,6 +188,7 @@ pub fn check_mint(
 pub fn check_mint22(
     mint: &AccountInfo,
     mint_authority: &AccountInfo,
+    token_program: &AccountInfo,
     decimals: u8,
 ) -> Result<(), ProgramError> {
     let mint_info = pinocchio_token_2022::state::Mint::from_account_info(mint)?;
@@ -196,13 +202,43 @@ pub fn check_mint22(
     if decimals != mint_info.decimals() {
         return Err(ProgramError::InvalidArgument);
     }
+    if !mint.is_owned_by(token_program.key()) {
+        return Err(ProgramError::InvalidAccountData);
+    }
     //TODO: over mint supply?
     Ok(())
 }
-pub fn check_decimals(mint: &AccountInfo, decimals: u8) -> Result<(), ProgramError> {
+pub fn check_decimals(
+    mint: &AccountInfo,
+    token_program: &AccountInfo,
+    decimals: u8,
+) -> Result<(), ProgramError> {
     let mint_info = pinocchio_token::state::Mint::from_account_info(mint)?;
     if decimals != mint_info.decimals() {
         return Err(ProgramError::InvalidArgument);
+    }
+    if !mint.is_owned_by(token_program.key()) {
+        return Err(ProgramError::InvalidAccountData);
+    }
+    Ok(())
+}
+pub fn check_ata(
+    ata: &AccountInfo,
+    owner: &AccountInfo,
+    mint: &AccountInfo,
+) -> Result<(), ProgramError> {
+    let ata_info = TokenAccount::from_account_info(ata)?;
+    if !ata_info.owner().eq(owner.key()) {
+        return Err(ProgramError::InvalidAccountOwner);
+    }
+    if !ata_info.mint().eq(mint.key()) {
+        return Err(ProgramError::InvalidAccountData);
+    }
+    Ok(())
+}
+pub fn check_sysprog(system_program: &AccountInfo) -> Result<(), ProgramError> {
+    if !system_program.key().eq(&pinocchio_system::ID) {
+        return Err(ProgramError::IncorrectProgramId);
     }
     Ok(())
 }

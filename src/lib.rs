@@ -38,6 +38,7 @@ fn process_instruction(
         TokenLgcInitMint::DISCRIMINATOR => TokenLgcInitMint::try_from((data, accounts))?.process(),
         TokenLgcInitAta::DISCRIMINATOR => TokenLgcInitAta::try_from((data, accounts))?.process(),
         TokLgcMintToken::DISCRIMINATOR => TokLgcMintToken::try_from((data, accounts))?.process(),
+        TokLgcDeposit::DISCRIMINATOR => TokLgcDeposit::try_from((data, accounts))?.process(),
         Token2022InitMint::DISCRIMINATOR => {
             Token2022InitMint::try_from((data, accounts))?.process()
         }
@@ -45,7 +46,6 @@ fn process_instruction(
         Token2022MintToken::DISCRIMINATOR => {
             Token2022MintToken::try_from((data, accounts))?.process()
         }
-        TokLgcDeposit::DISCRIMINATOR => TokLgcDeposit::try_from((data, accounts))?.process(),
         _ => Err(ProgramError::InvalidArgument),
     }
 }
