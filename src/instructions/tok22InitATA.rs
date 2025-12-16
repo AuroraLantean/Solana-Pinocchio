@@ -26,7 +26,7 @@ impl<'a> Token2022InitAta<'a> {
             mint,
             token_account,
             token_program,
-            system_program: _,
+            system_program,
             atoken_program: _,
         } = self;
         log!("Token2022InitAta process()");
@@ -39,18 +39,26 @@ impl<'a> Token2022InitAta<'a> {
 
         log!("Token2022InitAta 2");
         empty_lamport(token_account)?;
-        log!("Token2022InitAta 2b");
         empty_data(token_account)?;
-        log!("Token2022InitAta 2c");
         writable(token_account)?;
 
         log!("Init ATA Token Account");
-        pinocchio_token_2022::instructions::InitializeAccount3 {
+        pinocchio_associated_token_account::instructions::Create {
+            funding_account: payer, // Keypair
+            account: token_account,
+            wallet: to_wallet,
+            mint: mint,
+            system_program: system_program,
+            token_program: token_program,
+        }
+        .invoke()?;
+        /*pinocchio_token_2022::instructions::InitializeAccount3 {
             account: token_account,
             mint: mint,
             owner: to_wallet.key(),
             token_program: token_program.key(),
-        };
+        }
+        .invoke()?;//invalid account data for instruction*/
         Ok(())
     }
     pub fn init_if_needed(self) -> ProgramResult {
@@ -68,11 +76,22 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitAta<'a> {
         let (data, accounts) = value;
         log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-        let [payer, to_wallet, mint, token_account, token_program, system_program, atoken_program] =
+        if accounts.len() < 7 {
+            return Err(ProgramError::NotEnoughAccountKeys);
+        }
+        let payer = &accounts[0];
+        let to_wallet = &accounts[1];
+        let mint = &accounts[2];
+        let token_account = &accounts[3];
+        let token_program = &accounts[4];
+        let system_program = &accounts[5];
+        let atoken_program = &accounts[6];
+
+        /*let [payer, to_wallet, mint, token_account, token_program, system_program, atoken_program] =
             accounts
         else {
             return Err(ProgramError::NotEnoughAccountKeys);
-        };
+        };*/
         Ok(Self {
             payer,
             to_wallet,

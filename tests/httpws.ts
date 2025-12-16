@@ -15,7 +15,9 @@ import {
 	setTransactionMessageLifetimeUsingBlockhash,
 	signTransactionMessageWithSigners,
 } from "@solana/kit";
+import { LAMPORTS_PER_SOL } from "gill";
 import * as vault from "../clients/js/src/generated/index";
+import type { Data1 } from "./types";
 
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
 
@@ -100,19 +102,57 @@ export const checkAcct = async (target: Address, name: string) => {
 		ll(`${name} does not exist`);
 		return false;
 	}
-	ll(`${name} program exits!`);
+	ll(`${name} exits!`);
 	return true;
 };
 
 export const getSol = async (account: Address, name: string) => {
-	const { value: balc } = await rpc.getBalance(account).send();
-	ll(name, "balc:", balc);
-	return balc;
+	const { value: lamports } = await rpc.getBalance(account).send();
+	ll(name, "balc:", lamports);
+	return {
+		lamports,
+		balcUi: BigInt(lamports.toString()) / BigInt(LAMPORTS_PER_SOL),
+	};
 };
 export const getTokBalc = async (ata: Address, name: string = "") => {
-	const { value } = await rpc.getTokenAccountBalance(ata).send();
-	ll(name, "balc:", value.amount);
-	return value.amount.toString();
+	const {
+		value: { amount, decimals },
+	} = await rpc.getTokenAccountBalance(ata, { commitment: "confirmed" }).send();
+	const amountUi = (BigInt(amount) / BigInt(10 ** decimals)).toString();
+	ll(name, "balc:", amountUi);
+	return {
+		amount,
+		decimals,
+		amountUi,
+	};
+};
+export const getTokBalc2 = async (
+	owner: Address,
+	tokenProgram: Address,
+	tokenIndex = 0,
+	name: string = "",
+) => {
+	const tokenAccounts = await rpc
+		.getTokenAccountsByOwner(
+			owner,
+			{ programId: tokenProgram },
+			{ encoding: "base64" },
+		)
+		.send();
+	//const tokenAccounts = GetTokenAccountsByOwner
+	ll("tokenAccounts:", tokenAccounts);
+	const valuesLen = tokenAccounts.value.length;
+	if (valuesLen === 0) {
+		ll("no token is found");
+		return "0";
+	}
+	if (tokenIndex >= valuesLen) {
+		return "tokenIndex invalid";
+	}
+	const value0 = tokenAccounts.value[tokenIndex];
+	const amt = value0?.account.data as unknown as Data1;
+	ll(name, "balc:", amt);
+	return amt;
 };
 
 //https://www.solanakit.com/docs/getting-started/send-transaction#confirmation-strategies

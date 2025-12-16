@@ -18,6 +18,19 @@ export const decimalsSOL = BigInt(9);
 export const baseSOL = BigInt(10) ** decimalsSOL;
 export const amtAirdrop = BigInt(100) * baseSOL;
 
+export const network = "mainnet-beta"; //devnet
+export const PROJECT_DIRECTORY = ""; // Leave empty if using default anchor project
+export const USDC_DECIMALS = 6;
+export const USDC_MINT_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+export const USDT_MINT_ADDRESS = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB";
+export const USDT_DECIMALS = 6;
+
+export const MINIMUM_SLOT = 100;
+export const USDC_BALANCE = 100_000_000_000; // 100k USDC
+export const Transaction_Fee = 5000n;
+export const day = 86400;
+export const week = 604800;
+
 export const makeSolAmt = (amt: number) => BigInt(amt) * baseSOL;
 
 export const findPda = async (

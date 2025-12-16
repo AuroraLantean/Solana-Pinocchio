@@ -29,25 +29,6 @@ import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
 import { checkAcct, rpc, rpcSubscriptions } from "./httpws";
 import { ll } from "./utils";
 
-// https://solana.com/docs/tokens/basics/create-token-account
-
-export const getAta = async (
-	mint: Address,
-	dest: Address,
-	isToken2022 = false,
-) => {
-	const tokenProgram = isToken2022
-		? TOKEN_2022_PROGRAM_ADDRESS
-		: TOKEN_PROGRAM_ADDRESS;
-
-	const [ata, bump] = await findAssociatedTokenPda({
-		mint: mint,
-		owner: dest,
-		tokenProgram: tokenProgram,
-	});
-	ll("ata:", ata, ", bump:", bump);
-	return { ata, bump };
-};
 export const makeMint = async (
 	feePayerKp: KeyPairSigner<string>,
 	mintKp: KeyPairSigner<string>,
@@ -173,24 +154,40 @@ export const makeTokenAccount = async (
 	ll("Transaction Signature:", transactionSignature2);
 };
 
+// https://solana.com/docs/tokens/basics/create-token-account
+export const getAta = async (
+	mint: Address,
+	dest: Address,
+	isToken2022 = false,
+) => {
+	const tokenProgram = isToken2022
+		? TOKEN_2022_PROGRAM_ADDRESS
+		: TOKEN_PROGRAM_ADDRESS;
+	ll("tokenProgram:", tokenProgram);
+	const [ata, bump] = await findAssociatedTokenPda({
+		mint: mint,
+		owner: dest,
+		tokenProgram: tokenProgram,
+	});
+	ll("ATA:", ata, ", Bump:", bump);
+	return { ata, bump };
+};
+
 export const makeATA = async (
 	feePayerKp: KeyPairSigner<string>,
 	tokenOwner: Address,
 	mint: Address,
+	isToken2022 = false,
 ) => {
 	ll("makeATA 1");
-	const [ata, bump] = await findAssociatedTokenPda({
-		mint: mint,
-		owner: tokenOwner,
-		tokenProgram: TOKEN_PROGRAM_ADDRESS,
-	});
-	ll("ATA:", ata.toString());
+	const atabump = await getAta(mint, tokenOwner, isToken2022);
+	const ata = atabump.ata;
 	const out = await checkAcct(ata, "ATA");
 	if (out) {
-		ll("ATA already exists");
-		return { ata, bump };
+		ll("Skip makeATA");
+		return atabump;
 	}
-	// Get a fresh blockhash for the second transaction
+	ll("Make a new ATA");
 	const { value: latestBlockhash2 } = await rpc.getLatestBlockhash().send();
 
 	// Create instruction to create the associated token account
@@ -222,5 +219,5 @@ export const makeATA = async (
 	// Get transaction signature
 	const transactionSignature2 = getSignatureFromTransaction(signedTransaction2);
 	ll("Transaction Signature:", transactionSignature2);
-	return { ata, bump };
+	return atabump;
 };

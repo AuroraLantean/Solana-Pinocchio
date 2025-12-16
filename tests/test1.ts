@@ -4,7 +4,6 @@ import { lamports } from "@solana/kit";
 import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
-import { sleep } from "bun";
 import * as vault from "../clients/js/src/generated/index";
 import {
 	adminAddr,
@@ -69,7 +68,7 @@ describe("Vault Program", () => {
 		ll("Vault Rent:", vaultRent);
 		ll("amtDeposit:", amtDeposit);
 		const balc1 = await getSol(vaultPDA, "Vault");
-		expect(vaultRent + amtDeposit).toEqual(balc1);
+		expect(vaultRent + amtDeposit).toEqual(balc1.lamports);
 		//assert.equal(balc1, vaultRent + amtDeposit);
 	}, 10000); //Timeouts
 
@@ -89,7 +88,7 @@ describe("Vault Program", () => {
 		ll("Vault Rent:", vaultRent);
 		ll("Vault amtWithdraw:", amtWithdraw);
 		const balc22 = await getSol(vaultPDA, "Vault");
-		expect(vaultRent + amtDeposit - amtWithdraw).toEqual(balc22);
+		expect(vaultRent + amtDeposit - amtWithdraw).toEqual(balc22.lamports);
 	}); //can withdraw from vault
 
 	//------------------==
@@ -159,7 +158,7 @@ describe("Vault Program", () => {
 		await sendTxn(methodIx, payer);
 		ll("program execution successful");
 		const balcTok = await getTokBalc(ata);
-		expect(balcTok).toBe("0");
+		expect(balcTok.amountUi).toBe("0");
 	});
 	//------------------==
 	test("Lgc mint token", async () => {
@@ -169,11 +168,11 @@ describe("Vault Program", () => {
 		ll("destAddr:", destAddr);
 		ll("mint:", mint);
 		ll("mintAuthorityKp:", mintAuthorityKp.address);
-
+		const amount = 100;
 		const atabump = await makeATA(user1Kp, destAddr, mint);
 		const ata = atabump.ata;
 		const balcTok1 = await getTokBalc(ata, "B4");
-		expect(balcTok1).toBe("0");
+		expect(balcTok1.amountUi).toBe("0");
 
 		ll("before calling program");
 		const methodIx = vault.getTokLgcMintTokenInstruction(
@@ -186,7 +185,7 @@ describe("Vault Program", () => {
 				systemProgram: SYSTEM_PROGRAM_ADDRESS,
 				atokenProgram: ATokenGPvbd,
 				decimals: 9,
-				amount: 100,
+				amount: amount * 10 ** 9,
 			},
 			{
 				programAddress: vaultProgAddr,
@@ -196,7 +195,7 @@ describe("Vault Program", () => {
 		ll("program execution successful");
 
 		const balcTok2 = await getTokBalc(ata, "AF");
-		expect(balcTok2).toBe("100");
+		expect(balcTok2.amountUi).toBe(amount.toString());
 	});
 	//------------------==
 	//TODO: LiteSVM https://rareskills.io/post/litesvm ; Bankrun: https://www.quicknode.com/guides/solana-development/tooling/bankrun
@@ -225,6 +224,7 @@ describe("Vault Program", () => {
 		);
 		await sendTxn(methodIx, adminKp);
 		ll("program execution successful");
+		await checkAcct(mint22, "mint22");
 	});
 
 	//------------------==
@@ -236,6 +236,7 @@ describe("Vault Program", () => {
 		ll("destAddr:", destAddr);
 		ll("mint22:", mint22);
 
+		const tokenProg = TOKEN_2022_PROGRAM_ADDRESS;
 		const atabump = await getAta(mint22, destAddr, true);
 		const ata = atabump.ata;
 
@@ -245,7 +246,7 @@ describe("Vault Program", () => {
 				toWallet: destAddr,
 				mint: mint22,
 				tokenAccount: ata,
-				tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
+				tokenProgram: tokenProg,
 				systemProgram: SYSTEM_PROGRAM_ADDRESS,
 				atokenProgram: ATokenGPvbd,
 			},
@@ -255,9 +256,50 @@ describe("Vault Program", () => {
 		);
 		await sendTxn(methodIx, payer);
 		ll("program execution successful");
-		await sleep(3000);
-		const balcTok = await getTokBalc(ata);
-		expect(balcTok).toBe("0");
+		//await sleep(3000);
+		await checkAcct(ata, "ata22");
+		const balcTok2 = await getTokBalc(ata, "AF");
+		expect(balcTok2.amountUi).toBe("0");
+		//const balcTok = await getTokBalc2(destAddr, tokenProg);
+	});
+
+	//------------------==
+	test("tok22 mint token", async () => {
+		ll("------== Tok22 Mint Token");
+		ll("payer:", adminAddr);
+		const destAddr = user1Addr;
+		ll("destAddr:", destAddr);
+		ll("mint22:", mint22);
+		ll("mintAuthorityKp:", mintAuthorityKp.address);
+		const amount = 1022;
+		const tokenProg = TOKEN_2022_PROGRAM_ADDRESS;
+		const atabump = await makeATA(user1Kp, destAddr, mint22, true);
+		const ata = atabump.ata;
+		ll("after makeATA");
+
+		ll("before calling program");
+		const methodIx = vault.getTok22MintTokenInstruction(
+			{
+				mintAuthority: mintAuthorityKp,
+				toWallet: destAddr,
+				mint: mint22,
+				tokenAccount: ata,
+				tokenProgram: tokenProg,
+				systemProgram: SYSTEM_PROGRAM_ADDRESS,
+				atokenProgram: ATokenGPvbd,
+				decimals: 9,
+				amount: amount * 10 ** 9,
+			},
+			{
+				programAddress: vaultProgAddr,
+			},
+		);
+		await sendTxn(methodIx, mintAuthorityKp);
+		ll("program execution successful");
+
+		const balcTok2 = await getTokBalc(ata, "AF");
+		expect(balcTok2.amountUi).toBe(amount.toString());
+		//const balcTok2 = await getTokBalc2(destAddr, tokenProg);
 	});
 
 	//------------------==

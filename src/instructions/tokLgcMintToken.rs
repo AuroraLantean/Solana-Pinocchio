@@ -3,7 +3,7 @@ use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramR
 use pinocchio_log::log;
 
 use crate::{check_mint, executable, instructions::check_signer, parse_u64, rent_exempt, writable};
-use pinocchio_token::{instructions::MintToChecked, state::TokenAccount};
+use pinocchio_token::state::TokenAccount;
 
 /// TokLgc Mint Tokens
 pub struct TokLgcMintToken<'a> {
@@ -75,7 +75,7 @@ impl<'a> TokLgcMintToken<'a> {
         log!("Token Account found/verified");
 
         log!("Mint Tokens");
-        MintToChecked {
+        pinocchio_token::instructions::MintToChecked {
             mint,
             account: token_account,
             mint_authority,

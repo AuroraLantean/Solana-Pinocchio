@@ -106,10 +106,13 @@ pub enum ProgramIx {
 
     /// Token2022 Mint Token
     #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]
-    #[account(1, writable, name = "mint", desc = "Mint")]
-    #[account(2, name = "token_account", desc = "Token Account")]
-    #[account(3, name = "token_program", desc = "Token Program")]
-    Token2022MintToken { decimals: u8, amount: u64 },
+    #[account(1, name = "to_wallet", desc = "ToWallet")]
+    #[account(2, writable, name = "mint", desc = "Mint")]
+    #[account(3, writable, name = "token_account", desc = "ATA Token Account")]
+    #[account(4, name = "token_program", desc = "Token Program")]
+    #[account(5, name = "system_program", desc = "System Program")]
+    #[account(6, name = "atoken_program", desc = "AToken Program")]
+    Tok22MintToken { decimals: u8, amount: u64 },
 } //update here and lib.rs for new functions
 
 //-------------==
@@ -146,6 +149,18 @@ pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
 }
 pub fn check_mint(mint: &AccountInfo, mint_authority: &AccountInfo) -> Result<(), ProgramError> {
     let mint_info = pinocchio_token::state::Mint::from_account_info(mint)?;
+
+    if mint_info
+        .mint_authority()
+        .is_some_and(|authority| !mint_authority.key().eq(authority))
+    {
+        return Err(ProgramError::IncorrectAuthority);
+    }
+    Ok(())
+}
+/// returns different error type than check_mint()... thus cannot be combined with it
+pub fn check_mint22(mint: &AccountInfo, mint_authority: &AccountInfo) -> Result<(), ProgramError> {
+    let mint_info = pinocchio_token_2022::state::Mint::from_account_info(mint)?;
 
     if mint_info
         .mint_authority()
