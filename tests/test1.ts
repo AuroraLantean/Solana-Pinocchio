@@ -30,8 +30,6 @@ const pda_bump1 = await findPda(user1Addr, "vault");
 const vaultPDA1 = pda_bump1.pda;
 ll(`✅ - vaultPDA1: ${vaultPDA1}`);
 
-const vaultAtabump = await getAta(mint, vaultPDA);
-const _vaultPdaAta = vaultAtabump.ata;
 const vaultAtabump1 = await getAta(mint, vaultPDA1);
 const vaultAta1 = vaultAtabump1.ata;
 
@@ -54,18 +52,12 @@ describe("Vault Program", () => {
 	});
 	test("User1 deposits SOL to vault1", async () => {
 		ll("\n------== User1 Deposits SOL to vault1");
-		const methodIx = vault.getDepositInstruction(
-			{
-				user: user1Kp,
-				vault: vaultPDA1,
-				program: vaultProgAddr,
-				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				amount: lamports(amtDeposit),
-			},
-			{
-				programAddress: vaultProgAddr,
-			},
-		);
+		const methodIx = vault.getDepositInstruction({
+			user: user1Kp,
+			vault: vaultPDA1,
+			systemProgram: SYSTEM_PROGRAM_ADDRESS,
+			amount: lamports(amtDeposit),
+		});
 		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 
@@ -83,7 +75,6 @@ describe("Vault Program", () => {
 		const methodIx = vault.getWithdrawInstruction({
 			user: user1Kp,
 			vault: vaultPDA1,
-			program: vaultProgAddr,
 			amount: lamports(amtWithdraw),
 		});
 		await sendTxn(methodIx, user1Kp);
@@ -100,7 +91,6 @@ describe("Vault Program", () => {
 		const methodIx = vault.getWithdrawInstruction({
 			user: hackerKp,
 			vault: vaultPDA1,
-			program: vaultProgAddr,
 			amount: lamports(amtWithdraw),
 		});
 		await sendTxn(methodIx, hackerKp);
@@ -114,21 +104,15 @@ describe("Vault Program", () => {
 		ll("mint_auth:", mintAuthority);
 		ll("mint:", mint);
 
-		const methodIx = vault.getTokenLgcInitMintInstruction(
-			{
-				payer: adminKp,
-				mint: mintKp,
-				mintAuthority: mintAuthority,
-				tokenProgram: TOKEN_PROGRAM_ADDRESS,
-				freezeAuthorityOpt: mintAuthority,
-				program: vaultProgAddr,
-				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				decimals: 9,
-			},
-			{
-				programAddress: vaultProgAddr,
-			},
-		);
+		const methodIx = vault.getTokenLgcInitMintInstruction({
+			payer: adminKp,
+			mint: mintKp,
+			mintAuthority: mintAuthority,
+			tokenProgram: TOKEN_PROGRAM_ADDRESS,
+			freezeAuthorityOpt: mintAuthority,
+			systemProgram: SYSTEM_PROGRAM_ADDRESS,
+			decimals: 9,
+		});
 		await sendTxn(methodIx, adminKp);
 		ll("program execution successful");
 	}, 10000); //Timeouts
@@ -145,20 +129,15 @@ describe("Vault Program", () => {
 		const atabump = await getAta(mint, destAddr);
 		const ata = atabump.ata;
 
-		const methodIx = vault.getTokenLgcInitATAInstruction(
-			{
-				payer: payer,
-				toWallet: destAddr,
-				mint: mint,
-				tokenAccount: ata,
-				tokenProgram: TOKEN_PROGRAM_ADDRESS,
-				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				atokenProgram: ATokenGPvbd,
-			},
-			{
-				programAddress: vaultProgAddr,
-			},
-		);
+		const methodIx = vault.getTokenLgcInitATAInstruction({
+			payer: payer,
+			toWallet: destAddr,
+			mint: mint,
+			tokenAccount: ata,
+			tokenProgram: TOKEN_PROGRAM_ADDRESS,
+			systemProgram: SYSTEM_PROGRAM_ADDRESS,
+			atokenProgram: ATokenGPvbd,
+		});
 		await sendTxn(methodIx, payer);
 		ll("program execution successful");
 		const balcTok = await getTokBalc(ata);
@@ -180,22 +159,17 @@ describe("Vault Program", () => {
 		expect(balcTok1.amountUi).toBe("0");
 
 		ll("before calling program");
-		const methodIx = vault.getTokLgcMintTokenInstruction(
-			{
-				mintAuthority: mintAuthorityKp,
-				toWallet: destAddr,
-				mint: mint,
-				tokenAccount: ata,
-				tokenProgram: TOKEN_PROGRAM_ADDRESS,
-				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				atokenProgram: ATokenGPvbd,
-				decimals: 9,
-				amount: amount * 10 ** 9,
-			},
-			{
-				programAddress: vaultProgAddr,
-			},
-		);
+		const methodIx = vault.getTokLgcMintTokenInstruction({
+			mintAuthority: mintAuthorityKp,
+			toWallet: destAddr,
+			mint: mint,
+			tokenAccount: ata,
+			tokenProgram: TOKEN_PROGRAM_ADDRESS,
+			systemProgram: SYSTEM_PROGRAM_ADDRESS,
+			atokenProgram: ATokenGPvbd,
+			decimals: 9,
+			amount: amount * 10 ** 9,
+		});
 		await sendTxn(methodIx, mintAuthorityKp);
 		ll("program execution successful");
 
@@ -211,20 +185,15 @@ describe("Vault Program", () => {
 		ll("vaultPDA1:", vaultPDA1);
 		ll("mint:", mint);
 
-		const methodIx = vault.getTokenLgcInitATAInstruction(
-			{
-				payer: payer,
-				toWallet: vaultPDA1,
-				mint: mint,
-				tokenAccount: vaultAta1,
-				tokenProgram: TOKEN_PROGRAM_ADDRESS,
-				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				atokenProgram: ATokenGPvbd,
-			},
-			{
-				programAddress: vaultProgAddr,
-			},
-		);
+		const methodIx = vault.getTokenLgcInitATAInstruction({
+			payer: payer,
+			toWallet: vaultPDA1,
+			mint: mint,
+			tokenAccount: vaultAta1,
+			tokenProgram: TOKEN_PROGRAM_ADDRESS,
+			systemProgram: SYSTEM_PROGRAM_ADDRESS,
+			atokenProgram: ATokenGPvbd,
+		});
 		await sendTxn(methodIx, payer);
 		ll("program execution successful");
 		const balcTok = await getTokBalc(vaultAta1, "vaultPDA ATA");
@@ -244,23 +213,18 @@ describe("Vault Program", () => {
 		expect(balcTok1.amountUi).toBe("1000");
 
 		ll("before calling program");
-		const methodIx = vault.getTokLgcDepositInstruction(
-			{
-				user: user1Kp,
-				from: user1Ata,
-				to: vaultAta1,
-				mint: mint,
-				toWallet: vaultPDA1,
-				tokenProgram: TOKEN_PROGRAM_ADDRESS,
-				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				atokenProgram: ATokenGPvbd,
-				decimals: 9,
-				amount: amount * 10 ** 9,
-			},
-			{
-				programAddress: vaultProgAddr,
-			},
-		);
+		const methodIx = vault.getTokLgcDepositInstruction({
+			user: user1Kp,
+			from: user1Ata,
+			to: vaultAta1,
+			mint: mint,
+			toWallet: vaultPDA1,
+			tokenProgram: TOKEN_PROGRAM_ADDRESS,
+			systemProgram: SYSTEM_PROGRAM_ADDRESS,
+			atokenProgram: ATokenGPvbd,
+			decimals: 9,
+			amount: amount * 10 ** 9,
+		});
 		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 
@@ -285,23 +249,18 @@ describe("Vault Program", () => {
 		expect(balcTok1.amountUi).toBe("261");
 
 		ll("before calling program");
-		const methodIx = vault.getTokLgcWithdrawInstruction(
-			{
-				user: user1Kp,
-				from: vaultAta1,
-				to: user1Ata,
-				mint: mint,
-				fromWallet: vaultPDA1,
-				tokenProgram: TOKEN_PROGRAM_ADDRESS,
-				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				atokenProgram: ATokenGPvbd,
-				decimals: 9,
-				amount: amount * 10 ** 9,
-			},
-			{
-				programAddress: vaultProgAddr,
-			},
-		);
+		const methodIx = vault.getTokLgcWithdrawInstruction({
+			user: user1Kp,
+			from: vaultAta1,
+			to: user1Ata,
+			mint: mint,
+			fromWallet: vaultPDA1,
+			tokenProgram: TOKEN_PROGRAM_ADDRESS,
+			systemProgram: SYSTEM_PROGRAM_ADDRESS,
+			atokenProgram: ATokenGPvbd,
+			decimals: 9,
+			amount: amount * 10 ** 9,
+		});
 		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 
@@ -328,23 +287,18 @@ describe("Vault Program", () => {
 		const _balcTok1b = await getTokBalc(vaultPdaAta, "vaultPdaAta");
 
 		ll("before calling program");
-		const methodIx = vault.getTokLgcDepositInstruction(
-			{
-				user: user1Kp,
-				from: user1Ata,
-				to: vaultPdaAta,
-				toWallet: vaultPDA,
-				mint: mint,
-				tokenProgram: TOKEN_PROGRAM_ADDRESS,
-				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				atokenProgram: ATokenGPvbd,
-				decimals: 9,
-				amount: amount * 10 ** 9,
-			},
-			{
-				programAddress: vaultProgAddr,
-			},
-		);
+		const methodIx = vault.getTokLgcDepositInstruction({
+			user: user1Kp,
+			from: user1Ata,
+			to: vaultPdaAta,
+			toWallet: vaultPDA,
+			mint: mint,
+			tokenProgram: TOKEN_PROGRAM_ADDRESS,
+			systemProgram: SYSTEM_PROGRAM_ADDRESS,
+			atokenProgram: ATokenGPvbd,
+			decimals: 9,
+			amount: amount * 10 ** 9,
+		});
 		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 
@@ -374,24 +328,19 @@ describe("Vault Program", () => {
 		expect(balcTok1b.amountUi).toBe("126");
 
 		ll("before calling program");
-		const methodIx = vault.getTokLgcRedeemInstruction(
-			{
-				user: user1Kp,
-				from: vaultPdaAta,
-				to: user1Ata,
-				mint: mint,
-				fromPda: vaultPDA,
-				fromPdaOwner: adminAddr,
-				tokenProgram: TOKEN_PROGRAM_ADDRESS,
-				systemProgram: SYSTEM_PROGRAM_ADDRESS,
-				atokenProgram: ATokenGPvbd,
-				decimals: 9,
-				amount: amount * 10 ** 9,
-			},
-			{
-				programAddress: vaultProgAddr,
-			},
-		);
+		const methodIx = vault.getTokLgcRedeemInstruction({
+			user: user1Kp,
+			from: vaultPdaAta,
+			to: user1Ata,
+			mint: mint,
+			fromPda: vaultPDA,
+			fromPdaOwner: adminAddr,
+			tokenProgram: TOKEN_PROGRAM_ADDRESS,
+			systemProgram: SYSTEM_PROGRAM_ADDRESS,
+			atokenProgram: ATokenGPvbd,
+			decimals: 9,
+			amount: amount * 10 ** 9,
+		});
 		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 

@@ -2,7 +2,6 @@ import { expect, test } from "bun:test";
 import {
 	Keypair,
 	LAMPORTS_PER_SOL,
-	PublicKey,
 	SystemProgram,
 	Transaction,
 	TransactionInstruction,
@@ -16,23 +15,49 @@ import { LiteSVM } from "litesvm";
 	TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 */
-import * as vault from "../clients/js/src/generated/index";
-import { getLamports, helloworldProgram, ll } from "./litesvm-utils";
+//import * as vault from "../clients/js/src/generated/index";
 
-export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
+import {
+	bigintToBytes,
+	findPda1,
+	getLamports,
+	helloworldProgram,
+	ll,
+	systemProgram,
+	vaultProgram,
+} from "./litesvm-utils";
 
 const adminKp = new Keypair();
+const user1Kp = new Keypair();
+const user2Kp = new Keypair();
+const user3Kp = new Keypair();
+const hackerKp = new Keypair();
+const adminAddr = adminKp.publicKey;
+const user1Addr = user1Kp.publicKey;
+const user2Addr = user2Kp.publicKey;
+const user3Addr = user3Kp.publicKey;
+const hackerAddr = hackerKp.publicKey;
+
+const initBalc = BigInt(LAMPORTS_PER_SOL) * BigInt(1);
+const svm = new LiteSVM();
+svm.airdrop(adminAddr, initBalc);
+svm.airdrop(user1Addr, initBalc);
+svm.airdrop(user2Addr, initBalc);
+svm.airdrop(user3Addr, initBalc);
+svm.airdrop(hackerAddr, initBalc);
+const adminBalc = svm.getBalance(adminAddr);
+ll("adminBalc:", adminBalc);
+
+const _vaultPDA = findPda1(adminAddr, "VaultPDA");
+const vaultPDA1 = findPda1(user1Addr, "VaultPDA1");
 
 test("transfer SOL", () => {
-	const svm = new LiteSVM();
-	svm.airdrop(adminKp.publicKey, BigInt(LAMPORTS_PER_SOL));
-	const receiver = PublicKey.unique();
 	const blockhash = svm.latestBlockhash();
 	const transferLamports = 1_000_000n;
 	const ixs = [
 		SystemProgram.transfer({
 			fromPubkey: adminKp.publicKey,
-			toPubkey: receiver,
+			toPubkey: user1Addr,
 			lamports: transferLamports,
 		}),
 	];
@@ -41,13 +66,8 @@ test("transfer SOL", () => {
 	tx.add(...ixs);
 	tx.sign(adminKp);
 	svm.sendTransaction(tx);
-	const balanceAfter = svm.getBalance(receiver);
-	expect(balanceAfter).toStrictEqual(transferLamports);
-
-	/*const c = svm.getClock();
-    svm.setClock(
-      new Clock(c.slot, c.epochStartTimestamp, c.epoch, c.leaderScheduleEpoch, BigInt(quarterTime))
-    );*/
+	const balanceAfter = svm.getBalance(user1Addr);
+	expect(balanceAfter).toStrictEqual(transferLamports + initBalc);
 });
 
 test("hello world", () => {
@@ -82,40 +102,36 @@ test("hello world", () => {
 	expect(greetedAccountAfter).not.toBeNull();
 	expect(greetedAccountAfter?.data).toStrictEqual(new Uint8Array([1, 0, 0, 0]));
 });
-/*
-export const makeAccount = () => {
-  const ixs = [SystemProgram.createAccount({
-    fromPubkey: payer.publicKey,
-    newAccountPubkey: dataAccount.publicKey,
-    lamports: Number(svm.minimumBalanceForRentExamption(BigInt(4))),
-    space: 4,
-    programId: contractPubkey
-  })]
-}
 
-*/
-/*test("can deposit to vault", async () => {
-	ll("------== To Deposit");
-	const amtDeposit = makeSolAmt(10);
-	const _methodIx = vault.getDepositInstruction(
-		{
-			owner: adminKp,
-			vault: vaultPDA,
-			program: vaultProgAddr,
-			systemProgram: SYSTEM_PROGRAM_ADDRESS,
-			amount: lamports(amtDeposit),
-		},
-		{
-			programAddress: vaultProgAddr,
-		},
-	);
+test("User1 Deposits SOL to vault1", () => {
+	ll("\n------== User1 Deposits SOL to vault1");
+	const [svm, programId] = vaultProgram();
+	const payer = user1Kp;
+	const amtLam = BigInt(10) * BigInt(10) ** BigInt(9);
+	const bytes = bigintToBytes(amtLam);
 
-	ll("Vault Rent:", vaultRent);
-	ll("amtDeposit:", amtDeposit);
-	const balc1 = svm.getBalance(vaultPDA);
-	//const balc1 = await getSol(vaultPDA, "Vault");
-	expect(vaultRent + amtDeposit).toEqual(balc1);
-	//assert.equal(balc1, vaultRent + amtDeposit);
-}, 10000);*/
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: user1Addr, isSigner: true, isWritable: true },
+			{ pubkey: vaultPDA1, isSigner: false, isWritable: true },
+			{ pubkey: systemProgram, isSigner: false, isWritable: false },
+		],
+		programId,
+		data: Buffer.from(bytes),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix);
+	tx.sign(payer);
+	svm.sendTransaction(tx);
 
+	const lamports2a = getLamports(svm, vaultPDA1);
+	ll("lamports2a:", lamports2a);
+	//expect(BigInt(lamports2a)).toEqual(amtLam);
+});
+
+/*const c = svm.getClock();
+    svm.setClock(
+      new Clock(c.slot, c.epochStartTimestamp, c.epoch, c.leaderScheduleEpoch, BigInt(quarterTime))    );*/
 ll("LiteSVM finished");

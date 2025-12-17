@@ -54,14 +54,12 @@ pub enum ProgramIx {
     /// 0 Deposit lamports into the vault.
     #[account(0, signer, writable, name = "user", desc = "User")]
     #[account(1, writable, name = "vault", desc = "VaultPDA")]
-    #[account(2, name = "program", desc = "Program Address")]
-    #[account(3, name = "system_program", desc = "System Program")]
+    #[account(2, name = "system_program", desc = "System Program")]
     Deposit { amount: u64 },
 
     /// 1 Withdraw lamports from the vault
     #[account(0, signer, writable, name = "user", desc = "User")]
     #[account(1, writable, name = "vault", desc = "Vault PDA")]
-    #[account(2, name = "program", desc = "Program Address")]
     Withdraw { amount: u64 },
 
     /// 2 TokLgc Init Mint
@@ -70,8 +68,7 @@ pub enum ProgramIx {
     #[account(2, name = "mint_authority", desc = "Mint Authority")]
     #[account(3, name = "token_program", desc = "Token Program")]
     #[account(4, name = "freeze_authority_opt", desc = "Freeze Authority")]
-    #[account(5, name = "program", desc = "This Program")]
-    #[account(6, name = "system_program", desc = "System Program")]
+    #[account(5, name = "system_program", desc = "System Program")]
     TokenLgcInitMint { decimals: u8 },
 
     /// 3 TokLgc Init ATA(Associated Token Acct)
