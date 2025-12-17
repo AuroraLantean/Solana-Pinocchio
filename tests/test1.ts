@@ -313,7 +313,7 @@ describe("Vault Program", () => {
 	});
 
 	//------------------==
-	test("Lgc User1 pays tokens to VaultPDA", async () => {
+	test("Lgc User1 pays/deposits tokens to VaultPDA", async () => {
 		ll("\n------== Lgc User1 pays tokens to VaultPDA");
 		ll("payer:", user1Addr);
 		ll("destAddr:", user1Addr);
@@ -351,12 +351,56 @@ describe("Vault Program", () => {
 		const balcTok2a = await getTokBalc(user1Ata, "user1 ATA"); //692-126=566
 		expect(balcTok2a.amountUi).toBe("566");
 
-		const balcTok2b = await getTokBalc(vaultPdaAta, "vaultPdaAta");
+		const balcTok2b = await getTokBalc(vaultPdaAta, "vaultPdaAta"); //126
 		expect(balcTok2b.amountUi).toBe(amount.toString());
 	});
 
 	//------------------==
-	//TODO: users can redeem tokens from pools
+	test("Lgc User1 redeems tokens from vaultPDA", async () => {
+		ll("\n------== Lgc User1 Redeems Tokens from VaultPDA");
+		ll("payer:", user1Kp.address);
+		const destAddr = user1Addr;
+		ll("destAddr:", destAddr);
+		ll("mint:", mint);
+		const amount = 37;
+		const atabump = await makeATA(user1Kp, destAddr, mint);
+		const user1Ata = atabump.ata;
+		const atabumpVaultPDA = await makeATA(user1Kp, vaultPDA, mint);
+		const vaultPdaAta = atabumpVaultPDA.ata;
+
+		const balcTok1a = await getTokBalc(user1Ata, "user1 ATA"); //566
+		expect(balcTok1a.amountUi).toBe("566");
+		const balcTok1b = await getTokBalc(vaultPdaAta, "vaultPdaAta"); //126
+		expect(balcTok1b.amountUi).toBe("126");
+
+		ll("before calling program");
+		const methodIx = vault.getTokLgcRedeemInstruction(
+			{
+				user: user1Kp,
+				from: vaultPdaAta,
+				to: user1Ata,
+				mint: mint,
+				fromPda: vaultPDA,
+				fromPdaOwner: adminAddr,
+				tokenProgram: TOKEN_PROGRAM_ADDRESS,
+				systemProgram: SYSTEM_PROGRAM_ADDRESS,
+				atokenProgram: ATokenGPvbd,
+				decimals: 9,
+				amount: amount * 10 ** 9,
+			},
+			{
+				programAddress: vaultProgAddr,
+			},
+		);
+		await sendTxn(methodIx, user1Kp);
+		ll("program execution successful");
+
+		const balcTok2a = await getTokBalc(user1Ata, "user1 ATA"); //566+37=603
+		expect(balcTok2a.amountUi).toBe("603");
+
+		const balcTok2b = await getTokBalc(vaultPdaAta, "vaultPdaAta"); //126-37 = 89
+		expect(balcTok2b.amountUi).toBe("89");
+	});
 	//------------------==
 	//TODO: LiteSVM https://rareskills.io/post/litesvm ; Bankrun: https://www.quicknode.com/guides/solana-development/tooling/bankrun
 	//amount: 100 * 10 ** 9,*/
