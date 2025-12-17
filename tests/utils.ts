@@ -62,6 +62,9 @@ export const llRd = (txt: string) => {
 export const llYl = (txt: string) => {
 	ll(chalk.yellow(txt));
 };
+export const llbalc = (name: string, amt: string) => {
+	ll(`${chalk.bgBlue(name)} balc: ${chalk.yellow(amt)}`);
+};
 
 export const uint8ToStr = (uint8Arr: number[]) => {
 	const filterred = uint8Arr.filter((item) => item !== 0);

@@ -12,7 +12,7 @@ use crate::{
     parse_u64, rent_exempt, writable,
 };
 
-/// TokLgc Withdraw Tokens
+/// TokLgc: Users to Withdraw Tokens
 pub struct TokLgcWithdraw<'a> {
     pub user: &'a AccountInfo, //signer
     pub from_ata: &'a AccountInfo,

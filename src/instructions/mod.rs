@@ -24,6 +24,8 @@ pub mod tokLgcInitMint;
 #[allow(non_snake_case)]
 pub mod tokLgcMintToken;
 #[allow(non_snake_case)]
+pub mod tokLgcRedeem;
+#[allow(non_snake_case)]
 pub mod tokLgcWithdraw;
 #[allow(non_snake_case)]
 pub mod withdrawSol;
@@ -36,6 +38,7 @@ pub use tokLgcDeposit::*;
 pub use tokLgcInitATA::*;
 pub use tokLgcInitMint::*;
 pub use tokLgcMintToken::*;
+pub use tokLgcRedeem::*;
 pub use tokLgcWithdraw::*;
 pub use withdrawSol::*;
 
@@ -91,8 +94,8 @@ pub enum ProgramIx {
     #[account(6, name = "atoken_program", desc = "AToken Program")]
     TokLgcMintToken { decimals: u8, amount: u64 },
 
-    /// 5 TokLgc Deposit Token
-    #[account(0, signer, writable, name = "authority", desc = "Authority")]
+    /// 5 TokLgc Deposit/Pay Tokens
+    #[account(0, signer, writable, name = "user", desc = "User")]
     #[account(1, writable, name = "from", desc = "From ATA")]
     #[account(2, writable, name = "to", desc = "To ATA")]
     #[account(3, name = "to_wallet", desc = "To Wallet")]
@@ -112,6 +115,17 @@ pub enum ProgramIx {
     #[account(6, name = "system_program", desc = "System Program")]
     #[account(7, name = "atoken_program", desc = "AToken Program")]
     TokLgcWithdraw { decimals: u8, amount: u64 },
+
+    /// 7 TokLgc Redeem Tokens
+    #[account(0, signer, writable, name = "user", desc = "User")]
+    #[account(1, writable, name = "from", desc = "From ATA")]
+    #[account(2, writable, name = "to", desc = "To ATA")]
+    #[account(3, name = "to_wallet", desc = "To Wallet")]
+    #[account(4, name = "mint", desc = "Mint")]
+    #[account(5, name = "token_program", desc = "Token Program")]
+    #[account(6, name = "system_program", desc = "System Program")]
+    #[account(7, name = "atoken_program", desc = "AToken Program")]
+    TokLgcRedeem { decimals: u8, amount: u64 },
 
     //---------== Token2022
     /// 51 Token2022 Init Mint

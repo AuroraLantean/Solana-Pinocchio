@@ -31,7 +31,7 @@ const vaultPDA1 = pda_bump1.pda;
 ll(`✅ - vaultPDA1: ${vaultPDA1}`);
 
 const vaultAtabump = await getAta(mint, vaultPDA);
-const _vaultAta = vaultAtabump.ata;
+const _vaultPdaAta = vaultAtabump.ata;
 const vaultAtabump1 = await getAta(mint, vaultPDA1);
 const vaultAta1 = vaultAtabump1.ata;
 
@@ -52,8 +52,8 @@ describe("Vault Program", () => {
 			throw new Error(`Program does not exist`);
 		}
 	});
-	test("can deposit to vault", async () => {
-		ll("\n------== To Deposit");
+	test("User1 deposits SOL to vault1", async () => {
+		ll("\n------== User1 Deposits SOL to vault1");
 		const methodIx = vault.getDepositInstruction(
 			{
 				user: user1Kp,
@@ -76,8 +76,8 @@ describe("Vault Program", () => {
 		//assert.equal(balc1, vaultRent + amtDeposit);
 	}, 10000); //Timeouts
 
-	test("can withdraw from vault", async () => {
-		ll("\n------== To Withdraw");
+	test("User1 withdraws SOL from vault1", async () => {
+		ll("\n------== User1 Withdraws SOL from vault1");
 		await getSol(vaultPDA, "Vault");
 
 		const methodIx = vault.getWithdrawInstruction({
@@ -96,7 +96,7 @@ describe("Vault Program", () => {
 	}); //can withdraw from vault
 
 	//------------------==
-	test.failing("hacker cannot withdraw from the vault", async () => {
+	test.failing("hacker cannot withdraw SOL from  vault1", async () => {
 		const methodIx = vault.getWithdrawInstruction({
 			user: hackerKp,
 			vault: vaultPDA1,
@@ -246,7 +246,7 @@ describe("Vault Program", () => {
 		ll("before calling program");
 		const methodIx = vault.getTokLgcDepositInstruction(
 			{
-				authority: user1Kp,
+				user: user1Kp,
 				from: user1Ata,
 				to: vaultAta1,
 				mint: mint,
@@ -264,10 +264,10 @@ describe("Vault Program", () => {
 		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 
-		const balcTok2a = await getTokBalc(user1Ata, "vaultPDA ATA1");
+		const balcTok2a = await getTokBalc(user1Ata, "user1 ATA");
 		expect(balcTok2a.amountUi).toBe("261");
 
-		const balcTok2b = await getTokBalc(vaultAta1, "AF");
+		const balcTok2b = await getTokBalc(vaultAta1, "vaultAta1");
 		expect(balcTok2b.amountUi).toBe(amount.toString());
 	});
 
@@ -305,14 +305,58 @@ describe("Vault Program", () => {
 		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 
-		const balcTok2a = await getTokBalc(user1Ata, "vaultPDA ATA"); //1000−739+431= 692
+		const balcTok2a = await getTokBalc(user1Ata, "user1 ATA"); //1000−739+431= 692
 		expect(balcTok2a.amountUi).toBe("692");
 
-		const balcTok2b = await getTokBalc(vaultAta1, "AF"); //732-431 = 308
+		const balcTok2b = await getTokBalc(vaultAta1, "vaultAta"); //732-431 = 308
 		expect(balcTok2b.amountUi).toBe("308");
 	});
+
 	//------------------==
-	//TODO: users can redeem tokens
+	test("Lgc User1 pays tokens to VaultPDA", async () => {
+		ll("\n------== Lgc User1 pays tokens to VaultPDA");
+		ll("payer:", user1Addr);
+		ll("destAddr:", user1Addr);
+		ll("mint:", mint);
+		const amount = 126;
+		const atabump1 = await makeATA(user1Kp, user1Addr, mint);
+		const user1Ata = atabump1.ata;
+		const atabumpVaultPDA = await makeATA(user1Kp, vaultPDA, mint);
+		const vaultPdaAta = atabumpVaultPDA.ata;
+
+		const _balcTok1a = await getTokBalc(user1Ata, "user1 ATA");
+		const _balcTok1b = await getTokBalc(vaultPdaAta, "vaultPdaAta");
+
+		ll("before calling program");
+		const methodIx = vault.getTokLgcDepositInstruction(
+			{
+				user: user1Kp,
+				from: user1Ata,
+				to: vaultPdaAta,
+				toWallet: vaultPDA,
+				mint: mint,
+				tokenProgram: TOKEN_PROGRAM_ADDRESS,
+				systemProgram: SYSTEM_PROGRAM_ADDRESS,
+				atokenProgram: ATokenGPvbd,
+				decimals: 9,
+				amount: amount * 10 ** 9,
+			},
+			{
+				programAddress: vaultProgAddr,
+			},
+		);
+		await sendTxn(methodIx, user1Kp);
+		ll("program execution successful");
+
+		const balcTok2a = await getTokBalc(user1Ata, "user1 ATA"); //692-126=566
+		expect(balcTok2a.amountUi).toBe("566");
+
+		const balcTok2b = await getTokBalc(vaultPdaAta, "vaultPdaAta");
+		expect(balcTok2b.amountUi).toBe(amount.toString());
+	});
+
+	//------------------==
+	//TODO: users can redeem tokens from pools
 	//------------------==
 	//TODO: LiteSVM https://rareskills.io/post/litesvm ; Bankrun: https://www.quicknode.com/guides/solana-development/tooling/bankrun
 	//amount: 100 * 10 ** 9,*/

@@ -7,8 +7,8 @@ use crate::{
     rent_exempt, writable,
 };
 
-/// TokLgc: Users to Deposit Tokens
-pub struct TokLgcDeposit<'a> {
+/// TokLgc: Users to Redeem Tokens
+pub struct TokLgcRedeem<'a> {
     pub user: &'a AccountInfo, //signer
     pub from_ata: &'a AccountInfo,
     pub to_ata: &'a AccountInfo,
@@ -20,11 +20,11 @@ pub struct TokLgcDeposit<'a> {
     pub decimals: u8,
     pub amount: u64,
 }
-impl<'a> TokLgcDeposit<'a> {
-    pub const DISCRIMINATOR: &'a u8 = &5;
+impl<'a> TokLgcRedeem<'a> {
+    pub const DISCRIMINATOR: &'a u8 = &7;
 
     pub fn process(self) -> ProgramResult {
-        let TokLgcDeposit {
+        let TokLgcRedeem {
             user,
             from_ata,
             to_ata,
@@ -36,17 +36,17 @@ impl<'a> TokLgcDeposit<'a> {
             decimals,
             amount,
         } = self;
-        log!("TokLgcDeposit process()");
+        log!("TokLgcRedeem process()");
         check_signer(user)?;
         executable(token_program)?;
         writable(from_ata)?;
         check_ata(from_ata, user, mint)?;
 
-        log!("TokLgcDeposit 1");
+        log!("TokLgcRedeem 1");
         rent_exempt(mint, 0)?;
         check_decimals(mint, token_program, decimals)?;
 
-        log!("TokLgcDeposit 5");
+        log!("TokLgcRedeem 5");
         check_sysprog(system_program)?;
 
         if to_ata.data_is_empty() {
@@ -88,11 +88,11 @@ impl<'a> TokLgcDeposit<'a> {
         Ok(())
     }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
+impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcRedeem<'a> {
     type Error = ProgramError;
 
     fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
-        log!("TokLgcDeposit try_from");
+        log!("TokLgcRedeem try_from");
         let (data, accounts) = value;
         log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 

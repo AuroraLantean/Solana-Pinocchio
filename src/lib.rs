@@ -40,6 +40,7 @@ fn process_instruction(
         TokLgcMintToken::DISCRIMINATOR => TokLgcMintToken::try_from((data, accounts))?.process(),
         TokLgcDeposit::DISCRIMINATOR => TokLgcDeposit::try_from((data, accounts))?.process(),
         TokLgcWithdraw::DISCRIMINATOR => TokLgcWithdraw::try_from((data, accounts))?.process(),
+        TokLgcRedeem::DISCRIMINATOR => TokLgcRedeem::try_from((data, accounts))?.process(),
         Token2022InitMint::DISCRIMINATOR => {
             Token2022InitMint::try_from((data, accounts))?.process()
         }

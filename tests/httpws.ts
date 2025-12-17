@@ -18,6 +18,7 @@ import {
 import { LAMPORTS_PER_SOL } from "gill";
 import * as vault from "../clients/js/src/generated/index";
 import type { Data1 } from "./types";
+import { llbalc } from "./utils";
 
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
 
@@ -129,7 +130,7 @@ export const getTokBalc = async (ata: Address, name: string = "") => {
 		value: { amount, decimals },
 	} = await rpc.getTokenAccountBalance(ata, { commitment: "confirmed" }).send();
 	const amountUi = (BigInt(amount) / BigInt(10 ** decimals)).toString();
-	ll(name, "balc:", amountUi);
+	llbalc(name, amountUi);
 	return {
 		amount,
 		decimals,
