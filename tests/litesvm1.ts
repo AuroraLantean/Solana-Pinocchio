@@ -81,7 +81,18 @@ test("hello world", () => {
 		new Uint8Array([1, 0, 0, 0]),
 	);*/
 });
+/*
+export const makeAccount = () => {
+  const ixs = [SystemProgram.createAccount({
+    fromPubkey: payer.publicKey,
+    newAccountPubkey: dataAccount.publicKey,
+    lamports: Number(svm.minimumBalanceForRentExamption(BigInt(4))),
+    space: 4,
+    programId: contractPubkey
+  })]
+}
 
+*/
 /*test("can deposit to vault", async () => {
 	ll("------== To Deposit");
 	const amtDeposit = makeSolAmt(10);

@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import type { Address } from "@solana/kit";
 import { lamports } from "@solana/kit";
 import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
@@ -24,11 +23,17 @@ import {
 import { getAta, makeATA } from "./tokens";
 import { ATokenGPvbd, findPda, ll, makeSolAmt } from "./utils";
 
-export const pda_bump = await findPda(adminAddr, "vault");
-export const vaultPDA: Address = pda_bump.pda;
+const pda_bump = await findPda(adminAddr, "vault");
+const vaultPDA = pda_bump.pda;
 ll(`✅ - Vault PDA: ${vaultPDA}`);
-export const vaultAtabump = await getAta(mint, vaultPDA);
-export const vaultAta = vaultAtabump.ata;
+const pda_bump1 = await findPda(user1Addr, "vault");
+const vaultPDA1 = pda_bump1.pda;
+ll(`✅ - vaultPDA1: ${vaultPDA1}`);
+
+const vaultAtabump = await getAta(mint, vaultPDA);
+const _vaultAta = vaultAtabump.ata;
+const vaultAtabump1 = await getAta(mint, vaultPDA1);
+const vaultAta1 = vaultAtabump1.ata;
 
 const amtDeposit = makeSolAmt(10);
 const amtWithdraw = makeSolAmt(9);
@@ -47,12 +52,12 @@ describe("Vault Program", () => {
 			throw new Error(`Program does not exist`);
 		}
 	});
-	test.skip("can deposit to vault", async () => {
+	test("can deposit to vault", async () => {
 		ll("\n------== To Deposit");
 		const methodIx = vault.getDepositInstruction(
 			{
-				owner: adminKp,
-				vault: vaultPDA,
+				user: user1Kp,
+				vault: vaultPDA1,
 				program: vaultProgAddr,
 				systemProgram: SYSTEM_PROGRAM_ADDRESS,
 				amount: lamports(amtDeposit),
@@ -61,48 +66,47 @@ describe("Vault Program", () => {
 				programAddress: vaultProgAddr,
 			},
 		);
-		await sendTxn(methodIx, adminKp);
+		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 
 		ll("Vault Rent:", vaultRent);
 		ll("amtDeposit:", amtDeposit);
-		const balc1 = await getSol(vaultPDA, "Vault");
+		const balc1 = await getSol(vaultPDA1, "Vault");
 		expect(vaultRent + amtDeposit).toEqual(balc1.lamports);
 		//assert.equal(balc1, vaultRent + amtDeposit);
 	}, 10000); //Timeouts
 
-	test.skip("can withdraw from vault", async () => {
+	test("can withdraw from vault", async () => {
 		ll("\n------== To Withdraw");
 		await getSol(vaultPDA, "Vault");
 
 		const methodIx = vault.getWithdrawInstruction({
-			owner: adminKp,
-			vault: vaultPDA,
+			user: user1Kp,
+			vault: vaultPDA1,
 			program: vaultProgAddr,
 			amount: lamports(amtWithdraw),
 		});
-		await sendTxn(methodIx, adminKp);
+		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 
 		ll("Vault Rent:", vaultRent);
 		ll("Vault amtWithdraw:", amtWithdraw);
-		const balc22 = await getSol(vaultPDA, "Vault");
+		const balc22 = await getSol(vaultPDA1, "Vault");
 		expect(vaultRent + amtDeposit - amtWithdraw).toEqual(balc22.lamports);
 	}); //can withdraw from vault
 
 	//------------------==
-	test.failing(
-		"doesn't allow other users to withdraw from the vault",
-		async () => {
-			const methodIx = vault.getWithdrawInstruction({
-				owner: hackerKp,
-				vault: vaultPDA,
-				program: vaultProgAddr,
-				amount: lamports(amtWithdraw),
-			});
-			await sendTxn(methodIx, hackerKp);
-		},
-	);
+	test.failing("hacker cannot withdraw from the vault", async () => {
+		const methodIx = vault.getWithdrawInstruction({
+			user: hackerKp,
+			vault: vaultPDA1,
+			program: vaultProgAddr,
+			amount: lamports(amtWithdraw),
+		});
+		await sendTxn(methodIx, hackerKp);
+	});
+	//------------------==
+	//TODO: users can redeem SOL from pool
 	//------------------==
 	test("lgc init mint", async () => {
 		ll("\n------== Lgc Init Mint");
@@ -200,20 +204,19 @@ describe("Vault Program", () => {
 	});
 
 	//------------------==
-	test("Lgc init vault pda_ata", async () => {
-		ll("\n------== Lgc Init Vault PDA ATA");
-		const payer = adminKp;
+	test("Lgc init vault pdaAta1", async () => {
+		ll("\n------== Lgc Init Vault PDA ATA1");
+		const payer = user1Kp;
 		ll("payer:", payer.address);
-		const destAddr = vaultPDA;
-		ll("destAddr:", destAddr);
+		ll("vaultPDA1:", vaultPDA1);
 		ll("mint:", mint);
 
 		const methodIx = vault.getTokenLgcInitATAInstruction(
 			{
 				payer: payer,
-				toWallet: destAddr,
+				toWallet: vaultPDA1,
 				mint: mint,
-				tokenAccount: vaultAta,
+				tokenAccount: vaultAta1,
 				tokenProgram: TOKEN_PROGRAM_ADDRESS,
 				systemProgram: SYSTEM_PROGRAM_ADDRESS,
 				atokenProgram: ATokenGPvbd,
@@ -224,20 +227,18 @@ describe("Vault Program", () => {
 		);
 		await sendTxn(methodIx, payer);
 		ll("program execution successful");
-		const balcTok = await getTokBalc(vaultAta, "vaultPDA ATA");
+		const balcTok = await getTokBalc(vaultAta1, "vaultPDA ATA");
 		expect(balcTok.amountUi).toBe("0");
 	});
 
 	//------------------==
-	test("Lgc deposit token from user1", async () => {
-		ll("\n------== Lgc Deposit Token from User1");
+	test("Lgc User1 deposits tokens", async () => {
+		ll("\n------== Lgc User1 Deposits Tokens");
 		ll("payer:", user1Addr);
-		const destAddr = user1Addr;
-		ll("destAddr:", destAddr);
+		ll("destAddr:", user1Addr);
 		ll("mint:", mint);
-		ll("mintAuthorityKp:", mintAuthorityKp.address);
-		const amount = 271;
-		const atabump = await makeATA(user1Kp, destAddr, mint);
+		const amount = 739;
+		const atabump = await makeATA(user1Kp, user1Addr, mint);
 		const user1Ata = atabump.ata;
 		const balcTok1 = await getTokBalc(user1Ata, "B4");
 		expect(balcTok1.amountUi).toBe("1000");
@@ -247,9 +248,9 @@ describe("Vault Program", () => {
 			{
 				authority: user1Kp,
 				from: user1Ata,
-				to: vaultAta,
+				to: vaultAta1,
 				mint: mint,
-				toWallet: vaultPDA,
+				toWallet: vaultPDA1,
 				tokenProgram: TOKEN_PROGRAM_ADDRESS,
 				systemProgram: SYSTEM_PROGRAM_ADDRESS,
 				atokenProgram: ATokenGPvbd,
@@ -263,12 +264,55 @@ describe("Vault Program", () => {
 		await sendTxn(methodIx, user1Kp);
 		ll("program execution successful");
 
-		const _balcTok2a = await getTokBalc(user1Ata, "vaultPDA ATA");
-		//expect(balcTok2a.amountUi).toBe("729");
+		const balcTok2a = await getTokBalc(user1Ata, "vaultPDA ATA1");
+		expect(balcTok2a.amountUi).toBe("261");
 
-		const _balcTok2b = await getTokBalc(vaultAta, "AF");
-		//expect(balcTok2b.amountUi).toBe(amount.toString());
+		const balcTok2b = await getTokBalc(vaultAta1, "AF");
+		expect(balcTok2b.amountUi).toBe(amount.toString());
 	});
+
+	//------------------==
+	test("Lgc User1 withdraws token from vaultPDA1", async () => {
+		ll("\n------== Lgc User1 Withdraws Tokens from VaultPDA1");
+		ll("payer:", user1Kp.address);
+		const destAddr = user1Addr;
+		ll("destAddr:", destAddr);
+		ll("mint:", mint);
+		const amount = 431;
+		const atabump = await makeATA(user1Kp, destAddr, mint);
+		const user1Ata = atabump.ata;
+		const balcTok1 = await getTokBalc(user1Ata, "B4");
+		expect(balcTok1.amountUi).toBe("261");
+
+		ll("before calling program");
+		const methodIx = vault.getTokLgcWithdrawInstruction(
+			{
+				user: user1Kp,
+				from: vaultAta1,
+				to: user1Ata,
+				mint: mint,
+				fromWallet: vaultPDA1,
+				tokenProgram: TOKEN_PROGRAM_ADDRESS,
+				systemProgram: SYSTEM_PROGRAM_ADDRESS,
+				atokenProgram: ATokenGPvbd,
+				decimals: 9,
+				amount: amount * 10 ** 9,
+			},
+			{
+				programAddress: vaultProgAddr,
+			},
+		);
+		await sendTxn(methodIx, user1Kp);
+		ll("program execution successful");
+
+		const balcTok2a = await getTokBalc(user1Ata, "vaultPDA ATA"); //1000−739+431= 692
+		expect(balcTok2a.amountUi).toBe("692");
+
+		const balcTok2b = await getTokBalc(vaultAta1, "AF"); //732-431 = 308
+		expect(balcTok2b.amountUi).toBe("308");
+	});
+	//------------------==
+	//TODO: users can redeem tokens
 	//------------------==
 	//TODO: LiteSVM https://rareskills.io/post/litesvm ; Bankrun: https://www.quicknode.com/guides/solana-development/tooling/bankrun
 	//amount: 100 * 10 ** 9,*/

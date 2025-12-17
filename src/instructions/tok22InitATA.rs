@@ -17,7 +17,7 @@ pub struct Token2022InitAta<'a> {
     pub atoken_program: &'a AccountInfo,
 }
 impl<'a> Token2022InitAta<'a> {
-    pub const DISCRIMINATOR: &'a u8 = &7;
+    pub const DISCRIMINATOR: &'a u8 = &52;
 
     pub fn process(self) -> ProgramResult {
         let Token2022InitAta {

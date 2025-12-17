@@ -22,7 +22,7 @@ use crate::{
 
 //Deposit Accounts
 pub struct DepositSol<'a> {
-    pub owner: &'a AccountInfo,
+    pub user: &'a AccountInfo,
     pub vault: &'a AccountInfo,
     pub amount: u64,
 }
@@ -31,15 +31,15 @@ impl<'a> DepositSol<'a> {
 
     pub fn process(self) -> ProgramResult {
         let DepositSol {
-            owner,
+            user,
             vault,
             amount,
         } = self;
 
-        ensure_deposit_accounts(owner, vault)?;
+        ensure_deposit_accounts(user, vault)?;
 
         SystemTransfer {
-            from: owner,
+            from: user,
             to: vault,
             lamports: amount,
         }
@@ -56,13 +56,13 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositSol<'a> {
         if accounts.len() < 2 {
             return Err(ProgramError::NotEnoughAccountKeys);
         }
-        let owner = &accounts[0];
+        let user = &accounts[0];
         let vault = &accounts[1];
-        //let [owner, vault, _system_program, _] = accounts else { return Err(ProgramError::NotEnoughAccountKeys);}
+        //let [user, vault, _system_program, _] = accounts else { return Err(ProgramError::NotEnoughAccountKeys);}
 
         let amount = parse_u64(data)?;
         Ok(Self {
-            owner,
+            user,
             vault,
             amount,
         })

@@ -81,6 +81,16 @@ await airdrop({
 await airdrop({
 	commitment: "confirmed",
 	lamports: lamports(amtAirdrop),
+	recipientAddress: user2Addr,
+});
+await airdrop({
+	commitment: "confirmed",
+	lamports: lamports(amtAirdrop),
+	recipientAddress: user3Addr,
+});
+await airdrop({
+	commitment: "confirmed",
+	lamports: lamports(amtAirdrop),
 	recipientAddress: hackerKp.address,
 });
 ll(`✅ - Airdropped SOL to Admin and user1Addr`);

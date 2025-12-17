@@ -24,6 +24,8 @@ pub mod tokLgcInitMint;
 #[allow(non_snake_case)]
 pub mod tokLgcMintToken;
 #[allow(non_snake_case)]
+pub mod tokLgcWithdraw;
+#[allow(non_snake_case)]
 pub mod withdrawSol;
 
 pub use depositSol::*;
@@ -34,6 +36,7 @@ pub use tokLgcDeposit::*;
 pub use tokLgcInitATA::*;
 pub use tokLgcInitMint::*;
 pub use tokLgcMintToken::*;
+pub use tokLgcWithdraw::*;
 pub use withdrawSol::*;
 
 use shank::ShankInstruction;
@@ -45,20 +48,20 @@ use shank::ShankInstruction;
 /// non writable: program, system_program, mint
 #[derive(ShankInstruction)]
 pub enum ProgramIx {
-    /// Deposit lamports into the vault.
-    #[account(0, signer, writable, name = "owner", desc = "Vault owner and payer")]
+    /// 0 Deposit lamports into the vault.
+    #[account(0, signer, writable, name = "user", desc = "User")]
     #[account(1, writable, name = "vault", desc = "VaultPDA")]
     #[account(2, name = "program", desc = "Program Address")]
     #[account(3, name = "system_program", desc = "System Program")]
     Deposit { amount: u64 },
 
-    /// Withdraw lamports from the vault
-    #[account(0, signer, writable, name = "owner", desc = "Vault owner + authority")]
+    /// 1 Withdraw lamports from the vault
+    #[account(0, signer, writable, name = "user", desc = "User")]
     #[account(1, writable, name = "vault", desc = "Vault PDA")]
     #[account(2, name = "program", desc = "Program Address")]
     Withdraw { amount: u64 },
 
-    /// TokLgc Init Mint
+    /// 2 TokLgc Init Mint
     #[account(0, signer, writable, name = "payer", desc = "Payer")]
     #[account(1, signer, writable, name = "mint", desc = "Mint")]
     #[account(2, name = "mint_authority", desc = "Mint Authority")]
@@ -68,7 +71,7 @@ pub enum ProgramIx {
     #[account(6, name = "system_program", desc = "System Program")]
     TokenLgcInitMint { decimals: u8 },
 
-    /// TokLgc Init ATA(Associated Token Acct)
+    /// 3 TokLgc Init ATA(Associated Token Acct)
     #[account(0, signer, writable, name = "payer", desc = "Payer")]
     #[account(1, name = "to_wallet", desc = "To Wallet")]
     #[account(2, name = "mint", desc = "Mint")]
@@ -78,7 +81,7 @@ pub enum ProgramIx {
     #[account(6, name = "atoken_program", desc = "AToken Program")]
     TokenLgcInitATA {},
 
-    /// TokLgc Mint Token
+    /// 4 TokLgc Mint Token
     #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]
     #[account(1, name = "to_wallet", desc = "ToWallet")]
     #[account(2, writable, name = "mint", desc = "Mint")]
@@ -88,8 +91,8 @@ pub enum ProgramIx {
     #[account(6, name = "atoken_program", desc = "AToken Program")]
     TokLgcMintToken { decimals: u8, amount: u64 },
 
-    /// TokLgc Deposit Token
-    #[account(0, signer, name = "authority", desc = "Authority")]
+    /// 5 TokLgc Deposit Token
+    #[account(0, signer, writable, name = "authority", desc = "Authority")]
     #[account(1, writable, name = "from", desc = "From ATA")]
     #[account(2, writable, name = "to", desc = "To ATA")]
     #[account(3, name = "to_wallet", desc = "To Wallet")]
@@ -99,7 +102,19 @@ pub enum ProgramIx {
     #[account(7, name = "atoken_program", desc = "AToken Program")]
     TokLgcDeposit { decimals: u8, amount: u64 },
 
-    /// Token2022 Init Mint
+    /// 6 TokLgc Withdraw Token
+    #[account(0, signer, writable, name = "user", desc = "User")]
+    #[account(1, writable, name = "from", desc = "From ATA")]
+    #[account(2, writable, name = "to", desc = "To ATA")]
+    #[account(3, name = "from_wallet", desc = "From Wallet")]
+    #[account(4, name = "mint", desc = "Mint")]
+    #[account(5, name = "token_program", desc = "Token Program")]
+    #[account(6, name = "system_program", desc = "System Program")]
+    #[account(7, name = "atoken_program", desc = "AToken Program")]
+    TokLgcWithdraw { decimals: u8, amount: u64 },
+
+    //---------== Token2022
+    /// 51 Token2022 Init Mint
     #[account(0, signer, writable, name = "payer", desc = "Payer")]
     #[account(1, signer, writable, name = "mint", desc = "Mint")]
     #[account(2, name = "mint_authority", desc = "Mint Authority")]
@@ -109,7 +124,7 @@ pub enum ProgramIx {
     #[account(6, name = "system_program", desc = "System Program")]
     Token2022InitMint { decimals: u8 },
 
-    /// Token2022 Init ATA(Associated Token Acct)
+    /// 52 Token2022 Init ATA(Associated Token Acct)
     #[account(0, signer, writable, name = "payer", desc = "Payer")]
     #[account(1, name = "to_wallet", desc = "To Wallet")]
     #[account(2, name = "mint", desc = "Mint")]
@@ -119,7 +134,7 @@ pub enum ProgramIx {
     #[account(6, name = "atoken_program", desc = "AToken Program")]
     Token2022InitATA {},
 
-    /// Token2022 Mint Token
+    /// 53 Token2022 Mint Token
     #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]
     #[account(1, name = "to_wallet", desc = "ToWallet")]
     #[account(2, writable, name = "mint", desc = "Mint")]

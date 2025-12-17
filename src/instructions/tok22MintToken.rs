@@ -20,7 +20,7 @@ pub struct Token2022MintToken<'a> {
     pub amount: u64,
 }
 impl<'a> Token2022MintToken<'a> {
-    pub const DISCRIMINATOR: &'a u8 = &8;
+    pub const DISCRIMINATOR: &'a u8 = &53;
 
     pub fn process(self) -> ProgramResult {
         let Token2022MintToken {

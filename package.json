@@ -10,7 +10,7 @@
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
-	"packageManager": "pnpm@10.25.0",
+	"packageManager": "pnpm@10.26.0",
 	"dependencies": {
 		"@codama/nodes-from-anchor": "^1.3.6",
 		"@codama/renderers-js": "^1.5.5",
@@ -21,6 +21,7 @@
 		"@solana/kit": "^5.0.0",
 		"@solana/spl-token": "^0.4.14",
 		"@types/node": "^25.0.1",
+		"chalk": "^5.6.2",
 		"codama": "^1.4.4",
 		"gill": "^0.14.0",
 		"litesvm": "^0.4.0",
@@ -29,8 +30,8 @@
 	},
 	"private": true,
 	"devDependencies": {
-		"@types/bun": "latest",
-		"@solana/web3.js": "^1.98.4"
+		"@solana/web3.js": "^1.98.4",
+		"@types/bun": "latest"
 	},
 	"peerDependencies": {
 		"typescript": "^5"

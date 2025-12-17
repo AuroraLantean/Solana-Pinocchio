@@ -7,6 +7,7 @@ import {
 
 export const ll = console.log;
 
+import chalk from "chalk";
 import * as vault from "../clients/js/src/generated/index";
 
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
@@ -47,4 +48,26 @@ export const findPda = async (
 	});
 	ll(`${str} pda: ${pda_bump[0]}, bump: ${pda_bump[1]}`);
 	return { pda: pda_bump[0], bump: pda_bump[1] };
+};
+
+export const llBl = (txt: string) => {
+	ll(chalk.blue(txt));
+};
+export const llGn = (txt: string) => {
+	ll(chalk.green(txt));
+};
+export const llRd = (txt: string) => {
+	ll(chalk.red(txt));
+};
+export const llYl = (txt: string) => {
+	ll(chalk.yellow(txt));
+};
+
+export const uint8ToStr = (uint8Arr: number[]) => {
+	const filterred = uint8Arr.filter((item) => item !== 0);
+	const str = Buffer.from(filterred).toString();
+	//ll("string:", str, str.length);
+	//const str2 = String.fromCharCode.apply(null, filterred);
+	//ll("string:", str2, str2.length);
+	return str;
 };

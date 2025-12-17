@@ -24,7 +24,7 @@ pub struct Token2022InitMint<'a> {
     pub decimals: u8,
 }
 impl<'a> Token2022InitMint<'a> {
-    pub const DISCRIMINATOR: &'a u8 = &6;
+    pub const DISCRIMINATOR: &'a u8 = &51;
 
     pub fn process(self) -> ProgramResult {
         let Token2022InitMint {
