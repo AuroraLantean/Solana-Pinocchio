@@ -136,16 +136,25 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitMint<'a> {
         })
     }
 }
+/*https://www.helius.dev/blog/pinocchio#how-is-pinocchio-more-performant-than-solana-program
+#[derive(BorshDeserialize, Debug)]
+pub struct CreateTokenArgs {
+    pub name: String,
+    pub symbol: String,
+    pub uri: String,
+    pub decimals: u8,
+}
+
 // Initialize MetadataPointer extension pointing to the Mint account
-/*InitializeMetadataPointer {
+InitializeMetadataPointer {
     mint: mint,
     authority: Some(*payer.key()),
     metadata_address: Some(*mint.key()),
 }
-.invoke()?;*/
+.invoke()?;
 
 // Set the metadata within the Mint account
-/*InitializeTokenMetadata {
+InitializeTokenMetadata {
     metadata: mint,
     update_authority: payer,
     mint: mint,

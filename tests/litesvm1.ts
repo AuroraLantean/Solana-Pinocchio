@@ -7,16 +7,24 @@ import {
 	Transaction,
 	TransactionInstruction,
 } from "@solana/web3.js";
+//Node-LiteSVM uses web3.js! https://github.com/LiteSVM/litesvm/tree/master/crates/node-litesvm
 import { LiteSVM } from "litesvm";
+/*import {
+	getAssociatedTokenAddressSync,
+	AccountLayout,
+	ACCOUNT_SIZE,
+	TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+*/
 import * as vault from "../clients/js/src/generated/index";
-import { getLamports, helloworldProgram } from "./litesvm-setup";
-import { ll } from "./utils";
+import { getLamports, helloworldProgram, ll } from "./litesvm-utils";
+
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
 
-const svm = new LiteSVM();
 const adminKp = new Keypair();
 
 test("transfer SOL", () => {
+	const svm = new LiteSVM();
 	svm.airdrop(adminKp.publicKey, BigInt(LAMPORTS_PER_SOL));
 	const receiver = PublicKey.unique();
 	const blockhash = svm.latestBlockhash();
@@ -35,7 +43,6 @@ test("transfer SOL", () => {
 	svm.sendTransaction(tx);
 	const balanceAfter = svm.getBalance(receiver);
 	expect(balanceAfter).toStrictEqual(transferLamports);
-	//assert.strictEqual(balanceAfter, transferLamports);
 
 	/*const c = svm.getClock();
     svm.setClock(
@@ -45,22 +52,20 @@ test("transfer SOL", () => {
 
 test("hello world", () => {
 	const [svm, programId, greetedPubkey] = helloworldProgram();
-	const lamports = getLamports(svm, greetedPubkey);
-	expect(lamports).toEqual(LAMPORTS_PER_SOL);
-	//assert.strictEqual(lamports, LAMPORTS_PER_SOL);
+
 	const payer = new Keypair();
 	svm.airdrop(payer.publicKey, BigInt(LAMPORTS_PER_SOL));
+	const lamports = getLamports(svm, greetedPubkey);
+	ll("payer SOL balc:", lamports);
+	expect(lamports).toEqual(LAMPORTS_PER_SOL);
+
 	const blockhash = svm.latestBlockhash();
+
 	const greetedAccountBefore = svm.getAccount(greetedPubkey);
 	expect(greetedAccountBefore).not.toBeNull();
 	expect(greetedAccountBefore?.data).toStrictEqual(
 		new Uint8Array([0, 0, 0, 0]),
 	);
-	/*assert.notStrictEqual(greetedAccountBefore, null);
-	assert.deepStrictEqual(
-		greetedAccountBefore?.data,
-		new Uint8Array([0, 0, 0, 0]),
-	);*/
 
 	const ix = new TransactionInstruction({
 		keys: [{ pubkey: greetedPubkey, isSigner: false, isWritable: true }],
@@ -72,14 +77,10 @@ test("hello world", () => {
 	tx.add(ix);
 	tx.sign(payer);
 	svm.sendTransaction(tx);
+
 	const greetedAccountAfter = svm.getAccount(greetedPubkey);
 	expect(greetedAccountAfter).not.toBeNull();
 	expect(greetedAccountAfter?.data).toStrictEqual(new Uint8Array([1, 0, 0, 0]));
-	/*assert.notStrictEqual(greetedAccountAfter, null);
-	assert.deepStrictEqual(
-		greetedAccountAfter?.data,
-		new Uint8Array([1, 0, 0, 0]),
-	);*/
 });
 /*
 export const makeAccount = () => {
