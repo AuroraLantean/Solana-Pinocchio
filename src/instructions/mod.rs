@@ -8,6 +8,8 @@ use pinocchio::{
 use pinocchio_token_2022::state::{Mint as Mint22, TokenAccount as TokenAccount22};
 
 #[allow(non_snake_case)]
+pub mod closeConfig;
+#[allow(non_snake_case)]
 pub mod depositSol;
 #[allow(non_snake_case)]
 pub mod tok22InitATA;
@@ -31,6 +33,7 @@ pub mod utils;
 #[allow(non_snake_case)]
 pub mod withdrawSol;
 
+pub use closeConfig::*;
 pub use depositSol::*;
 pub use tok22InitATA::*;
 pub use tok22InitMint::*;
@@ -156,6 +159,20 @@ pub enum ProgramIx {
     #[account(5, name = "system_program", desc = "System Program")]
     #[account(6, name = "atoken_program", desc = "AToken Program")]
     Tok22MintToken { decimals: u8, amount: u64 },
+
+    /// 11 Init Config PDA
+    #[account(0, signer, writable, name = "authority", desc = "Authority")]
+    #[account(1, name = "pda", desc = "PDA")]
+    #[account(2, name = "dest", desc = "Destination")]
+    //#[account(5, name = "system_program", desc = "System Program")]
+    InitConfigPda {},
+
+    /// 12 Close Config PDA
+    #[account(0, signer, writable, name = "authority", desc = "Authority")]
+    #[account(1, name = "pda", desc = "PDA")]
+    #[account(2, name = "dest", desc = "Destination")]
+    //#[account(5, name = "system_program", desc = "System Program")]
+    CloseConfigPda {},
 } //update here and lib.rs for new functions
 
 //-------------==
