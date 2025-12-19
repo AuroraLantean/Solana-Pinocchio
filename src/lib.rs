@@ -1,8 +1,5 @@
 /*lib.rs serves as your program’s entrypoint
-- takes in the program ID, accounts, and instruction data, then reads the first byte as a discriminator to determine which method to call (for example, 0 = Deposit, 1 = Withdraw).
- *
- *
- */
+- takes in the program ID, accounts, and instruction data, then reads the first byte as a discriminator to determine which method to call (for example, 0 = Deposit, 1 = Withdraw). */
 #![no_std]
 
 use pinocchio::{
@@ -50,6 +47,7 @@ fn process_instruction(
         }
         InitConfig::DISCRIMINATOR => InitConfig::try_from((data, accounts))?.process(),
         CloseConfigPda::DISCRIMINATOR => CloseConfigPda::try_from((data, accounts))?.process(),
+        UpdateConfig::DISCRIMINATOR => UpdateConfig::try_from((data, accounts))?.process(),
         _ => Err(ProgramError::Custom(0)),
-    }
+    } //file names start with a lower case + Camel cases, but struct names start with Upper case + Camel cases!
 }

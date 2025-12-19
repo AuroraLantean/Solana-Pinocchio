@@ -31,10 +31,12 @@ pub mod tokLgcMintToken;
 pub mod tokLgcRedeem;
 #[allow(non_snake_case)]
 pub mod tokLgcWithdraw;
+#[allow(non_snake_case)]
+pub mod updateConfig;
 pub mod utils;
 #[allow(non_snake_case)]
 pub mod withdrawSol;
-
+//file names start with a lower case + Camel cases, but struct names start with Upper case + Camel cases!
 pub use closeConfig::*;
 pub use depositSol::*;
 pub use initConfig::*;
@@ -47,6 +49,7 @@ pub use tokLgcInitMint::*;
 pub use tokLgcMintToken::*;
 pub use tokLgcRedeem::*;
 pub use tokLgcWithdraw::*;
+pub use updateConfig::*;
 pub use utils::*;
 pub use withdrawSol::*;
 
@@ -175,6 +178,12 @@ pub enum ProgramIx<'a> {
     #[account(2, name = "dest", desc = "Destination")]
     //#[account(5, name = "system_program", desc = "System Program")]
     CloseConfigPda {},
+
+    /// 13 Update PDA
+    #[account(0, signer, writable, name = "authority", desc = "Authority")]
+    #[account(1, name = "pda", desc = "PDA")]
+    #[account(2, name = "addr", desc = "Addr")]
+    UpdateConfig { amount: u64 },
 } //update here and lib.rs for new functions
 
 //-------------==

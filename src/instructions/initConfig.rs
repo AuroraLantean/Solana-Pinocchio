@@ -10,7 +10,7 @@ use pinocchio_log::log;
 
 use crate::{derive_pda1, instructions::check_signer, parse_u64, writable};
 
-/// Close PDA
+/// Init Config PDA
 pub struct InitConfig<'a> {
     pub authority: &'a AccountInfo,
     pub pda: &'a AccountInfo,
