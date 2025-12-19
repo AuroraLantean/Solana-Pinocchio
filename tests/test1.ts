@@ -17,21 +17,14 @@ import {
 	sendTxn,
 	user1Addr,
 	user1Kp,
+	vaultAta1,
+	vaultPDA,
+	vaultPDA1,
 	vaultProgAddr,
 	vaultRent,
 } from "./httpws";
 import { getAta, makeATA } from "./tokens";
-import { ATokenGPvbd, findPda, ll, makeSolAmt } from "./utils";
-
-const pda_bump = await findPda(adminAddr, "vault");
-const vaultPDA = pda_bump.pda;
-ll(`✅ - Vault PDA: ${vaultPDA}`);
-const pda_bump1 = await findPda(user1Addr, "vault");
-const vaultPDA1 = pda_bump1.pda;
-ll(`✅ - vaultPDA1: ${vaultPDA1}`);
-
-const vaultAtabump1 = await getAta(mint, vaultPDA1);
-const vaultAta1 = vaultAtabump1.ata;
+import { ATokenGPvbd, ll, makeSolAmt } from "./utils";
 
 const amtDeposit = makeSolAmt(10);
 const amtWithdraw = makeSolAmt(9);

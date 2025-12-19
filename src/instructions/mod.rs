@@ -181,9 +181,13 @@ pub enum ProgramIx<'a> {
 
   /// 13 Update PDA
   #[account(0, signer, writable, name = "authority", desc = "Authority")]
-  #[account(1, name = "pda", desc = "PDA")]
-  #[account(2, name = "addr", desc = "Addr")]
-  UpdateConfig { amount: u64 },
+  #[account(1, writable, name = "pda1", desc = "PDA1")]
+  #[account(2, name = "pda2", desc = "PDA2")]
+  UpdateConfig {
+    u8s: [u8; 8],
+    u32s: [u32; 4],
+    u64s: [u64; 4],
+  },
 } //update here and lib.rs for new functions
 
 /// Derive the vault PDA for an user -> (pda, bump)
@@ -195,17 +199,17 @@ pub fn derive_pda1(user: &AccountInfo, bstr: &[u8]) -> Result<(Pubkey, u8), Prog
 }
 pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
   if !account.is_signer() {
-    return Err(ProgramError::MissingRequiredSignature);
+    return Err(MyError::NotSigner.into());
   }
   Ok(())
 }
 pub fn check_mint0a(mint: &AccountInfo, token_program: &AccountInfo) -> Result<(), ProgramError> {
   //if !mint.is_owned_by(mint_authority)
   if mint.data_len() != pinocchio_token::state::Mint::LEN {
-    return Err(ProgramError::Custom(402));
+    return Err(MyError::MintDataLen.into());
   }
   if !token_program.key().eq(&pinocchio_token::ID) {
-    return Err(ProgramError::Custom(403));
+    return Err(MyError::TokenProgramInvalid.into());
   }
   Ok(())
 }
@@ -224,7 +228,7 @@ pub fn check_mint0b(
     return Err(ProgramError::IncorrectAuthority);
   }
   if decimals != mint_info.decimals() {
-    return Err(ProgramError::Custom(404));
+    return Err(MyError::DecimalsValue.into());
   }
   check_mint0a(mint, token_program)?;
   //TODO: over mint supply?
@@ -233,10 +237,10 @@ pub fn check_mint0b(
 pub fn check_mint22a(mint: &AccountInfo, token_program: &AccountInfo) -> Result<(), ProgramError> {
   //if !mint.is_owned_by(mint_authority)
   if mint.data_len() != pinocchio_token_2022::state::Mint::BASE_LEN {
-    return Err(ProgramError::Custom(405));
+    return Err(MyError::MintDataLen.into());
   }
   if !token_program.key().eq(&pinocchio_token_2022::ID) {
-    return Err(ProgramError::Custom(406));
+    return Err(MyError::TokenProgramInvalid.into());
   }
   Ok(())
 }
@@ -255,7 +259,7 @@ pub fn check_mint22b(
     return Err(ProgramError::IncorrectAuthority);
   }
   if decimals != mint_info.decimals() {
-    return Err(ProgramError::Custom(407));
+    return Err(MyError::DecimalsValue.into());
   }
   check_mint22a(mint, token_program)?;
   //TODO: over mint supply?
@@ -264,7 +268,7 @@ pub fn check_mint22b(
 pub fn check_decimals(mint: &AccountInfo, decimals: u8) -> Result<(), ProgramError> {
   let mint_info = pinocchio_token::state::Mint::from_account_info(mint)?;
   if decimals != mint_info.decimals() {
-    return Err(ProgramError::Custom(408));
+    return Err(MyError::DecimalsValue.into());
   }
   Ok(())
 }
@@ -277,14 +281,14 @@ pub fn check_ata(
     .data_len()
     .ne(&pinocchio_token::state::TokenAccount::LEN)
   {
-    return Err(ProgramError::Custom(409));
+    return Err(MyError::TokAcctDataLen.into());
   }
   let ata_info = pinocchio_token::state::TokenAccount::from_account_info(ata)?;
   if !ata_info.owner().eq(owner.key()) {
     return Err(ProgramError::InvalidAccountOwner);
   }
   if !ata_info.mint().eq(mint.key()) {
-    return Err(ProgramError::Custom(410));
+    return Err(MyError::AtaOrMint.into());
   }
   Ok(())
 }
@@ -296,10 +300,10 @@ pub fn check_ata22(
   // token2022 ata has first 165 bytes the same as the legacy ata, but then some more data //log!("ata22 len:{}", ata.data_len());
   let ata_info = TokenAccount22::from_account_info(ata)?;
   if !ata_info.owner().eq(owner.key()) {
-    return Err(ProgramError::InvalidAccountOwner);
+    return Err(MyError::AtaOrOwner.into());
   }
   if !ata_info.mint().eq(mint.key()) {
-    return Err(ProgramError::Custom(411));
+    return Err(MyError::AtaOrMint.into());
   }
   Ok(())
 }
@@ -316,20 +320,23 @@ pub fn check_ata_x(
   .0
   .ne(ata.key())
   {
-    return Err(ProgramError::Custom(421));
+    return Err(MyError::AtaCheckFailed.into());
   }
   Ok(())
 }
 pub fn check_sysprog(system_program: &AccountInfo) -> Result<(), ProgramError> {
   if !system_program.key().eq(&pinocchio_system::ID) {
-    return Err(ProgramError::Custom(412));
+    return Err(MyError::SystemProgramInvalid.into());
   }
   Ok(())
 }
 
 pub fn check_pda(account: &AccountInfo) -> Result<(), ProgramError> {
+  if account.lamports() == 0 {
+    return Err(MyError::PdaNoInitialized.into());
+  }
   if !account.is_owned_by(&crate::ID) {
-    return Err(ProgramError::Custom(413));
+    return Err(MyError::ForeignPDA.into());
   }
   Ok(())
 }
@@ -337,23 +344,23 @@ pub fn empty_lamport(account: &AccountInfo) -> Result<(), ProgramError> {
   if account.lamports() == 0 {
     return Ok(());
   }
-  Err(ProgramError::Custom(414))
+  Err(MyError::EmptyLamport.into())
 }
 pub fn empty_data(account: &AccountInfo) -> Result<(), ProgramError> {
   if account.data_len() == 0 {
     return Ok(());
   }
-  Err(ProgramError::Custom(415))
+  Err(MyError::EmptyData.into())
 }
 pub fn writable(account: &AccountInfo) -> Result<(), ProgramError> {
   if !account.is_writable() {
-    return Err(ProgramError::Custom(416));
+    return Err(MyError::NotWritable.into());
   }
   Ok(())
 }
 pub fn executable(account: &AccountInfo) -> Result<(), ProgramError> {
   if !account.executable() {
-    return Err(ProgramError::Custom(417));
+    return Err(MyError::NotExecutable.into());
   }
   Ok(())
 }
@@ -367,16 +374,16 @@ pub fn rent_exempt(account: &AccountInfo, acc_type: u8) -> Result<(), ProgramErr
     return Err(ProgramError::AccountNotRentExempt);
   }
   if acc_type > 1 {
-    return Err(ProgramError::Custom(418));
+    return Err(MyError::AcctType.into());
   }
   Ok(())
 }
 pub fn check_str_len(s: &str, min_len: usize, max_len: usize) -> Result<(), ProgramError> {
   if s.len() < min_len {
-    return Err(ProgramError::Custom(419));
+    return Err(MyError::StrOverMax.into());
   }
   if s.len() > max_len {
-    return Err(ProgramError::Custom(420));
+    return Err(MyError::StrUnderMin.into());
   }
   Ok(())
 }

@@ -2,7 +2,7 @@ use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
 use pinocchio_log::log;
 
-use crate::{check_pda, instructions::check_signer, parse_u32, parse_u64, writable};
+use crate::{check_pda, instructions::check_signer, parse_u32, parse_u64, writable, MyError};
 pub struct UpdateConfigStatus<'a> {
   pub authority: &'a AccountInfo,
 }
@@ -29,21 +29,21 @@ impl<'a> UpdateConfig<'a> {
   pub fn process(self) -> ProgramResult {
     let UpdateConfig {
       authority,
-      pda1,
-      pda2,
-      u8s,
-      u32s,
+      pda1: _,
+      pda2: _,
+      u8s: _,
+      u32s: _,
       u64s: _,
       //datalen: _,
     } = self;
     log!("UpdateConfig process()");
     check_signer(authority)?;
-    writable(pda1)?;
+    //writable(pda1)?;
     //writable(pda2)?;
 
     log!("UpdateConfig 2");
-    check_pda(pda1)?;
-    check_pda(pda2)?;
+    //check_pda(pda1)?;
+    //check_pda(pda2)?;
     log!("UpdateConfig 3");
 
     log!("UpdateConfig 4");
@@ -53,7 +53,7 @@ impl<'a> UpdateConfig<'a> {
       len if len == size_of::<UpdateConfigStatus>() => self.update_status()?,
       len if len == size_of::<UpdateConfigFee>() => self.update_fee()?,
       len if len == size_of::<UpdateConfigAuthority>() => self.update_authority()?,
-      _ => return Err(ProgramError::Custom(500)),
+      _ => return Err(..),
     }*/
     Ok(())
   }
@@ -74,16 +74,19 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     log!("UpdateConfig try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
-    let datalen = data.len();
 
     let [authority, pda1, pda2] = accounts else {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     //TODO: check all data size in every function
-    let u64size = core::mem::size_of::<u64>();
-    if data.len() != (u64size * 2 + 2) {
-      return Err(ProgramError::InvalidInstructionData);
+    //u32size = core::mem::size_of::<u32>();//4
+    // u64size = core::mem::size_of::<u64>();//8
+    //let expected_size = 8 + u32size * 4 + u64size * 4; // 8 + 4*4+ 8*4 = 56
+    let expected_size: usize = 56;
+    log!("expected_size: {}", expected_size);
+    if data.len() != expected_size {
+      return Err(MyError::InputDataLen.into());
     }
     let u8s = [
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],

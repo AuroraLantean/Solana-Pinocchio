@@ -17,6 +17,7 @@ export const ATokenGPvbd =
 
 export const decimalsSOL = BigInt(9);
 export const baseSOL = BigInt(10) ** decimalsSOL;
+export const getLam = (amt: number) => BigInt(amt) * baseSOL;
 export const amtAirdrop = BigInt(100) * baseSOL;
 
 export const network = "mainnet-beta"; //devnet
@@ -73,4 +74,7 @@ export const uint8ToStr = (uint8Arr: number[]) => {
 	//const str2 = String.fromCharCode.apply(null, filterred);
 	//ll("string:", str2, str2.length);
 	return str;
+};
+export const getTime = () => {
+	return Math.floor(Date.now() / 1000);
 };

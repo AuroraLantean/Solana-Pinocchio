@@ -17,8 +17,9 @@ import {
 } from "@solana/kit";
 import { LAMPORTS_PER_SOL } from "gill";
 import * as vault from "../clients/js/src/generated/index";
+import { getAta } from "./tokens";
 import type { Data1 } from "./types";
-import { llbalc } from "./utils";
+import { findPda, llbalc } from "./utils";
 
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
 
@@ -99,6 +100,20 @@ ll(`✅ - Airdropped SOL to Admin and user1Addr`);
 const ACCOUNT_DISCRIMINATOR_SIZE = 8; // same as Anchor/Rust
 const U64_SIZE = 8; // u64 is 8 bytes
 const VAULT_SIZE = ACCOUNT_DISCRIMINATOR_SIZE + U64_SIZE; // 16
+
+const pda_bump = await findPda(adminAddr, "vault");
+export const vaultPDA = pda_bump.pda;
+ll(`✅ - Vault PDA: ${vaultPDA}`);
+const pda_bump1 = await findPda(user1Addr, "vault");
+export const vaultPDA1 = pda_bump1.pda;
+ll(`✅ - vaultPDA1: ${vaultPDA1}`);
+
+const configPdaBump = await findPda(user1Addr, "vault");
+export const configPDA = configPdaBump.pda;
+ll(`✅ - configPDA: ${configPDA}`);
+
+const vaultAtabump1 = await getAta(mint, vaultPDA1);
+export const vaultAta1 = vaultAtabump1.ata;
 
 // get vault rent
 export const vaultRent = await rpc

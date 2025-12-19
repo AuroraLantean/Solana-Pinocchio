@@ -3,8 +3,7 @@
 #![no_std]
 
 use pinocchio::{
-    account_info::AccountInfo, entrypoint, program_error::ProgramError, pubkey::Pubkey,
-    ProgramResult,
+  account_info::AccountInfo, entrypoint, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
 };
 use pinocchio_pubkey::declare_id;
 
@@ -16,38 +15,34 @@ pub use instructions::*;
 declare_id!("7EKqBVYSCmJbt2T8tGSmwzNKnpL29RqcJcyUr9aEEr6e"); //crate::ID
 
 fn process_instruction(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    instruction_data: &[u8],
+  program_id: &Pubkey,
+  accounts: &[AccountInfo],
+  instruction_data: &[u8],
 ) -> ProgramResult {
-    if program_id != &crate::ID {
-        return Err(ProgramError::IncorrectProgramId);
-    }
-    // `split_first` separates the first byte (discriminator) from the rest (payload).
-    let (discriminator, data) = instruction_data
-        .split_first()
-        .ok_or(ProgramError::InvalidInstructionData)?;
+  if program_id != &crate::ID {
+    return Err(ProgramError::IncorrectProgramId);
+  }
+  // `split_first` separates the first byte (discriminator) from the rest (payload).
+  let (discriminator, data) = instruction_data
+    .split_first()
+    .ok_or(ProgramError::InvalidInstructionData)?;
 
-    //reads the first byte as a discriminator to determine which method to call (here: 0 = DepositSol, 1 = WithdrawSol).
-    match discriminator {
-        DepositSol::DISCRIMINATOR => DepositSol::try_from((data, accounts))?.process(),
-        WithdrawSol::DISCRIMINATOR => WithdrawSol::try_from((data, accounts))?.process(),
-        TokenLgcInitMint::DISCRIMINATOR => TokenLgcInitMint::try_from((data, accounts))?.process(),
-        TokenLgcInitAta::DISCRIMINATOR => TokenLgcInitAta::try_from((data, accounts))?.process(),
-        TokLgcMintToken::DISCRIMINATOR => TokLgcMintToken::try_from((data, accounts))?.process(),
-        TokLgcDeposit::DISCRIMINATOR => TokLgcDeposit::try_from((data, accounts))?.process(),
-        TokLgcWithdraw::DISCRIMINATOR => TokLgcWithdraw::try_from((data, accounts))?.process(),
-        TokLgcRedeem::DISCRIMINATOR => TokLgcRedeem::try_from((data, accounts))?.process(),
-        Token2022InitMint::DISCRIMINATOR => {
-            Token2022InitMint::try_from((data, accounts))?.process()
-        }
-        Token2022InitAta::DISCRIMINATOR => Token2022InitAta::try_from((data, accounts))?.process(),
-        Token2022MintToken::DISCRIMINATOR => {
-            Token2022MintToken::try_from((data, accounts))?.process()
-        }
-        InitConfig::DISCRIMINATOR => InitConfig::try_from((data, accounts))?.process(),
-        CloseConfigPda::DISCRIMINATOR => CloseConfigPda::try_from((data, accounts))?.process(),
-        UpdateConfig::DISCRIMINATOR => UpdateConfig::try_from((data, accounts))?.process(),
-        _ => Err(ProgramError::Custom(0)),
-    } //file names start with a lower case + Camel cases, but struct names start with Upper case + Camel cases!
+  //reads the first byte as a discriminator to determine which method to call (here: 0 = DepositSol, 1 = WithdrawSol).
+  match discriminator {
+    DepositSol::DISCRIMINATOR => DepositSol::try_from((data, accounts))?.process(),
+    WithdrawSol::DISCRIMINATOR => WithdrawSol::try_from((data, accounts))?.process(),
+    TokenLgcInitMint::DISCRIMINATOR => TokenLgcInitMint::try_from((data, accounts))?.process(),
+    TokenLgcInitAta::DISCRIMINATOR => TokenLgcInitAta::try_from((data, accounts))?.process(),
+    TokLgcMintToken::DISCRIMINATOR => TokLgcMintToken::try_from((data, accounts))?.process(),
+    TokLgcDeposit::DISCRIMINATOR => TokLgcDeposit::try_from((data, accounts))?.process(),
+    TokLgcWithdraw::DISCRIMINATOR => TokLgcWithdraw::try_from((data, accounts))?.process(),
+    TokLgcRedeem::DISCRIMINATOR => TokLgcRedeem::try_from((data, accounts))?.process(),
+    Token2022InitMint::DISCRIMINATOR => Token2022InitMint::try_from((data, accounts))?.process(),
+    Token2022InitAta::DISCRIMINATOR => Token2022InitAta::try_from((data, accounts))?.process(),
+    Token2022MintToken::DISCRIMINATOR => Token2022MintToken::try_from((data, accounts))?.process(),
+    InitConfig::DISCRIMINATOR => InitConfig::try_from((data, accounts))?.process(),
+    CloseConfigPda::DISCRIMINATOR => CloseConfigPda::try_from((data, accounts))?.process(),
+    UpdateConfig::DISCRIMINATOR => UpdateConfig::try_from((data, accounts))?.process(),
+    _ => Err(MyError::InvalidDiscriminator.into()),
+  } //file names start with a lower case + Camel cases, but struct names start with Upper case + Camel cases!
 }
