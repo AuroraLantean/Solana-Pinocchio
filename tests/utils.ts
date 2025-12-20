@@ -67,12 +67,20 @@ export const llbalc = (name: string, amt: string) => {
 	ll(`${chalk.bgBlue(name)} balc: ${chalk.yellow(amt)}`);
 };
 
-export const uint8ToStr = (uint8Arr: number[]) => {
-	const filterred = uint8Arr.filter((item) => item !== 0);
+export const strToU8Array = (str: string) => {
+	const u8array = Uint8Array.from(
+		Array.from(str).map((letter) => letter.charCodeAt(0)),
+	);
+	ll("u8array:", u8array);
+	return u8array;
+};
+export const u8ArrayToStr = (u8Array: Uint8Array) => {
+	const filterred = u8Array.filter((item) => item !== 0);
 	const str = Buffer.from(filterred).toString();
 	//ll("string:", str, str.length);
 	//const str2 = String.fromCharCode.apply(null, filterred);
 	//ll("string:", str2, str2.length);
+	ll("string:", str);
 	return str;
 };
 export const getTime = () => {

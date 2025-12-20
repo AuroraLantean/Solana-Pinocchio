@@ -25,7 +25,7 @@ fn process_instruction(
   // `split_first` separates the first byte (discriminator) from the rest (payload).
   let (discriminator, data) = instruction_data
     .split_first()
-    .ok_or(ProgramError::InvalidInstructionData)?;
+    .ok_or_else(|| ProgramError::InvalidInstructionData)?;
 
   //reads the first byte as a discriminator to determine which method to call (here: 0 = DepositSol, 1 = WithdrawSol).
   match discriminator {

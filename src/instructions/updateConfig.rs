@@ -2,7 +2,9 @@ use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
 use pinocchio_log::log;
 
-use crate::{check_pda, instructions::check_signer, parse_u32, parse_u64, writable, MyError};
+use crate::{
+  instructions::check_signer, parse_u32, parse_u64, u8_slice_to_array, u8_to_bool, MyError,
+};
 pub struct UpdateConfigStatus<'a> {
   pub authority: &'a AccountInfo,
 }
@@ -18,10 +20,11 @@ pub struct UpdateConfig<'a> {
   pub authority: &'a AccountInfo,
   pub pda1: &'a AccountInfo,
   pub pda2: &'a AccountInfo,
-  pub u8s: [u8; 8],
+  pub bools: [bool; 4],
+  pub u8s: [u8; 4],
   pub u32s: [u32; 4],
   pub u64s: [u64; 4],
-  //pub datalen: usize,
+  pub str_u8array: &'a [u8; 32], //pub str_u8: &'a [u8], //pub datalen: usize,
 }
 impl<'a> UpdateConfig<'a> {
   pub const DISCRIMINATOR: &'a u8 = &13;
@@ -31,10 +34,11 @@ impl<'a> UpdateConfig<'a> {
       authority,
       pda1: _,
       pda2: _,
+      bools: _,
       u8s: _,
       u32s: _,
       u64s: _,
-      //datalen: _,
+      str_u8array: _, //datalen: _,
     } = self;
     log!("UpdateConfig process()");
     check_signer(authority)?;
@@ -80,17 +84,25 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     };
 
     //TODO: check all data size in every function
-    //u32size = core::mem::size_of::<u32>();//4
-    // u64size = core::mem::size_of::<u64>();//8
-    //let expected_size = 8 + u32size * 4 + u64size * 4; // 8 + 4*4+ 8*4 = 56
+    /*u32size = core::mem::size_of::<u32>();//4
+    u64size = core::mem::size_of::<u64>();//8
+    let expected_size = 8 + u32size * 4 + u64size * 4; // 8 + 4*4+ 8*4 = 56
     let expected_size: usize = 56;
     log!("expected_size: {}", expected_size);
     if data.len() != expected_size {
       return Err(MyError::InputDataLen.into());
+    }*/
+    let max_data_len = 88; //56+32
+    if data.len() > max_data_len {
+      return Err(MyError::InputDataLengthOverMax.into());
     }
-    let u8s = [
-      data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
-    ];
+    let b0 = u8_to_bool(data[0])?;
+    let b1 = u8_to_bool(data[1])?;
+    let b2 = u8_to_bool(data[2])?;
+    let b3 = u8_to_bool(data[3])?;
+    let bools = [b0, b1, b2, b3];
+
+    let u8s = [data[4], data[5], data[6], data[7]];
     let u32a = parse_u32(&data[8..12])?;
     let u32b = parse_u32(&data[12..16])?;
     let u32c = parse_u32(&data[16..20])?;
@@ -102,13 +114,18 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let num64d = parse_u64(&data[48..56])?;
     let u64s = [num64a, num64b, num64c, num64d];
     log!("u8s: {}, u32s: {}, u64s: {}", &u8s, &u32s, &u64s);
+    let str_u8: &[u8] = &data[56..max_data_len];
+    log!("str_u8: {}", str_u8);
+    let str_u8array = u8_slice_to_array(str_u8)?;
     Ok(Self {
       authority,
       pda1,
       pda2,
       u8s,
+      bools,
       u32s,
       u64s,
+      str_u8array,
     })
   }
 }

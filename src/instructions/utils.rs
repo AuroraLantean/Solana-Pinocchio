@@ -60,6 +60,12 @@ pub enum MyError {
   MintOrTokenProgram,
   #[error("Tok22AcctDisciminatorOffset")]
   Tok22AcctDisciminatorOffset,
+  #[error("InputDataLengthOverMax")]
+  InputDataLengthOverMax,
+  #[error("InputStrSliceOverMax")]
+  InputStrSliceOverMax,
+  #[error("InputU8InvalidForBool")]
+  InputU8InvalidForBool,
 }
 impl From<MyError> for ProgramError {
   fn from(e: MyError) -> Self {
@@ -98,6 +104,9 @@ impl TryFrom<u32> for MyError {
       23 => Ok(MyError::ParseU64),
       24 => Ok(MyError::MintOrTokenProgram),
       25 => Ok(MyError::Tok22AcctDisciminatorOffset),
+      26 => Ok(MyError::InputDataLengthOverMax),
+      27 => Ok(MyError::InputStrSliceOverMax),
+      28 => Ok(MyError::InputU8InvalidForBool),
       _ => Err(ProgramError::InvalidArgument),
     }
   }
@@ -132,6 +141,9 @@ impl ToStr for MyError {
       MyError::ParseU64 => "ParseU64",
       MyError::MintOrTokenProgram => "MintOrTokenProgram",
       MyError::Tok22AcctDisciminatorOffset => "Tok22AcctDisciminatorOffset",
+      MyError::InputDataLengthOverMax => "InputDataLengthOverMax",
+      MyError::InputStrSliceOverMax => "InputStrSliceOverMax",
+      MyError::InputU8InvalidForBool => "InputU8InvalidForBool",
     }
   }
 }
@@ -168,6 +180,19 @@ pub fn parse_u32(data: &[u8]) -> Result<u32, ProgramError> {
     return Err(MyError::ZeroAsInput.into());
   }
   Ok(amt)
+}
+pub fn u8_slice_to_array(str_u8: &[u8]) -> Result<&[u8; 32], ProgramError> {
+  let str_u8array: &[u8; 32] = str_u8
+    .try_into()
+    .map_err(|_| MyError::InputStrSliceOverMax)?;
+  return Ok(str_u8array);
+}
+pub fn u8_to_bool(v: u8) -> Result<bool, ProgramError> {
+  match v {
+    0 => Ok(false),
+    1 => Ok(true),
+    _ => Err(MyError::InputU8InvalidForBool.into()),
+  }
 }
 //----------------==
 //----------------==

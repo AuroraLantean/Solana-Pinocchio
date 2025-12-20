@@ -184,9 +184,11 @@ pub enum ProgramIx<'a> {
   #[account(1, writable, name = "pda1", desc = "PDA1")]
   #[account(2, name = "pda2", desc = "PDA2")]
   UpdateConfig {
-    u8s: [u8; 8],
+    bools: [u8; 4],
+    u8s: [u8; 4],
     u32s: [u32; 4],
     u64s: [u64; 4],
+    str_u8: [u8; 32],
   },
 } //update here and lib.rs for new functions
 
@@ -195,7 +197,7 @@ pub fn derive_pda1(user: &AccountInfo, bstr: &[u8]) -> Result<(Pubkey, u8), Prog
   //find_program_address(&[b"vault", user.key().as_ref()], &crate::ID)
   // let (pda, _bump) =
   try_find_program_address(&[bstr, user.key().as_ref()], &crate::ID)
-    .ok_or(ProgramError::InvalidSeeds)
+    .ok_or_else(|| ProgramError::InvalidSeeds)
 }
 pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
   if !account.is_signer() {
