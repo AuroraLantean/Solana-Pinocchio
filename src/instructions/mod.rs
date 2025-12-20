@@ -274,6 +274,18 @@ pub fn check_decimals(mint: &AccountInfo, decimals: u8) -> Result<(), ProgramErr
   }
   Ok(())
 }
+pub fn check_decimals_max(decimals: u8, max: u8) -> Result<(), ProgramError> {
+  if decimals > max {
+    return Err(MyError::DecimalsValue.into());
+  }
+  Ok(())
+}
+pub fn input_data_len(data: &[u8], min: usize) -> Result<(), ProgramError> {
+  if data.len() < min {
+    return Err(MyError::InputDataLen.into());
+  }
+  Ok(())
+}
 pub fn check_ata(
   ata: &AccountInfo,
   owner: &AccountInfo,
