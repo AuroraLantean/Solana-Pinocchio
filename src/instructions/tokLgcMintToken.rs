@@ -3,7 +3,7 @@ use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramR
 use pinocchio_log::log;
 
 use crate::{
-  check_ata, check_mint0b, check_sysprog, executable, input_data_len, instructions::check_signer,
+  check_ata, check_mint0b, check_sysprog, executable, instructions::check_signer, min_data_len,
   parse_u64, rent_exempt, writable,
 };
 
@@ -93,7 +93,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcMintToken<'a> {
     };
 
     //1+8: u8 takes 1, u64 takes 8 bytes
-    input_data_len(data, 9)?;
+    min_data_len(data, 9)?;
     let decimals = data[0];
     let amount = parse_u64(&data[1..])?;
     log!("decimals: {}, amount: {}", decimals, amount);

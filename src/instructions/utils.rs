@@ -74,6 +74,8 @@ pub enum MyError {
   U16ByteSizeInvalid,
   #[error("U8ByteSizeInvalid")]
   U8ByteSizeInvalid,
+  #[error("VaultPDA")]
+  VaultPDA,
 }
 impl From<MyError> for ProgramError {
   fn from(e: MyError) -> Self {
@@ -119,6 +121,7 @@ impl TryFrom<u32> for MyError {
       30 => Ok(MyError::U32ByteSizeInvalid),
       31 => Ok(MyError::U16ByteSizeInvalid),
       32 => Ok(MyError::U8ByteSizeInvalid),
+      33 => Ok(MyError::VaultPDA),
       _ => Err(ProgramError::InvalidArgument),
     }
   }
@@ -160,6 +163,7 @@ impl ToStr for MyError {
       MyError::U32ByteSizeInvalid => "U32ByteSizeInvalid",
       MyError::U16ByteSizeInvalid => "U16ByteSizeInvalid",
       MyError::U8ByteSizeInvalid => "U8ByteSizeInvalid",
+      MyError::VaultPDA => "VaultPDA",
     }
   }
 }

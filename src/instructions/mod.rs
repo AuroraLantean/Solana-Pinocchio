@@ -280,7 +280,7 @@ pub fn check_decimals_max(decimals: u8, max: u8) -> Result<(), ProgramError> {
   }
   Ok(())
 }
-pub fn input_data_len(data: &[u8], min: usize) -> Result<(), ProgramError> {
+pub fn min_data_len(data: &[u8], min: usize) -> Result<(), ProgramError> {
   if data.len() < min {
     return Err(MyError::InputDataLen.into());
   }
