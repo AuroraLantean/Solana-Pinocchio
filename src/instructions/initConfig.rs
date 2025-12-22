@@ -8,12 +8,14 @@ use pinocchio::{
 };
 use pinocchio_log::log;
 
-use crate::{derive_pda1, instructions::check_signer, parse_u64, writable, MyError, VAULT_SEED};
+use crate::{
+  check_pda, derive_pda1, instructions::check_signer, parse_u64, writable, MyError, VAULT_SEED,
+};
 
 /// Init Config PDA
 pub struct InitConfig<'a> {
   pub authority: &'a AccountInfo,
-  pub pda: &'a AccountInfo,
+  pub config_pda: &'a AccountInfo,
   pub system_program: &'a AccountInfo,
   //pub seeds: &'a [Seed<'a>],
   pub space: u64,
@@ -24,19 +26,17 @@ impl<'a> InitConfig<'a> {
   pub fn process(self) -> ProgramResult {
     let InitConfig {
       authority,
-      pda,
+      config_pda,
       system_program: _,
       //seeds,
       space,
     } = self;
     log!("InitConfig process()");
     check_signer(authority)?;
-    writable(pda)?;
+    //writable(config_pda)?;
 
     log!("InitConfig 2");
-    if !pda.is_owned_by(&crate::ID) {
-      return Err(MyError::ForeignPDA.into());
-    }
+    check_pda(config_pda)?;
     log!("InitConfig 3");
 
     log!("InitConfig 4");
@@ -54,7 +54,7 @@ impl<'a> InitConfig<'a> {
 
     pinocchio_system::instructions::CreateAccount {
       from: authority,
-      to: pda,
+      to: config_pda,
       lamports,
       space: space as u64,
       owner: &crate::ID,
@@ -71,14 +71,14 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-    let [authority, pda, system_program] = accounts else {
+    let [authority, config_pda, system_program] = accounts else {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
     //let seeds: &'a [Seed<'a>] = &'a [Seed::from(b"vault".as_slice())];
     let space = parse_u64(data)?;
     Ok(Self {
       authority,
-      pda,
+      config_pda,
       system_program,
       //seeds,
       space,

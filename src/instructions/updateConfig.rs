@@ -30,16 +30,6 @@ impl<'a> UpdateConfig<'a> {
   pub const DISCRIMINATOR: &'a u8 = &13;
 
   pub fn process(self) -> ProgramResult {
-    let UpdateConfig {
-      authority: _,
-      config_pda: _,
-      account1: _,
-      bools: _,
-      u8s: _,
-      u32s: _,
-      u64s: _,
-      str_u8array: _, //datalen: _,
-    } = self;
     log!("UpdateConfig process()");
     /*match self.datalen as usize {
       len if len == size_of::<UpdateConfigStatus>() => self.update_status()?,
@@ -49,6 +39,7 @@ impl<'a> UpdateConfig<'a> {
     }*/
     Ok(())
   }
+
   pub fn update_status(self) -> ProgramResult {
     Ok(())
   }
