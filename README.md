@@ -104,12 +104,13 @@ pnpm add -D litesvm @solana/web3.js @solana/spl-token
 ### Reference
 
 - Pinocchio: <https://github.com/anza-xyz/pinocchio>
+- Native Development: <https://solana.com/docs/programs/rust>
 - Bun Js Test: <https://bun.com/docs/test>
 - Solana Kit: <https://www.solanakit.com/>
 - LiteSVM: <https://github.com/LiteSVM/litesvm>
 - Gill: <https://www.gillsdk.com/docs/guides/tokens/create-token>
 - Quicknode: <https://www.quicknode.com/guides/solana-development/pinocchio/how-to-build-and-deploy-a-solana-program-using-pinocchio>
-- How to Build Solana Programs with Pinocchio: <https://www.helius.dev/blog/pinocchio#how-is-pinocchio-more-performant-than-solana-program>
+- How to Build Programs with Pinocchio: <https://www.helius.dev/blog/pinocchio#how-is-pinocchio-more-performant-than-solana-program>
 - Create Token Mint via Rust and JavaScript: <https://solana.com/docs/tokens/basics/create-mint>
 - Create and Mint SPL Tokens via Anchor: <https://www.quicknode.com/guides/solana-development/anchor/create-tokens>
 - Create Token Account via Anchor: <https://www.anchor-lang.com/docs/tokens/basics/create-token-account>

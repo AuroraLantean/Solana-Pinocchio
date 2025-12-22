@@ -1,9 +1,9 @@
-use core::convert::TryFrom;
+use core::{convert::TryFrom, ops::Add};
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
-  instructions::check_signer, parse_u32, parse_u64, u8_slice_to_array, u8_to_bool, MyError,
+  instructions::check_signer, parse_u32, parse_u64, u8_slice_to_array, u8_to_bool, Config, MyError,
 };
 pub struct UpdateConfigStatus<'a> {
   pub authority: &'a AccountInfo,
@@ -18,8 +18,8 @@ pub struct UpdateConfigAuthority<'a> {
 /// Update Config PDA
 pub struct UpdateConfig<'a> {
   pub authority: &'a AccountInfo,
-  pub pda1: &'a AccountInfo,
-  pub pda2: &'a AccountInfo,
+  pub config_pda: &'a AccountInfo,
+  pub account1: &'a AccountInfo,
   pub bools: [bool; 4],
   pub u8s: [u8; 4],
   pub u32s: [u32; 4],
@@ -31,9 +31,9 @@ impl<'a> UpdateConfig<'a> {
 
   pub fn process(self) -> ProgramResult {
     let UpdateConfig {
-      authority,
-      pda1: _,
-      pda2: _,
+      authority: _,
+      config_pda: _,
+      account1: _,
       bools: _,
       u8s: _,
       u32s: _,
@@ -41,18 +41,6 @@ impl<'a> UpdateConfig<'a> {
       str_u8array: _, //datalen: _,
     } = self;
     log!("UpdateConfig process()");
-    check_signer(authority)?;
-    //writable(pda1)?;
-    //writable(pda2)?;
-
-    log!("UpdateConfig 2");
-    //check_pda(pda1)?;
-    //check_pda(pda2)?;
-    log!("UpdateConfig 3");
-
-    log!("UpdateConfig 4");
-
-    log!("UpdateConfig 5");
     /*match self.datalen as usize {
       len if len == size_of::<UpdateConfigStatus>() => self.update_status()?,
       len if len == size_of::<UpdateConfigFee>() => self.update_fee()?,
@@ -65,9 +53,24 @@ impl<'a> UpdateConfig<'a> {
     Ok(())
   }
   pub fn update_fee(self) -> ProgramResult {
+    let config = Config::load(&self.config_pda)?;
+    if config.authority != *self.authority.key() {
+      return Err(ProgramError::IncorrectAuthority);
+    }
+    let fee = u64::from_le_bytes(config.fee);
+    let amt = self.u64s[0];
+    config.fee = amt.add(fee).to_be_bytes();
     Ok(())
-  }
+  } /*let mut data = self.config_pda.data.borow_mut();
+    let counter_data = Config {
+      fee: ,
+    }; */
   pub fn update_authority(self) -> ProgramResult {
+    let config = Config::load(&self.config_pda)?;
+    if config.authority != *self.authority.key() {
+      return Err(ProgramError::IncorrectAuthority);
+    }
+    config.authority = *self.account1.key();
     Ok(())
   }
 }
@@ -79,7 +82,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-    let [authority, pda1, pda2] = accounts else {
+    let [authority, config_pda, account1] = accounts else {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
 
@@ -117,10 +120,12 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let str_u8: &[u8] = &data[56..max_data_len];
     log!("str_u8: {}", str_u8);
     let str_u8array = u8_slice_to_array(str_u8)?;
+    check_signer(authority)?;
+
     Ok(Self {
       authority,
-      pda1,
-      pda2,
+      config_pda,
+      account1,
       u8s,
       bools,
       u32s,

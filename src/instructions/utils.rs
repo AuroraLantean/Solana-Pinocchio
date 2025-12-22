@@ -5,7 +5,7 @@ use pinocchio::{
 };
 use thiserror::Error;
 
-//https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/pinocchio-errors
+//TODO: put errors in error.rs ... https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/pinocchio-errors
 #[derive(Clone, Debug, Eq, Error, PartialEq)] //FromPrimitive
 pub enum MyError {
   #[error("InvalidDiscriminator")]
@@ -76,6 +76,8 @@ pub enum MyError {
   U8ByteSizeInvalid,
   #[error("VaultPDA")]
   VaultPDA,
+  #[error("ConfigDataLengh")]
+  ConfigDataLengh,
 }
 impl From<MyError> for ProgramError {
   fn from(e: MyError) -> Self {
@@ -122,6 +124,7 @@ impl TryFrom<u32> for MyError {
       31 => Ok(MyError::U16ByteSizeInvalid),
       32 => Ok(MyError::U8ByteSizeInvalid),
       33 => Ok(MyError::VaultPDA),
+      34 => Ok(MyError::ConfigDataLengh),
       _ => Err(ProgramError::InvalidArgument),
     }
   }
@@ -164,13 +167,13 @@ impl ToStr for MyError {
       MyError::U16ByteSizeInvalid => "U16ByteSizeInvalid",
       MyError::U8ByteSizeInvalid => "U8ByteSizeInvalid",
       MyError::VaultPDA => "VaultPDA",
+      MyError::ConfigDataLengh => "ConfigDataLengh",
     }
   }
 }
 //----------------==
 //----------------==
-/// Parse a u64 from instruction data.
-/// amount must be non-zero,
+/// Parse a u64 from u8 array
 pub fn parse_u64(data: &[u8]) -> Result<u64, ProgramError> {
   let bytes: [u8; 8] = data
     .try_into()

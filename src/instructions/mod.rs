@@ -192,6 +192,9 @@ pub enum ProgramIx<'a> {
   },
 } //update here and lib.rs for new functions
 
+/// Seed of the vault account PDA.
+pub const VAULT_SEED: &[u8] = b"vault";
+
 /// Derive the vault PDA for an user -> (pda, bump)
 pub fn derive_pda1(user: &AccountInfo, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
   //find_program_address(&[b"vault", user.key().as_ref()], &crate::ID)

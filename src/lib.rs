@@ -1,16 +1,22 @@
 /*lib.rs serves as your program’s entrypoint
 - takes in the program ID, accounts, and instruction data, then reads the first byte as a discriminator to determine which method to call (for example, 0 = Deposit, 1 = Withdraw). */
 #![no_std]
-
+#![allow(unexpected_cfgs)]
 use pinocchio::{
   account_info::AccountInfo, entrypoint, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
 };
 use pinocchio_pubkey::declare_id;
 
+//#[cfg(not(feature = "no-entrypoint"))]
 entrypoint!(process_instruction);
+//program_entrypoint!(process_instruction);
+//no_allocator!();
+//nostd_panic_handler!();
 
 pub mod instructions;
 pub use instructions::*;
+pub mod state;
+pub use state::*;
 
 declare_id!("7EKqBVYSCmJbt2T8tGSmwzNKnpL29RqcJcyUr9aEEr6e"); //crate::ID
 
