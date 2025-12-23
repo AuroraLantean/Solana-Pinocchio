@@ -72,7 +72,8 @@ impl<'a> InitConfig<'a> {
     self.config_pda.can_borrow_mut_data()?;
     let config = Config::load(&config_pda)?;
     config.authority = *original_owner.key();
-    config.fee = fee.to_be_bytes();
+    log!("fee: {}", fee);
+    config.fee = fee.to_le_bytes();
     config.bump = bump;
     Ok(())
   }

@@ -46,9 +46,7 @@ impl<'a> UpdateConfig<'a> {
   //TODO: WHY do tests run twice??
   pub fn update_fee(self) -> ProgramResult {
     log!("UpdateConfig update_fee()");
-    let fee = u64::from_le_bytes(self.config.fee);
-    log!("old fee: {}", fee);
-    self.config.fee = self.u64s[0].to_be_bytes();
+    self.config.fee = self.u64s[0].to_le_bytes();
     Ok(())
   }
   pub fn update_authority(self) -> ProgramResult {

@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { expect, test } from "bun:test";
 import { SYSTEM_PROGRAM_ADDRESS } from "@solana-program/system";
 import * as vault from "../clients/js/src/generated/index";
 import {
@@ -31,7 +31,7 @@ test("programs exist", async () => {
 test("InitConfig", async () => {
 	ll("------== InitConfig");
 	ll("payer:", adminAddr);
-	const fee = BigInt(100);
+	const fee = getLam(111);
 
 	const methodIx = vault.getInitConfigInstruction({
 		authority: adminKp,
@@ -43,8 +43,10 @@ test("InitConfig", async () => {
 	await sendTxn(methodIx, adminKp);
 	ll("program execution successful");
 
-	const _configData = await readAcctData(configPDA, "configPDA");
-}, 10000);
+	const configData = await readAcctData(configPDA, "configPDA");
+	expect(configData.authority).toEqual(adminAddr);
+	expect(configData.fee).toEqual(fee);
+}, 10000); //Timeouts
 
 test("UpdateConfig", async () => {
 	ll("------== UpdateConfig");
@@ -56,6 +58,7 @@ test("UpdateConfig", async () => {
 	const str1 = "SOL to the moon!";
 	const u8array = strToU8Array(str1);
 	const _str1b = u8ArrayToStr(u8array);
+	const newFee = getLam(137);
 
 	const methodIx = vault.getUpdateConfigInstruction({
 		authority: adminKp,
@@ -64,9 +67,13 @@ test("UpdateConfig", async () => {
 		bools,
 		u8s,
 		u32s: [time, time + 1, time + 2, time + 3],
-		u64s: [getLam(137), getLam(38), getLam(39), getLam(40)],
+		u64s: [newFee, getLam(38), getLam(39), getLam(40)],
 		strU8: u8array,
 	});
 	await sendTxn(methodIx, adminKp);
 	ll("program execution successful");
-}); //Timeouts
+
+	const configData = await readAcctData(configPDA, "configPDA");
+	expect(configData.authority).toEqual(adminAddr);
+	expect(configData.fee).toEqual(newFee);
+});
