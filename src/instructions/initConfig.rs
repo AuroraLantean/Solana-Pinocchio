@@ -9,57 +9,71 @@ use pinocchio::{
 use pinocchio_log::log;
 
 use crate::{
-  check_pda, derive_pda1, instructions::check_signer, parse_u64, writable, MyError, VAULT_SEED,
+  derive_pda1, empty_lamport, instructions::check_signer, parse_u64, Config, MyError, CONFIG_SEED,
 };
 
 /// Init Config PDA
 pub struct InitConfig<'a> {
   pub authority: &'a AccountInfo,
   pub config_pda: &'a AccountInfo,
+  pub original_owner: &'a AccountInfo,
   pub system_program: &'a AccountInfo,
-  //pub seeds: &'a [Seed<'a>],
-  pub space: u64,
+  pub fee: u64,
 }
 impl<'a> InitConfig<'a> {
-  pub const DISCRIMINATOR: &'a u8 = &11;
+  pub const DISCRIMINATOR: &'a u8 = &12;
 
   pub fn process(self) -> ProgramResult {
     let InitConfig {
       authority,
       config_pda,
+      original_owner,
+      fee,
       system_program: _,
-      //seeds,
-      space,
     } = self;
     log!("InitConfig process()");
     check_signer(authority)?;
     //writable(config_pda)?;
 
     log!("InitConfig 2");
-    check_pda(config_pda)?;
+    empty_lamport(config_pda)?;
+
     log!("InitConfig 3");
+    let lamports = Rent::get()?.minimum_balance(Config::LEN); //space.try_into().unwrap()
+    let space = Config::LEN as u64;
 
     log!("InitConfig 4");
+    let (expected_config_pda, bump) = derive_pda1(original_owner, CONFIG_SEED)?;
 
     log!("InitConfig 5");
-    let lamports = Rent::get()?.minimum_balance(space.try_into().unwrap());
+    if expected_config_pda != *config_pda.key() {
+      return Err(MyError::ConfigPDA.into());
+    }
 
-    let (_expected_vault_pda, bump) = derive_pda1(authority, VAULT_SEED)?;
+    log!("InitConfig 6");
     let seeds = [
-      Seed::from(VAULT_SEED),
-      Seed::from(authority.key().as_ref()),
+      Seed::from(CONFIG_SEED),
+      Seed::from(original_owner.key().as_ref()),
       Seed::from(core::slice::from_ref(&bump)),
     ];
     let signer = [Signer::from(&seeds)];
 
+    log!("InitConfig 7");
     pinocchio_system::instructions::CreateAccount {
       from: authority,
       to: config_pda,
       lamports,
-      space: space as u64,
+      space,
       owner: &crate::ID,
     }
     .invoke_signed(&signer)?;
+
+    log!("InitConfig after initialization");
+    self.config_pda.can_borrow_mut_data()?;
+    let config = Config::load(&config_pda)?;
+    config.authority = *original_owner.key();
+    config.fee = fee.to_be_bytes();
+    config.bump = bump;
     Ok(())
   }
 }
@@ -71,17 +85,17 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-    let [authority, config_pda, system_program] = accounts else {
+    let [authority, config_pda, original_owner, system_program] = accounts else {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
     //let seeds: &'a [Seed<'a>] = &'a [Seed::from(b"vault".as_slice())];
-    let space = parse_u64(data)?;
+    let fee = parse_u64(data)?;
     Ok(Self {
       authority,
       config_pda,
+      original_owner,
       system_program,
-      //seeds,
-      space,
+      fee,
     })
   }
 }

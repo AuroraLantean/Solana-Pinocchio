@@ -6,7 +6,6 @@ import * as vault from "../clients/js/src/generated/index";
 import {
 	adminAddr,
 	adminKp,
-	checkAcct,
 	getSol,
 	getTokBalc,
 	hackerKp,
@@ -14,6 +13,7 @@ import {
 	mintAuthority,
 	mintAuthorityKp,
 	mintKp,
+	readAcctData,
 	sendTxn,
 	user1Addr,
 	user1Kp,
@@ -37,9 +37,9 @@ const amtWithdraw = makeSolAmt(9);
 //BunJs Tests: https://bun.com/docs/test/writing-tests  expect(true).toBe(true);
 describe("Vault Program", () => {
 	test("programs exist", async () => {
-		const out1 = await checkAcct(vaultProgAddr, "Vault");
-		const out2 = await checkAcct(ATokenGPvbd, "ATokenGPvbd");
-		if (!out1 || !out2) {
+		const out1 = await readAcctData(vaultProgAddr, "Vault");
+		const out2 = await readAcctData(ATokenGPvbd, "ATokenGPvbd");
+		if (!out1.data || !out2.data) {
 			throw new Error(`Program does not exist`);
 		}
 	});

@@ -25,43 +25,34 @@ pub struct UpdateConfig<'a> {
   pub u32s: [u32; 4],
   pub u64s: [u64; 4],
   pub str_u8array: &'a [u8; 32], //pub str_u8: &'a [u8], //pub datalen: usize,
+  pub config: &'a mut Config,
 }
 impl<'a> UpdateConfig<'a> {
   pub const DISCRIMINATOR: &'a u8 = &13;
 
   pub fn process(self) -> ProgramResult {
     log!("UpdateConfig process()");
-    /*match self.datalen as usize {
-      len if len == size_of::<UpdateConfigStatus>() => self.update_status()?,
-      len if len == size_of::<UpdateConfigFee>() => self.update_fee()?,
-      len if len == size_of::<UpdateConfigAuthority>() => self.update_authority()?,
-      _ => return Err(..),
-    }*/
-    Ok(())
+    match self.u8s[0] {
+      0 => self.update_status(),
+      1 => self.update_fee(),
+      2 => self.update_authority(),
+      _ => Err(MyError::FunctionSelector.into()),
+    }
   }
 
   pub fn update_status(self) -> ProgramResult {
     Ok(())
   }
+  //TODO: WHY did this update_fee() run twice??
   pub fn update_fee(self) -> ProgramResult {
-    let config = Config::load(&self.config_pda)?;
-    if config.authority != *self.authority.key() {
-      return Err(ProgramError::IncorrectAuthority);
-    }
-    let fee = u64::from_le_bytes(config.fee);
-    let amt = self.u64s[0];
-    config.fee = amt.add(fee).to_be_bytes();
+    log!("UpdateConfig update_fee()");
+    let fee = u64::from_le_bytes(self.config.fee);
+    log!("old fee: {}", fee);
+    self.config.fee = self.u64s[0].to_be_bytes();
     Ok(())
-  } /*let mut data = self.config_pda.data.borow_mut();
-    let counter_data = Config {
-      fee: ,
-    }; */
+  }
   pub fn update_authority(self) -> ProgramResult {
-    let config = Config::load(&self.config_pda)?;
-    if config.authority != *self.authority.key() {
-      return Err(ProgramError::IncorrectAuthority);
-    }
-    config.authority = *self.account1.key();
+    self.config.authority = *self.account1.key();
     Ok(())
   }
 }
@@ -112,7 +103,11 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     log!("str_u8: {}", str_u8);
     let str_u8array = u8_slice_to_array(str_u8)?;
     check_signer(authority)?;
-
+    let config = Config::load(&config_pda)?;
+    if config.authority != *authority.key() {
+      return Err(ProgramError::IncorrectAuthority);
+    }
+    // cannot use self in "0 => Self.process(),
     Ok(Self {
       authority,
       config_pda,
@@ -122,6 +117,13 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
       u32s,
       u64s,
       str_u8array,
+      config,
     })
   }
 }
+/*match self.datalen as usize {
+  len if len == size_of::<UpdateConfigStatus>() => self.update_status()?,
+  len if len == size_of::<UpdateConfigFee>() => self.update_fee()?,
+  len if len == size_of::<UpdateConfigAuthority>() => self.update_authority()?,
+  _ => return Err(..),
+} */

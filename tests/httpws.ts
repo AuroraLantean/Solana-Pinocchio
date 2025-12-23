@@ -7,6 +7,7 @@ import {
 	createSolanaRpcSubscriptions,
 	createTransactionMessage,
 	generateKeyPairSigner,
+	getBase64Encoder,
 	getSignatureFromTransaction,
 	lamports,
 	pipe,
@@ -108,7 +109,7 @@ const pda_bump1 = await findPda(user1Addr, "vault");
 export const vaultPDA1 = pda_bump1.pda;
 ll(`✅ - vaultPDA1: ${vaultPDA1}`);
 
-const configPdaBump = await findPda(user1Addr, "vault");
+const configPdaBump = await findPda(adminAddr, "config");
 export const configPDA = configPdaBump.pda;
 ll(`✅ - configPDA: ${configPDA}`);
 
@@ -120,17 +121,33 @@ export const vaultRent = await rpc
 	.getMinimumBalanceForRentExemption(BigInt(VAULT_SIZE))
 	.send();
 
-export const checkAcct = async (target: Address, name: string) => {
+export const readAcctData = async (target: Address, name: string) => {
 	const { value } = await rpc
 		.getAccountInfo(target, { encoding: "base64" })
 		.send();
 	if (!value || !value?.data) {
 		ll(`${name} does not exist`);
-		return false;
+		return { data: null };
 	}
 	ll(`${name} exits!`);
-	return true;
+	const base64Encoder = getBase64Encoder();
+	const _bytes = base64Encoder.encode(value.data[0]);
+	//const _decoded = ammConfigDecoder.decode(bytes);
+	return { data: value.data };
 };
+/*export const ammConfigDecoder: FixedSizeDecoder<Config> = getStructDecoder([
+	["anchorDiscriminator", fixDecoderSize(getBytesDecoder(), 8)],
+	["bump", getU8Decoder()],
+	["index", getU16Decoder()],
+	["owner", getAddressDecoder()],
+	["protocolFeeRate", getU32Decoder()],
+	["tradeFeeRate", getU32Decoder()],
+	["tickSpacing", getU16Decoder()],
+	["fundFeeRate", getU32Decoder()],
+	["paddingU32", getU32Decoder()],
+	["fundOwner", getAddressDecoder()],
+	["padding", getArrayDecoder(getU64Decoder(), { size: 3 })],
+]);*/
 
 export const getSol = async (account: Address, name: string) => {
 	const { value: lamports } = await rpc.getBalance(account).send();

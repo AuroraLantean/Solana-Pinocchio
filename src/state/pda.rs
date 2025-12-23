@@ -6,10 +6,11 @@ use crate::MyError;
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct Config {
-  pub authority: Pubkey,  //32
-  pub fee: [u8; 8],       //u64,
-  pub token_balance: u64, //8
-  pub bump: u8,           // 1
+  pub authority: Pubkey,      //32
+  pub fee: [u8; 8],           //u64,
+  pub sol_balance: [u8; 8],   //8
+  pub token_balance: [u8; 8], //8
+  pub bump: u8,               // 1
 }
 impl Config {
   pub const LEN: usize = core::mem::size_of::<Config>();

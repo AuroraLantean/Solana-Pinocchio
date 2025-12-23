@@ -26,7 +26,7 @@ import {
 	TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
 import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
-import { checkAcct, rpc, rpcSubscriptions } from "./httpws";
+import { readAcctData, rpc, rpcSubscriptions } from "./httpws";
 import { ll } from "./utils";
 
 export const makeMint = async (
@@ -182,8 +182,8 @@ export const makeATA = async (
 	ll("makeATA 1");
 	const atabump = await getAta(mint, tokenOwner, isToken2022);
 	const ata = atabump.ata;
-	const out = await checkAcct(ata, "ATA");
-	if (out) {
+	const out = await readAcctData(ata, "ATA");
+	if (out.data != null) {
 		ll("Skip makeATA");
 		return atabump;
 	}

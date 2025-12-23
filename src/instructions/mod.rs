@@ -2,7 +2,6 @@ use pinocchio::pubkey::find_program_address;
 use pinocchio::{
   account_info::AccountInfo,
   program_error::ProgramError,
-  pubkey::{try_find_program_address, Pubkey},
   sysvars::{rent::Rent, Sysvar},
 };
 use pinocchio_token_2022::state::{Mint as Mint22, TokenAccount as TokenAccount22};
@@ -172,14 +171,14 @@ pub enum ProgramIx<'a> {
   #[account(2, name = "system_program", desc = "System Program")]
   InitConfigPda { seeds: &'a str, space: u32 },
 
-  /// 12 Close Config PDA
+  /// 12 Init Config PDA
   #[account(0, signer, writable, name = "authority", desc = "Authority")]
-  #[account(1, name = "pda", desc = "PDA")]
-  #[account(2, name = "dest", desc = "Destination")]
-  //#[account(5, name = "system_program", desc = "System Program")]
-  CloseConfigPda {},
+  #[account(1, writable, name = "config_pda", desc = "Config PDA")]
+  #[account(2, name = "original_owner", desc = "Original Owner")]
+  #[account(3, name = "system_program", desc = "System Program")]
+  InitConfig { fee: u64 },
 
-  /// 13 Update PDA
+  /// 13 Update Config PDA
   #[account(0, signer, writable, name = "authority", desc = "Authority")]
   #[account(1, writable, name = "pda1", desc = "PDA1")]
   #[account(2, name = "pda2", desc = "PDA2")]
@@ -190,18 +189,19 @@ pub enum ProgramIx<'a> {
     u64s: [u64; 4],
     str_u8: [u8; 32],
   },
+
+  /// 14 Close Config PDA
+  #[account(0, signer, writable, name = "authority", desc = "Authority")]
+  #[account(1, name = "pda", desc = "PDA")]
+  #[account(2, name = "dest", desc = "Destination")]
+  //#[account(5, name = "system_program", desc = "System Program")]
+  CloseConfigPda {},
 } //update here and lib.rs for new functions
 
 /// Seed of the vault account PDA.
 pub const VAULT_SEED: &[u8] = b"vault";
+pub const CONFIG_SEED: &[u8] = b"config";
 
-/// Derive the vault PDA for an user -> (pda, bump)
-pub fn derive_pda1(user: &AccountInfo, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
-  //find_program_address(&[b"vault", user.key().as_ref()], &crate::ID)
-  // let (pda, _bump) =
-  try_find_program_address(&[bstr, user.key().as_ref()], &crate::ID)
-    .ok_or_else(|| ProgramError::InvalidSeeds)
-}
 pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
   if !account.is_signer() {
     return Err(MyError::NotSigner.into());
@@ -348,9 +348,9 @@ pub fn check_sysprog(system_program: &AccountInfo) -> Result<(), ProgramError> {
   Ok(())
 }
 
-pub fn check_pda(account: &AccountInfo) -> Result<(), ProgramError> {
+pub fn pda_exists(account: &AccountInfo) -> Result<(), ProgramError> {
   if account.lamports() == 0 {
-    return Err(MyError::PdaNoInitialized.into());
+    return Err(MyError::PdaNotInitialized.into());
   }
   if !account.is_owned_by(&crate::ID) {
     return Err(MyError::ForeignPDA.into());
@@ -361,7 +361,7 @@ pub fn empty_lamport(account: &AccountInfo) -> Result<(), ProgramError> {
   if account.lamports() == 0 {
     return Ok(());
   }
-  Err(MyError::EmptyLamport.into())
+  Err(ProgramError::AccountAlreadyInitialized)
 }
 pub fn empty_data(account: &AccountInfo) -> Result<(), ProgramError> {
   if account.data_len() == 0 {

@@ -11,7 +11,7 @@ pub struct CloseConfigPda<'a> {
   pub dest: &'a AccountInfo,
 }
 impl<'a> CloseConfigPda<'a> {
-  pub const DISCRIMINATOR: &'a u8 = &12;
+  pub const DISCRIMINATOR: &'a u8 = &14;
 
   pub fn process(self) -> ProgramResult {
     let CloseConfigPda {

@@ -6,12 +6,12 @@ import * as vault from "../clients/js/src/generated/index";
 import {
 	adminAddr,
 	adminKp,
-	checkAcct,
 	getTokBalc,
 	mint22,
 	mint22Kp,
 	mintAuthority,
 	mintAuthorityKp,
+	readAcctData,
 	sendTxn,
 	user1Addr,
 	user1Kp,
@@ -41,7 +41,7 @@ describe("Vault Program", () => {
 		});
 		await sendTxn(methodIx, adminKp);
 		ll("program execution successful");
-		await checkAcct(mint22, "mint22");
+		await readAcctData(mint22, "mint22");
 	}, 10000); //Timeouts
 
 	//------------------==
@@ -69,7 +69,7 @@ describe("Vault Program", () => {
 		await sendTxn(methodIx, payer);
 		ll("program execution successful");
 		//await sleep(3000);
-		await checkAcct(ata, "ata22");
+		await readAcctData(ata, "ata22");
 		const balcTok2 = await getTokBalc(ata, "AF");
 		expect(balcTok2.amountUi).toBe("0");
 		//const balcTok = await getTokBalc2(destAddr, tokenProg);

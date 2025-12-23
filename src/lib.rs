@@ -1,5 +1,5 @@
 /*lib.rs serves as your program’s entrypoint
-- takes in the program ID, accounts, and instruction data, then reads the first byte as a discriminator to determine which method to call (for example, 0 = Deposit, 1 = Withdraw). */
+- takes in the program ID, accounts, and instruction data, then reads the first byte as a discriminator to determine which method to call*/
 #![no_std]
 #![allow(unexpected_cfgs)]
 use pinocchio::{
@@ -9,9 +9,6 @@ use pinocchio_pubkey::declare_id;
 
 //#[cfg(not(feature = "no-entrypoint"))]
 entrypoint!(process_instruction);
-//program_entrypoint!(process_instruction);
-//no_allocator!();
-//nostd_panic_handler!();
 
 pub mod instructions;
 pub use instructions::*;
@@ -47,8 +44,8 @@ fn process_instruction(
     Token2022InitAta::DISCRIMINATOR => Token2022InitAta::try_from((data, accounts))?.process(),
     Token2022MintToken::DISCRIMINATOR => Token2022MintToken::try_from((data, accounts))?.process(),
     InitConfig::DISCRIMINATOR => InitConfig::try_from((data, accounts))?.process(),
-    CloseConfigPda::DISCRIMINATOR => CloseConfigPda::try_from((data, accounts))?.process(),
     UpdateConfig::DISCRIMINATOR => UpdateConfig::try_from((data, accounts))?.process(),
+    CloseConfigPda::DISCRIMINATOR => CloseConfigPda::try_from((data, accounts))?.process(),
     _ => Err(MyError::InvalidDiscriminator.into()),
   } //file names start with a lower case + Camel cases, but struct names start with Upper case + Camel cases!
 }

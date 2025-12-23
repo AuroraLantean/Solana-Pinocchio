@@ -14,11 +14,15 @@ The only dependencies are types from the Solana SDK. This mitigates dependency i
 - Provide safe/unsafe function variants: safe Rust do all checks for you, while{} unsafe Rust comes with speed
 - Small Binaries: no no_std the Rust standard library
 
+### Why skipping solana-program
+
+the solana-program crate brings overhead. extra deserialization, hidden allocations, and increased binary size.
+
 ### Environment
 
 Rust: 1.92.0 (ded5c06cf 2025-12-08);
 solana-cli: 3.0.12 or 2.3.13;
-BunJs:  1.3.3; PNPM: 10.25.0
+BunJs:  1.3.5; PNPM: 10.26.0
 
 Install Solana CLI: <https://solana.com/docs/intro/installation>
 
@@ -101,7 +105,7 @@ Fast and lightweight library for testing Solana programs.
 pnpm add -D litesvm @solana/web3.js @solana/spl-token
 ```
 
-### Reference
+### References
 
 - Pinocchio: <https://github.com/anza-xyz/pinocchio>
 - Native Development: <https://solana.com/docs/programs/rust>

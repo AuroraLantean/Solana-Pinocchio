@@ -11,7 +11,7 @@ use pinocchio_log::log;
 use pinocchio_system::instructions::{CreateAccount, Transfer as SystemTransfer};
 
 use crate::{
-  instructions::{check_pda, check_signer, derive_pda1, parse_u64},
+  instructions::{check_signer, derive_pda1, parse_u64, pda_exists},
   MyError, ACCOUNT_DISCRIMINATOR_SIZE, VAULT_SEED,
 };
 
@@ -75,8 +75,6 @@ fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramRe
     if vault.key() != &expected_vault_pda {
       return Err(MyError::VaultPDA.into());
     }
-    //assert_eq!(&expected_vault_pda, vault.key());
-
     let signer_seeds = [
       Seed::from(VAULT_SEED),
       Seed::from(user.key().as_ref()),
@@ -100,7 +98,7 @@ fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramRe
     log!("Vault created");
   } else {
     // If vault already exists
-    check_pda(vault)?;
+    pda_exists(vault)?;
     log!("Vault already exists");
   }
   Ok(())

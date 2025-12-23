@@ -2,6 +2,7 @@
 use pinocchio::{
   account_info::AccountInfo,
   program_error::{ProgramError, ToStr},
+  pubkey::{try_find_program_address, Pubkey},
 };
 use thiserror::Error;
 
@@ -52,8 +53,8 @@ pub enum MyError {
   StrUnderMin,
   #[error("InputDataLen")]
   InputDataLen,
-  #[error("PdaNoInitialized")]
-  PdaNoInitialized,
+  #[error("PdaNotInitialized")]
+  PdaNotInitialized,
   #[error("Parse u64")]
   ParseU64,
   #[error("MintOrTokenProgram")]
@@ -78,6 +79,10 @@ pub enum MyError {
   VaultPDA,
   #[error("ConfigDataLengh")]
   ConfigDataLengh,
+  #[error("FunctionSelector")]
+  FunctionSelector,
+  #[error("ConfigPDA")]
+  ConfigPDA,
 }
 impl From<MyError> for ProgramError {
   fn from(e: MyError) -> Self {
@@ -112,7 +117,7 @@ impl TryFrom<u32> for MyError {
       19 => Ok(MyError::StrOverMax),
       20 => Ok(MyError::StrUnderMin),
       21 => Ok(MyError::InputDataLen),
-      22 => Ok(MyError::PdaNoInitialized),
+      22 => Ok(MyError::PdaNotInitialized),
       23 => Ok(MyError::ParseU64),
       24 => Ok(MyError::MintOrTokenProgram),
       25 => Ok(MyError::Tok22AcctDisciminatorOffset),
@@ -125,6 +130,8 @@ impl TryFrom<u32> for MyError {
       32 => Ok(MyError::U8ByteSizeInvalid),
       33 => Ok(MyError::VaultPDA),
       34 => Ok(MyError::ConfigDataLengh),
+      35 => Ok(MyError::FunctionSelector),
+      36 => Ok(MyError::ConfigPDA),
       _ => Err(ProgramError::InvalidArgument),
     }
   }
@@ -155,7 +162,7 @@ impl ToStr for MyError {
       MyError::StrOverMax => "StrOverMax",
       MyError::StrUnderMin => "StrUnderMin",
       MyError::InputDataLen => "InputDataLen",
-      MyError::PdaNoInitialized => "PdaNoInitialized",
+      MyError::PdaNotInitialized => "PdaNotInitialized",
       MyError::ParseU64 => "ParseU64",
       MyError::MintOrTokenProgram => "MintOrTokenProgram",
       MyError::Tok22AcctDisciminatorOffset => "Tok22AcctDisciminatorOffset",
@@ -168,6 +175,8 @@ impl ToStr for MyError {
       MyError::U8ByteSizeInvalid => "U8ByteSizeInvalid",
       MyError::VaultPDA => "VaultPDA",
       MyError::ConfigDataLengh => "ConfigDataLengh",
+      MyError::FunctionSelector => "FunctionSelector",
+      MyError::ConfigPDA => "ConfigPDA",
     }
   }
 }
@@ -212,6 +221,16 @@ pub fn u8_to_bool(v: u8) -> Result<bool, ProgramError> {
   }
 }
 //----------------==
+pub fn derive_pda1(user: &AccountInfo, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
+  //find_program_address(&[b"vault", user.key().as_ref()], &crate::ID)
+  // let (pda, _bump) =
+  try_find_program_address(&[bstr, user.key().as_ref()], &crate::ID)
+    .ok_or_else(|| ProgramError::InvalidSeeds)
+}
+/*let pda = pubkey::create_program_address(
+    &[PDA_SEED, &[self.datas.bump as u8]],
+    &crate::ID,
+) */
 //----------------==
 const TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET: usize = 165;
 pub const TOKEN_2022_MINT_DISCRIMINATOR: u8 = 0x01;
