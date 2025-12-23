@@ -348,7 +348,7 @@ pub fn check_sysprog(system_program: &AccountInfo) -> Result<(), ProgramError> {
   Ok(())
 }
 
-pub fn pda_exists(account: &AccountInfo) -> Result<(), ProgramError> {
+pub fn check_pda(account: &AccountInfo) -> Result<(), ProgramError> {
   if account.lamports() == 0 {
     return Err(MyError::PdaNotInitialized.into());
   }

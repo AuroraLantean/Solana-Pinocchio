@@ -9,6 +9,7 @@ pub struct Config {
   pub fee: [u8; 8],           //u64,
   pub sol_balance: [u8; 8],   //8
   pub token_balance: [u8; 8], //8
+  pub status: StatusEnum,     // 1
   pub bump: u8,               // 1
 }
 impl Config {
@@ -24,5 +25,25 @@ impl Config {
     }
     //assert_eq!(account.owner(), &crate::ID);
     unsafe { Ok(&mut *(account.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }
+  }
+}
+
+#[repr(C)] //keeps the struct layout the same across different architectures
+#[derive(Clone, Copy, Debug)]
+pub enum StatusEnum {
+  Waiting,
+  Active,
+  Expired,
+  Paused,
+}
+impl From<u8> for StatusEnum {
+  fn from(num: u8) -> Self {
+    match num {
+      0 => StatusEnum::Waiting,
+      1 => StatusEnum::Active,
+      2 => StatusEnum::Expired,
+      3 => StatusEnum::Paused,
+      _ => StatusEnum::Expired,
+    }
   }
 }

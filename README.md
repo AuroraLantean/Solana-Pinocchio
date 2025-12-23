@@ -110,7 +110,8 @@ pnpm add -D litesvm @solana/web3.js @solana/spl-token
 - Pinocchio: <https://github.com/anza-xyz/pinocchio>
 - Native Development: <https://solana.com/docs/programs/rust>
 - Bun Js Test: <https://bun.com/docs/test>
-- Solana Kit: <https://www.solanakit.com/>
+- Solana Kit: <https://www.solanakit.com/docs/getting-started/send-transaction>
+- Solana Kit Account: <https://github.com/anza-xyz/kit/tree/main/packages/accounts>
 - LiteSVM: <https://github.com/LiteSVM/litesvm>
 - Gill: <https://www.gillsdk.com/docs/guides/tokens/create-token>
 - Quicknode: <https://www.quicknode.com/guides/solana-development/pinocchio/how-to-build-and-deploy-a-solana-program-using-pinocchio>

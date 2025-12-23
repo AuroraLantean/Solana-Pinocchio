@@ -3,17 +3,9 @@ use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramR
 use pinocchio_log::log;
 
 use crate::{
-  instructions::check_signer, parse_u32, parse_u64, u8_slice_to_array, u8_to_bool, Config, MyError,
+  check_pda, instructions::check_signer, parse_u32, parse_u64, u8_slice_to_array, u8_to_bool,
+  writable, Config, MyError, StatusEnum,
 };
-pub struct UpdateConfigStatus<'a> {
-  pub authority: &'a AccountInfo,
-}
-pub struct UpdateConfigFee<'a> {
-  pub authority: &'a AccountInfo,
-}
-pub struct UpdateConfigAuthority<'a> {
-  pub authority: &'a AccountInfo,
-}
 
 /// Update Config PDA
 pub struct UpdateConfig<'a> {
@@ -41,12 +33,16 @@ impl<'a> UpdateConfig<'a> {
   }
 
   pub fn update_status(self) -> ProgramResult {
+    log!("UpdateConfig update_status()");
+    //self.config.status = self.u8s[1]; //StatusEnum::from(self.u8s[1]);
     Ok(())
   }
   //TODO: WHY do tests run twice??
   pub fn update_fee(self) -> ProgramResult {
     log!("UpdateConfig update_fee()");
     self.config.fee = self.u64s[0].to_le_bytes();
+    //self.config.status = self.u8s[1];
+    self.config.status = StatusEnum::from(self.u8s[1]);
     Ok(())
   }
   pub fn update_authority(self) -> ProgramResult {
@@ -66,8 +62,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    //TODO: check all data size in every function
-    /*u32size = core::mem::size_of::<u32>();//4
+    /* check all data size in every function
+    u32size = core::mem::size_of::<u32>();//4
     u64size = core::mem::size_of::<u64>();//8
     let expected_size = 8 + u32size * 4 + u64size * 4; // 8 + 4*4+ 8*4 = 56
     let expected_size: usize = 56;
@@ -100,7 +96,16 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let str_u8: &[u8] = &data[56..max_data_len];
     log!("str_u8: {}", str_u8);
     let str_u8array = u8_slice_to_array(str_u8)?;
+
+    //check Status input range
+    if u8s[1] > 3 {
+      return Err(MyError::InputStatus.into());
+    }
+
     check_signer(authority)?;
+    writable(config_pda)?;
+    check_pda(config_pda)?;
+
     let config = Config::load(&config_pda)?;
     if config.authority != *authority.key() {
       return Err(ProgramError::IncorrectAuthority);

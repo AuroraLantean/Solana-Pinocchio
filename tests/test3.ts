@@ -52,7 +52,7 @@ test("UpdateConfig", async () => {
 	ll("------== UpdateConfig");
 	ll("payer:", adminAddr);
 	const bools = new Uint8Array([0, 1, 0, 1]);
-	const u8s = new Uint8Array([1, 6, 7, 8]);
+	const u8s = new Uint8Array([1, 2, 7, 8]);
 	const time = getTime();
 	ll("time:", time, ", u64a", getLam(37));
 	const str1 = "SOL to the moon!";

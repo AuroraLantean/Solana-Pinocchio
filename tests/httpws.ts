@@ -20,9 +20,9 @@ import {
 } from "@solana/kit";
 import { LAMPORTS_PER_SOL } from "gill";
 import * as vault from "../clients/js/src/generated/index";
-import { configAcctDecoder } from "./decoder";
+import { configAcctDecoder, type DecodedConfigAcct } from "./decoder";
 import { getAta } from "./tokens";
-import type { Data1, DecodedConfigAcct } from "./types";
+import type { Data1 } from "./types";
 import { findPda, llbalc } from "./utils";
 
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
@@ -135,7 +135,7 @@ export const acctExists = async (target: Address, name: string) => {
 	ll(`${name} exits!`);
 	return value;
 };
-export const readAcctData = async (target: Address, _name: string) => {
+export const readAcctData = async (target: Address, name: string) => {
 	const myAccount = await fetchEncodedAccount(rpc, target);
 	assertAccountExists(myAccount);
 	//myAccount satisfies MaybeEncodedAccount<>;
@@ -148,7 +148,7 @@ export const readAcctData = async (target: Address, _name: string) => {
 	const _fee = Number(
 		feeBytes.readBigUInt64LE(0), // read as little-endian
 	);*/
-	ll("decoded:", decoded);
+	ll(name, "decoded:", decoded);
 	const acct = decoded as unknown as DecodedConfigAcct;
 	return acct.data;
 };

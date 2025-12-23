@@ -8,7 +8,7 @@ use pinocchio::{
 use pinocchio_log::log;
 
 use crate::{
-  instructions::{check_signer, derive_pda1, parse_u64, pda_exists},
+  instructions::{check_pda, check_signer, derive_pda1, parse_u64},
   VAULT_SEED,
 };
 
@@ -31,7 +31,7 @@ impl<'a> WithdrawSol<'a> {
     check_signer(user)?;
 
     // Validate the vault is owned by the program
-    pda_exists(vault)?;
+    check_pda(vault)?;
 
     let (expected_vault_pda, _bump) = derive_pda1(user, VAULT_SEED)?;
     if vault.key() != &expected_vault_pda {
