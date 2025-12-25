@@ -8,7 +8,10 @@ use pinocchio::{
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
 
-use crate::{empty_data, empty_lamport, executable, instructions::check_signer, writable};
+use crate::{
+  check_decimals_max, empty_data, empty_lamport, executable, instructions::check_signer,
+  max_data_len, min_data_len, u8_slice_to_array, writable,
+};
 use pinocchio_token_2022::{instructions::InitializeMint2, state::Mint};
 
 //Initiate Token2022 Mint Account
@@ -18,10 +21,9 @@ pub struct Token2022InitMint<'a> {
   pub mint_authority: &'a AccountInfo,
   pub token_program: &'a AccountInfo,
   pub freeze_authority_opt: Option<&'a [u8; 32]>, // or Pubkey
-  //pub name: &'a str,
-  //pub symbol: &'a str,
-  //pub uri: &'a str,
   pub decimals: u8,
+  pub token_data: [u8; 32],
+  pub token_uri: [u8; 32],
 }
 impl<'a> Token2022InitMint<'a> {
   pub const DISCRIMINATOR: &'a u8 = &8;
@@ -33,8 +35,9 @@ impl<'a> Token2022InitMint<'a> {
       mint_authority,
       token_program,
       freeze_authority_opt,
-      //name,symbol,uri,
       decimals,
+      token_data: _,
+      token_uri: _,
     } = self;
     log!("Token2022InitMint process()");
     check_signer(payer)?;
@@ -45,12 +48,7 @@ impl<'a> Token2022InitMint<'a> {
     log!("here 4");
     executable(token_program)?;
 
-    if decimals > 18 {
-      return Err(ProgramError::InvalidArgument);
-    }
-    //check_str_len(name, 3, 20)?;
-    //check_str_len(symbol, 3, 20)?;
-    //check_str_len(uri, 3, 20)?;
+    check_decimals_max(decimals, 18)?;
     log!("Token2022InitMint 4()");
     /*TODO: let toklgc = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
     .as_bytes()
@@ -115,12 +113,18 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitMint<'a> {
       None
     };
 
-    if data.len() < 1 {
-      return Err(ProgramError::AccountDataTooSmall);
-    }
+    min_data_len(data, 64)?;
+    max_data_len(data, 64)?;
+
     let decimals = data[0];
     log!("decimals: {}", decimals);
-    //TODO: extract name, symbol, uri
+
+    // 32 = 10 token name + 6 token symbol + 8 max supply + 8 extra data
+    let token_data = *u8_slice_to_array(&data[1..32])?;
+
+    //32 length
+    let token_uri_array = *u8_slice_to_array(&data[32..64])?;
+
     Ok(Self {
       payer,
       mint,
@@ -128,9 +132,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitMint<'a> {
       token_program,
       freeze_authority_opt,
       decimals,
-      //name: "token_name",
-      //symbol: "token_symbol",
-      //uri: "token_uri",
+      token_data,
+      token_uri: token_uri_array,
     })
   }
 }

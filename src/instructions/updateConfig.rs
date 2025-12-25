@@ -3,8 +3,8 @@ use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramR
 use pinocchio_log::log;
 
 use crate::{
-  check_pda, instructions::check_signer, parse_u32, parse_u64, u8_slice_to_array, u8_to_bool,
-  writable, Config, MyError, StatusEnum,
+  check_pda, instructions::check_signer, max_data_len, parse_u32, parse_u64, u8_slice_to_array,
+  u8_to_bool, writable, Config, MyError, StatusEnum,
 };
 
 /// Update Config PDA
@@ -83,10 +83,9 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     if data.len() != expected_size {
       return Err(MyError::InputDataLen.into());
     }*/
-    let max_data_len = 88; //56+32
-    if data.len() > max_data_len {
-      return Err(MyError::InputDataLengthOverMax.into());
-    }
+    let max_data_size1 = 88;
+    max_data_len(data, max_data_size1)?; //56+32
+
     let b0 = u8_to_bool(data[0])?;
     let b1 = u8_to_bool(data[1])?;
     let b2 = u8_to_bool(data[2])?;
@@ -105,7 +104,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let num64d = parse_u64(&data[48..56])?;
     let u64s = [num64a, num64b, num64c, num64d];
     log!("u8s: {}, u32s: {}, u64s: {}", &u8s, &u32s, &u64s);
-    let str_u8: &[u8] = &data[56..max_data_len];
+    let str_u8: &[u8] = &data[56..max_data_size1];
     log!("str_u8: {}", str_u8);
     let str_u8array = u8_slice_to_array(str_u8)?;
 

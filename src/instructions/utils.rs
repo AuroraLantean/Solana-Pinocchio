@@ -61,8 +61,8 @@ pub enum MyError {
   MintOrTokenProgram,
   #[error("Tok22AcctDisciminatorOffset")]
   Tok22AcctDisciminatorOffset,
-  #[error("InputDataLengthOverMax")]
-  InputDataLengthOverMax,
+  #[error("InputDataOverMax")]
+  InputDataOverMax,
   #[error("InputStrSliceOverMax")]
   InputStrSliceOverMax,
   #[error("InputU8InvalidForBool")]
@@ -127,7 +127,7 @@ impl TryFrom<u32> for MyError {
       23 => Ok(MyError::ParseU64),
       24 => Ok(MyError::MintOrTokenProgram),
       25 => Ok(MyError::Tok22AcctDisciminatorOffset),
-      26 => Ok(MyError::InputDataLengthOverMax),
+      26 => Ok(MyError::InputDataOverMax),
       27 => Ok(MyError::InputStrSliceOverMax),
       28 => Ok(MyError::InputU8InvalidForBool),
       29 => Ok(MyError::U64ByteSizeInvalid),
@@ -175,7 +175,7 @@ impl ToStr for MyError {
       MyError::ParseU64 => "ParseU64",
       MyError::MintOrTokenProgram => "MintOrTokenProgram",
       MyError::Tok22AcctDisciminatorOffset => "Tok22AcctDisciminatorOffset",
-      MyError::InputDataLengthOverMax => "InputDataLengthOverMax",
+      MyError::InputDataOverMax => "InputDataOverMax",
       MyError::InputStrSliceOverMax => "InputStrSliceOverMax",
       MyError::InputU8InvalidForBool => "InputU8InvalidForBool",
       MyError::U64ByteSizeInvalid => "U64ByteSizeInvalid",
@@ -231,6 +231,18 @@ pub fn u8_to_bool(v: u8) -> Result<bool, ProgramError> {
     1 => Ok(true),
     _ => Err(MyError::InputU8InvalidForBool.into()),
   }
+}
+pub fn min_data_len(data: &[u8], min: usize) -> Result<(), ProgramError> {
+  if data.len() < min {
+    return Err(MyError::InputDataLen.into());
+  }
+  Ok(())
+}
+pub fn max_data_len(data: &[u8], max: usize) -> Result<(), ProgramError> {
+  if data.len() > max {
+    return Err(MyError::InputDataOverMax.into());
+  }
+  Ok(())
 }
 //----------------==
 pub fn derive_pda1(user: &AccountInfo, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
