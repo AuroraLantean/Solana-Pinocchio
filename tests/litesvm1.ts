@@ -25,7 +25,7 @@ import {
 } from "@solana/spl-token";
 import {
 	bigintToBytes,
-	findPda1,
+	findVaultPda,
 	getLamports,
 	helloworldProgram,
 	ll,
@@ -34,20 +34,24 @@ import {
 	usdcMint,
 	vaultProgram,
 } from "./litesvm-utils";
+import { makeSolAmt } from "./utils";
 
+const ownerKp = new Keypair();
 const adminKp = new Keypair();
 const user1Kp = new Keypair();
 const user2Kp = new Keypair();
 const user3Kp = new Keypair();
 const hackerKp = new Keypair();
+const ownerAddr = ownerKp.publicKey;
 const adminAddr = adminKp.publicKey;
 const user1Addr = user1Kp.publicKey;
 const user2Addr = user2Kp.publicKey;
 const user3Addr = user3Kp.publicKey;
 const hackerAddr = hackerKp.publicKey;
 
-const initBalc = BigInt(LAMPORTS_PER_SOL) * BigInt(1);
+const initBalc = BigInt(LAMPORTS_PER_SOL) * BigInt(10);
 const svm = new LiteSVM();
+svm.airdrop(ownerAddr, initBalc);
 svm.airdrop(adminAddr, initBalc);
 svm.airdrop(user1Addr, initBalc);
 svm.airdrop(user2Addr, initBalc);
@@ -56,8 +60,8 @@ svm.airdrop(hackerAddr, initBalc);
 const adminBalc = svm.getBalance(adminAddr);
 ll("adminBalc:", adminBalc);
 
-const _vaultPDA = findPda1(adminAddr, "VaultPDA");
-const vaultPDA1 = findPda1(user1Addr, "VaultPDA1");
+const _vaultPDA = findVaultPda(ownerAddr, "VaultPDA");
+const vaultPDA1 = findVaultPda(user1Addr, "VaultPDA1");
 
 test("transfer SOL", () => {
 	const blockhash = svm.latestBlockhash();
@@ -113,15 +117,22 @@ test("hello world", () => {
 
 test("User1 Deposits SOL to vault1", () => {
 	ll("\n------== User1 Deposits SOL to vault1");
-	const [svm, programId] = vaultProgram();
+	const discriminator = 0;
+	ll("vaultPDA1:", vaultPDA1.toBase58());
 	const payer = user1Kp;
-	const amtLam = BigInt(10) * BigInt(10) ** BigInt(9);
-	const bytes = bigintToBytes(amtLam);
+	const amtLam = makeSolAmt(123);
+
+	const [svm, programId] = vaultProgram();
+	ll("programId:", programId.toBase58());
+	const argBytes = bigintToBytes(amtLam);
+	ll("argBytes:", argBytes);
+	const bytes = [discriminator, ...argBytes];
+	ll(bytes);
 
 	const blockhash = svm.latestBlockhash();
 	const ix = new TransactionInstruction({
 		keys: [
-			{ pubkey: user1Addr, isSigner: true, isWritable: true },
+			{ pubkey: payer.publicKey, isSigner: true, isWritable: true },
 			{ pubkey: vaultPDA1, isSigner: false, isWritable: true },
 			{ pubkey: systemProgram, isSigner: false, isWritable: false },
 		],

@@ -12,9 +12,6 @@ import {
 } from "@solana/web3.js";
 import { ComputeBudget, LiteSVM } from "litesvm";
 
-//const programPath = "target/deploy/pinocchio_vault.so";
-const programPath = "program_bytes/counter.so";
-
 export const vaultProgAddr = new PublicKey(
 	"7EKqBVYSCmJbt2T8tGSmwzNKnpL29RqcJcyUr9aEEr6e",
 );
@@ -37,14 +34,10 @@ export const bigintToBytes = (bint: bigint) => {
 	}
 	return bytes;
 };
-export const findPda1 = (
-	userAddr: PublicKey,
-	pdaName: string,
-	programId = vaultProgAddr,
-) => {
+export const findVaultPda = (userAddr: PublicKey, pdaName: string) => {
 	const [configPbk, _configBump] = PublicKey.findProgramAddressSync(
 		[Buffer.from("vault"), userAddr.toBuffer()],
-		programId,
+		vaultProgAddr,
 	);
 	ll(pdaName, ":", configPbk.toBase58());
 	return configPbk;
@@ -127,7 +120,7 @@ export function getLamports(svm: LiteSVM, address: PublicKey): number | null {
 	return acc === null ? null : acc.lamports;
 }
 export function vaultProgram(computeMaxUnits?: bigint): [LiteSVM, PublicKey] {
-	const programId = PublicKey.unique();
+	const programId = vaultProgAddr; // PublicKey.unique();
 	let svm = new LiteSVM();
 
 	if (computeMaxUnits) {
@@ -135,6 +128,7 @@ export function vaultProgram(computeMaxUnits?: bigint): [LiteSVM, PublicKey] {
 		computeBudget.computeUnitLimit = computeMaxUnits;
 		svm = svm.withComputeBudget(computeBudget);
 	}
+	const programPath = "target/deploy/pinocchio_vault.so";
 	svm.addProgramFromFile(programId, programPath);
 	return [svm, programId];
 }
@@ -157,6 +151,7 @@ export function helloworldProgram(
 		lamports: LAMPORTS_PER_SOL,
 		data: new Uint8Array([0, 0, 0, 0]),
 	});
+	const programPath = "program_bytes/counter.so";
 	svm.addProgramFromFile(programId, programPath);
 	return [svm, programId, greetedPubkey];
 }
