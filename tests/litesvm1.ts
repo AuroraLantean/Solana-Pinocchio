@@ -23,8 +23,8 @@ import {
 	AccountLayout,
 	getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
+import { TransactionMetadata } from "litesvm";
 import {
-	bigintToBytes,
 	findVaultPda,
 	getLamports,
 	helloworldProgram,
@@ -34,7 +34,7 @@ import {
 	usdcMint,
 	vaultProgram,
 } from "./litesvm-utils";
-import { makeSolAmt } from "./utils";
+import { bytesToBigint, lamToBytes } from "./utils";
 
 const ownerKp = new Keypair();
 const adminKp = new Keypair();
@@ -83,13 +83,13 @@ test("transfer SOL", () => {
 });
 
 test("hello world", () => {
-	const [svm, programId, greetedPubkey] = helloworldProgram();
+	const [programId, greetedPubkey] = helloworldProgram(svm);
 
 	const payer = new Keypair();
 	svm.airdrop(payer.publicKey, BigInt(LAMPORTS_PER_SOL));
-	const lamports = getLamports(svm, greetedPubkey);
-	ll("payer SOL balc:", lamports);
-	expect(lamports).toEqual(LAMPORTS_PER_SOL);
+	const amt = getLamports(svm, greetedPubkey);
+	ll("payer SOL balc:", amt);
+	expect(amt).toEqual(LAMPORTS_PER_SOL);
 
 	const blockhash = svm.latestBlockhash();
 
@@ -115,19 +115,29 @@ test("hello world", () => {
 	expect(greetedAccountAfter?.data).toStrictEqual(new Uint8Array([1, 0, 0, 0]));
 });
 
+test("lamportsBytes", () => {
+	ll("\n------== lamportsBytes");
+	const amountNum = 1.23;
+	const lamBytes64 = lamToBytes(amountNum);
+
+	const lam = bytesToBigint(lamBytes64);
+	ll("lam:", lam); //1230000000n
+});
+
 test("User1 Deposits SOL to vault1", () => {
 	ll("\n------== User1 Deposits SOL to vault1");
 	const discriminator = 0;
 	ll("vaultPDA1:", vaultPDA1.toBase58());
 	const payer = user1Kp;
-	const amtLam = makeSolAmt(123);
+	const amtSol = 1.23;
+	//ll(toLam(amtSol));
 
-	const [svm, programId] = vaultProgram();
+	const [programId] = vaultProgram(svm);
 	ll("programId:", programId.toBase58());
-	const argBytes = bigintToBytes(amtLam);
-	ll("argBytes:", argBytes);
-	const bytes = [discriminator, ...argBytes];
-	ll(bytes);
+
+	const lamBytes64 = lamToBytes(amtSol);
+	const bytes = [discriminator, ...lamBytes64];
+	ll("bytes:", bytes);
 
 	const blockhash = svm.latestBlockhash();
 	const ix = new TransactionInstruction({
@@ -143,7 +153,32 @@ test("User1 Deposits SOL to vault1", () => {
 	tx.recentBlockhash = blockhash;
 	tx.add(ix);
 	tx.sign(payer);
-	svm.sendTransaction(tx);
+
+	const simRes = svm.simulateTransaction(tx);
+	ll("simRes meta logs:", simRes.meta().logs());
+	//ll("simRes meta prettylogs:", simRes.meta().prettyLogs());
+	ll("simRes meta returnData:", simRes.meta().returnData().toString()); //simRes.err(),
+	/** simRes.meta():
+  computeUnitsConsumed: [class computeUnitsConsumed],
+  innerInstructions: [class innerInstructions],
+  logs: [class logs],
+  prettyLogs: [class prettyLogs],
+  returnData: [class returnData],
+  signature: [class signature],
+  toString: [class toString], */
+
+	const sendRes = svm.sendTransaction(tx);
+	ll("\nsendRes:", sendRes.toString()); //sendRes.err(),sendRes.meta()
+	//ll("sendRes:", sendRes);
+	//ll("sendRes.logs():", sendRes.logs());
+
+	if (sendRes instanceof TransactionMetadata) {
+		expect(simRes.meta().logs()).toStrictEqual(sendRes.logs());
+		expect(sendRes.logs()[15]).toStrictEqual(`Program ${programId} success`);
+	} else {
+		throw new Error("Unexpected tx failure");
+	}
+	ll("after simulation");
 
 	const lamports2a = getLamports(svm, vaultPDA1);
 	ll("lamports2a:", lamports2a);

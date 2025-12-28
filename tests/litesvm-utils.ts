@@ -22,18 +22,6 @@ export const usdcMint = new PublicKey(
 export const ll = console.log;
 ll("vaultProgAddr:", vaultProgAddr.toBase58());
 
-export const bigintToBytes = (bint: bigint) => {
-	const q: string = bint.toString();
-	const bytes = [];
-	for (let i = 0; i < q.length; i += 2) {
-		let byte = parseInt(q.substring(i, i + 2), 16);
-		if (byte > 127) {
-			byte = -(~byte & 0xff) - 1;
-		}
-		bytes.push(byte);
-	}
-	return bytes;
-};
 export const findVaultPda = (userAddr: PublicKey, pdaName: string) => {
 	const [configPbk, _configBump] = PublicKey.findProgramAddressSync(
 		[Buffer.from("vault"), userAddr.toBuffer()],
@@ -119,9 +107,11 @@ export function getLamports(svm: LiteSVM, address: PublicKey): number | null {
 	const acc = svm.getAccount(address);
 	return acc === null ? null : acc.lamports;
 }
-export function vaultProgram(computeMaxUnits?: bigint): [LiteSVM, PublicKey] {
-	const programId = vaultProgAddr; // PublicKey.unique();
-	let svm = new LiteSVM();
+export const vaultProgram = (
+	svm: LiteSVM,
+	computeMaxUnits?: bigint,
+): [PublicKey] => {
+	const programId = vaultProgAddr;
 
 	if (computeMaxUnits) {
 		const computeBudget = new ComputeBudget();
@@ -130,15 +120,16 @@ export function vaultProgram(computeMaxUnits?: bigint): [LiteSVM, PublicKey] {
 	}
 	const programPath = "target/deploy/pinocchio_vault.so";
 	svm.addProgramFromFile(programId, programPath);
-	return [svm, programId];
-}
+	return [programId];
+};
 
 export function helloworldProgram(
+	svm: LiteSVM,
 	computeMaxUnits?: bigint,
-): [LiteSVM, PublicKey, PublicKey] {
+): [PublicKey, PublicKey] {
 	const programId = PublicKey.unique();
 	const greetedPubkey = PublicKey.unique();
-	let svm = new LiteSVM();
+	//let svm = new LiteSVM();
 
 	if (computeMaxUnits) {
 		const computeBudget = new ComputeBudget();
@@ -153,5 +144,5 @@ export function helloworldProgram(
 	});
 	const programPath = "program_bytes/counter.so";
 	svm.addProgramFromFile(programId, programPath);
-	return [svm, programId, greetedPubkey];
+	return [programId, greetedPubkey];
 }

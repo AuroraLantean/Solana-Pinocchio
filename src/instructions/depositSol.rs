@@ -35,16 +35,17 @@ impl<'a> DepositSol<'a> {
       vault,
       amount,
     } = self;
-
+    log!("DepositSol process");
     ensure_deposit_accounts(user, vault)?;
 
+    log!("DepositSol 2");
     SystemTransfer {
       from: user,
       to: vault,
       lamports: amount,
     }
     .invoke()?;
-    log!("{} Lamports deposited to vault", amount);
+    log!("success: {} Lamports deposited to vault", amount);
     Ok(())
   }
 }
@@ -52,11 +53,16 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositSol<'a> {
   type Error = ProgramError;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+    log!("DepositSol try_from");
     let (data, accounts) = value;
+    log!("accounts len: {}, data len: {}", accounts.len(), data.len());
+
     let [user, vault, _systemProgram] = accounts else {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
+    log!("DepositSol data: {}", data);
     let amount = parse_u64(data)?;
+    log!("amount: {}", amount);
     Ok(Self {
       user,
       vault,

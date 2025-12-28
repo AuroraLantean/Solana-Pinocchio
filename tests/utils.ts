@@ -7,6 +7,19 @@ import {
 
 export const ll = console.log;
 
+import type { Lamports } from "@solana/kit";
+import {
+	getLamportsDecoder,
+	getLamportsEncoder,
+	getU8Decoder,
+	getU8Encoder,
+	getU16Decoder,
+	getU32Decoder,
+	getU32Encoder,
+	getU64Decoder,
+	getU64Encoder,
+	lamports,
+} from "@solana/kit";
 import chalk from "chalk";
 import * as vault from "../clients/js/src/generated/index";
 
@@ -14,11 +27,6 @@ export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
 ll("vaultProgAddr:", vaultProgAddr);
 export const ATokenGPvbd =
 	"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
-
-export const decimalsSOL = BigInt(9);
-export const baseSOL = BigInt(10) ** decimalsSOL;
-export const getLam = (amt: number) => BigInt(amt) * baseSOL;
-export const amtAirdrop = BigInt(100) * baseSOL;
 
 export const network = "mainnet-beta"; //devnet
 export const PROJECT_DIRECTORY = ""; // Leave empty if using default anchor project
@@ -33,7 +41,16 @@ export const Transaction_Fee = 5000n;
 export const day = 86400;
 export const week = 604800;
 
-export const makeSolAmt = (amt: number) => BigInt(amt) * baseSOL;
+export const decimalsSOL = BigInt(9);
+export const baseSOL = BigInt(10) ** decimalsSOL;
+export const amtAirdrop = BigInt(100) * baseSOL;
+export const toLam = (amt: number) => {
+	if (Number.isInteger(amt)) {
+		return BigInt(amt) * baseSOL;
+	}
+	return BigInt(amt * 10 ** 9);
+};
+export const fromLam = (amt: number) => BigInt(amt) / baseSOL;
 
 export const findPda = async (
 	addr: Address<string>,
@@ -65,6 +82,49 @@ export const llYl = (txt: string) => {
 };
 export const llbalc = (name: string, amt: string) => {
 	ll(`${chalk.bgBlue(name)} balc: ${chalk.yellow(amt)}`);
+};
+//--------------== Bytes
+export const lamToBytes = (amt: number, bit = 64) => {
+	const amtLam = lamports(toLam(amt));
+	// biome-ignore lint/suspicious/noExplicitAny: <>
+	let lamportsEncoder: any;
+	if (bit === 64) {
+		lamportsEncoder = getLamportsEncoder(getU64Encoder());
+	} else if (bit === 32) {
+		lamportsEncoder = getLamportsEncoder(getU32Encoder());
+	} else if (bit === 8) {
+		lamportsEncoder = getLamportsEncoder(getU8Encoder());
+	} else {
+		throw new Error("bit unknown");
+		//lamportsEncoder = getDefaultLamportsEncoder()
+	}
+	const lamportsBytes = lamportsEncoder.encode(amtLam);
+	ll("lamportsBytes", lamportsBytes);
+	return lamportsBytes;
+};
+export const bytesToBigint = (lamportsBytes: Uint8Array, bit = 64) => {
+	let lam: Lamports = lamports(0n);
+	// lamportsBytes = decoder.decode(new Uint8Array([0x2a, 0x00, 0x00, 0x00]));
+	if (bit === 64) {
+		//Returns a decoder that you can use to decode a byte array representing a 64-bit little endian number to a {@link Lamports} value.
+		const lamportsDecoder = getLamportsDecoder(getU64Decoder()); //getDefaultLamportsDecoder()
+		lam = lamportsDecoder.decode(lamportsBytes); // lamports(256n)
+	} else if (bit === 32) {
+		const _decoder = getU32Decoder();
+		//const _lamportsDecoder = getLamportsEncoder(decoder);
+		//lam = lamportsDecoder.decode(lamportsBytes); // lamports(256n)
+	} else if (bit === 16) {
+		const lamportsDecoder = getLamportsDecoder(getU16Decoder());
+		lam = lamportsDecoder.decode(lamportsBytes); // lamports(256n)
+	} else if (bit === 8) {
+		const _decoder = getU8Decoder();
+		//const _lamportsDecoder = getLamportsEncoder(decoder);
+	} else {
+		throw new Error("bit unknown");
+		//lamportsEncoder = getDefaultLamportsCodec()
+	}
+	ll("bytesToBigint lamports:", lam);
+	return lam;
 };
 
 export const strToU8Array = (str: string) => {
