@@ -11,15 +11,14 @@ import {
 	mint22Kp,
 	mintAuthority,
 	mintAuthorityKp,
-	readAcctData,
 	sendTxn,
 	user1Addr,
 	user1Kp,
 } from "./httpws";
 import { getAta, makeATA } from "./tokens";
-import { ATokenGPvbd, findPda, ll } from "./utils";
+import { ATokenGPvbd, findPdaV2, ll } from "./utils";
 
-export const pda_bump = await findPda(adminAddr, "vault");
+export const pda_bump = await findPdaV2(adminAddr, "vault", "Vault");
 export const vaultPDA: Address = pda_bump.pda;
 ll(`✅ - Vault PDA: ${vaultPDA}`);
 
@@ -41,7 +40,6 @@ describe("Vault Program", () => {
 		});
 		await sendTxn(methodIx, adminKp);
 		ll("program execution successful");
-		await readAcctData(mint22, "mint22");
 	}, 10000); //Timeouts
 
 	//------------------==
@@ -69,7 +67,6 @@ describe("Vault Program", () => {
 		await sendTxn(methodIx, payer);
 		ll("program execution successful");
 		//await sleep(3000);
-		await readAcctData(ata, "ata22");
 		const balcTok2 = await getTokBalc(ata, "AF");
 		expect(balcTok2.amountUi).toBe("0");
 		//const balcTok = await getTokBalc2(destAddr, tokenProg);

@@ -52,20 +52,21 @@ export const toLam = (amt: number) => {
 };
 export const fromLam = (amt: number) => BigInt(amt) / baseSOL;
 
-export const findPda = async (
+export const findPdaV2 = async (
 	addr: Address<string>,
-	str: string,
+	seedStr: string,
+	pdaName: string,
 	progAddr = vaultProgAddr,
 ) => {
 	const seedSigner = getAddressEncoder().encode(addr);
-	const seedTag = getUtf8Encoder().encode(str);
+	const seedTag = getUtf8Encoder().encode(seedStr);
 
-	const pda_bump = await getProgramDerivedAddress({
+	const [pda, bump] = await getProgramDerivedAddress({
 		programAddress: progAddr,
 		seeds: [seedTag, seedSigner],
 	});
-	ll(`${str} pda: ${pda_bump[0]}, bump: ${pda_bump[1]}`);
-	return { pda: pda_bump[0], bump: pda_bump[1] };
+	ll(`${pdaName} pda: ${pda}, bump: ${bump}`);
+	return { pda, bump };
 };
 
 export const llBl = (txt: string) => {
@@ -84,10 +85,11 @@ export const llbalc = (name: string, amt: string) => {
 	ll(`${chalk.bgBlue(name)} balc: ${chalk.yellow(amt)}`);
 };
 //--------------== Bytes
-export const lamToBytes = (amt: number, bit = 64) => {
-	const amtLam = lamports(toLam(amt));
+export const bigintToBytes = (amtLamport: bigint, bit = 64) => {
+	const amtLam = lamports(amtLamport);
 	// biome-ignore lint/suspicious/noExplicitAny: <>
 	let lamportsEncoder: any;
+	let lamportsBytes = [];
 	if (bit === 64) {
 		lamportsEncoder = getLamportsEncoder(getU64Encoder());
 	} else if (bit === 32) {
@@ -98,7 +100,7 @@ export const lamToBytes = (amt: number, bit = 64) => {
 		throw new Error("bit unknown");
 		//lamportsEncoder = getDefaultLamportsEncoder()
 	}
-	const lamportsBytes = lamportsEncoder.encode(amtLam);
+	lamportsBytes = lamportsEncoder.encode(amtLam);
 	ll("lamportsBytes", lamportsBytes);
 	return lamportsBytes;
 };

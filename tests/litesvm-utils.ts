@@ -22,13 +22,18 @@ export const usdcMint = new PublicKey(
 export const ll = console.log;
 ll("vaultProgAddr:", vaultProgAddr.toBase58());
 
-export const findVaultPda = (userAddr: PublicKey, pdaName: string) => {
-	const [configPbk, _configBump] = PublicKey.findProgramAddressSync(
-		[Buffer.from("vault"), userAddr.toBuffer()],
-		vaultProgAddr,
+export const findPdaV1 = (
+	userAddr: PublicKey,
+	seedStr: string,
+	pdaName: string,
+	progAddr = vaultProgAddr,
+) => {
+	const [pda, bump] = PublicKey.findProgramAddressSync(
+		[Buffer.from(seedStr), userAddr.toBuffer()],
+		progAddr,
 	);
-	ll(pdaName, ":", configPbk.toBase58());
-	return configPbk;
+	ll(`${pdaName} pda: ${pda.toBase58()}, bump: ${bump}`);
+	return { pda, bump };
 };
 
 export type ConfigT = {

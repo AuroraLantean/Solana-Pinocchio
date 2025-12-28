@@ -107,7 +107,7 @@ describe("Vault Program", () => {
 		await sendTxn(methodIx, hackerKp);
 	});
 	//------------------==
-	//TODO: users can redeem SOL from pool
+	//TODO: users can redeem SOL from the shared pool
 	//------------------==
 	test("lgc init mint", async () => {
 		ll("\n------== Lgc Init Mint");

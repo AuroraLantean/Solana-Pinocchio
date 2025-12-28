@@ -23,7 +23,7 @@ import * as vault from "../clients/js/src/generated/index";
 import { configAcctDecoder, type DecodedConfigAcct } from "./decoder";
 import { getAta } from "./tokens";
 import type { Data1 } from "./types";
-import { findPda, llbalc } from "./utils";
+import { findPdaV2, llbalc } from "./utils";
 
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
 
@@ -112,14 +112,14 @@ const ACCOUNT_DISCRIMINATOR_SIZE = 8; // same as Anchor/Rust
 const U64_SIZE = 8; // u64 is 8 bytes
 const VAULT_SIZE = ACCOUNT_DISCRIMINATOR_SIZE + U64_SIZE; // 16
 
-const pda_bump = await findPda(ownerAddr, "vault");
+const pda_bump = await findPdaV2(ownerAddr, "vault", "Vault");
 export const vaultPDA = pda_bump.pda;
 ll(`✅ - Vault PDA: ${vaultPDA}`);
-const pda_bump1 = await findPda(user1Addr, "vault");
+const pda_bump1 = await findPdaV2(user1Addr, "vault", "Vault1");
 export const vaultPDA1 = pda_bump1.pda;
 ll(`✅ - vaultPDA1: ${vaultPDA1}`);
 
-const configPdaBump = await findPda(adminAddr, "config");
+const configPdaBump = await findPdaV2(adminAddr, "config", "Config");
 export const configPDA = configPdaBump.pda;
 ll(`✅ - configPDA: ${configPDA}`);
 

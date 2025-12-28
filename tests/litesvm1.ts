@@ -25,7 +25,7 @@ import {
 } from "@solana/spl-token";
 import { TransactionMetadata } from "litesvm";
 import {
-	findVaultPda,
+	findPdaV1,
 	getLamports,
 	helloworldProgram,
 	ll,
@@ -34,7 +34,7 @@ import {
 	usdcMint,
 	vaultProgram,
 } from "./litesvm-utils";
-import { bytesToBigint, lamToBytes } from "./utils";
+import { bigintToBytes, bytesToBigint, toLam } from "./utils";
 
 const ownerKp = new Keypair();
 const adminKp = new Keypair();
@@ -60,8 +60,10 @@ svm.airdrop(hackerAddr, initBalc);
 const adminBalc = svm.getBalance(adminAddr);
 ll("adminBalc:", adminBalc);
 
-const _vaultPDA = findVaultPda(ownerAddr, "VaultPDA");
-const vaultPDA1 = findVaultPda(user1Addr, "VaultPDA1");
+const vaultPdaBump = findPdaV1(ownerAddr, "vault", "VaultPDA");
+const vaultPdaBump1 = findPdaV1(user1Addr, "vault", "VaultPDA1");
+const _vaultPDA = vaultPdaBump.pda;
+const vaultPDA1 = vaultPdaBump1.pda;
 
 test("transfer SOL", () => {
 	const blockhash = svm.latestBlockhash();
@@ -117,27 +119,26 @@ test("hello world", () => {
 
 test("lamportsBytes", () => {
 	ll("\n------== lamportsBytes");
-	const amountNum = 1.23;
-	const lamBytes64 = lamToBytes(amountNum);
-
-	const lam = bytesToBigint(lamBytes64);
-	ll("lam:", lam); //1230000000n
+	const amountNum = toLam(1.23);
+	const argData = bigintToBytes(amountNum);
+	const amountNumOut = bytesToBigint(argData);
+	ll("amountNumOut:", amountNumOut); //1230000000n
 });
 
 test("User1 Deposits SOL to vault1", () => {
 	ll("\n------== User1 Deposits SOL to vault1");
-	const discriminator = 0;
+	const disc = 0; //discriminator
 	ll("vaultPDA1:", vaultPDA1.toBase58());
 	const payer = user1Kp;
-	const amtSol = 1.23;
-	//ll(toLam(amtSol));
+	const amtlam = toLam(1.23);
+	//ll(toLam(amtSol));1230000000n
 
 	const [programId] = vaultProgram(svm);
 	ll("programId:", programId.toBase58());
 
-	const lamBytes64 = lamToBytes(amtSol);
-	const bytes = [discriminator, ...lamBytes64];
-	ll("bytes:", bytes);
+	const argData = bigintToBytes(amtlam, 64);
+	//const bytes = [disc, ...argData];
+	//ll("bytes:", bytes);
 
 	const blockhash = svm.latestBlockhash();
 	const ix = new TransactionInstruction({
@@ -147,7 +148,7 @@ test("User1 Deposits SOL to vault1", () => {
 			{ pubkey: systemProgram, isSigner: false, isWritable: false },
 		],
 		programId,
-		data: Buffer.from(bytes),
+		data: Buffer.from([disc, ...argData]),
 	});
 	const tx = new Transaction();
 	tx.recentBlockhash = blockhash;
@@ -183,6 +184,14 @@ test("User1 Deposits SOL to vault1", () => {
 	const lamports2a = getLamports(svm, vaultPDA1);
 	ll("lamports2a:", lamports2a);
 	//expect(BigInt(lamports2a)).toEqual(amtLam);
+});
+
+test("parse u32", () => {
+	ll("\n------== parse u32");
+	const time1 = 1766946349n;
+	const argData = bigintToBytes(time1, 32);
+	const amountNumOut = bytesToBigint(argData, 32);
+	ll("amountNumOut:", amountNumOut); //1230000000n
 });
 
 test("infinite usdc mint", () => {
