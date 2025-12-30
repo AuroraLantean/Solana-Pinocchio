@@ -14,6 +14,10 @@ pub mod instructions;
 pub use instructions::*;
 pub mod state;
 pub use state::*;
+#[cfg(test)]
+mod litesvm1;
+#[cfg(test)]
+mod litesvm_helpers;
 
 declare_id!("7EKqBVYSCmJbt2T8tGSmwzNKnpL29RqcJcyUr9aEEr6e"); //crate::ID
 
