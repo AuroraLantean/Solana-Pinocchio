@@ -19,5 +19,10 @@ thiserror = { version = "2.0.17", default-features = false }
 
 [dev-dependencies]
 litesvm = "0.8.2"
+#Features: hashbrown, internal-test,  nodejs-internal, precompiles, serde
 litesvm-token = "0.8.2"
+#Features: token-2022
 solana-sdk = "3.0.0"
+#Features: dev-context-only-utils, frozen-abi
+solana-system-interface = "3.0.0"
+#Features: alloc, bincode, frozen-abi, serde, std

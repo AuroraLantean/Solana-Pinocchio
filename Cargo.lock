@@ -1154,7 +1154,7 @@ dependencies = [
  "solana-svm-log-collector",
  "solana-svm-timings",
  "solana-svm-transaction",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
  "solana-system-program",
  "solana-sysvar",
  "solana-sysvar-id",
@@ -1179,7 +1179,7 @@ dependencies = [
  "solana-pubkey 3.0.0",
  "solana-rent",
  "solana-signer",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
  "solana-transaction",
  "solana-transaction-error",
  "spl-associated-token-account-interface",
@@ -1513,6 +1513,7 @@ dependencies = [
  "pinocchio-token-2022",
  "shank",
  "solana-sdk",
+ "solana-system-interface 3.0.0",
  "thiserror 2.0.17",
 ]
 
@@ -2135,7 +2136,7 @@ dependencies = [
  "solana-svm-log-collector",
  "solana-svm-measure",
  "solana-svm-type-overrides",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
  "solana-transaction-context",
 ]
 
@@ -2266,7 +2267,7 @@ dependencies = [
  "solana-pubkey 3.0.0",
  "solana-sdk-ids",
  "solana-short-vec",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
 ]
 
 [[package]]
@@ -2395,7 +2396,7 @@ dependencies = [
  "solana-nonce",
  "solana-pubkey 3.0.0",
  "solana-sdk-ids",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
  "thiserror 2.0.17",
 ]
 
@@ -2612,7 +2613,7 @@ dependencies = [
  "solana-instruction",
  "solana-pubkey 3.0.0",
  "solana-sdk-ids",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
 ]
 
 [[package]]
@@ -2893,7 +2894,7 @@ dependencies = [
  "solana-svm-timings",
  "solana-svm-transaction",
  "solana-svm-type-overrides",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
  "solana-sysvar",
  "solana-sysvar-id",
  "solana-transaction-context",
@@ -3180,7 +3181,7 @@ dependencies = [
  "solana-instruction",
  "solana-program-error",
  "solana-pubkey 3.0.0",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
  "solana-sysvar",
  "solana-sysvar-id",
 ]
@@ -3297,6 +3298,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-system-interface"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14591d6508042ebefb110305d3ba761615927146a26917ade45dc332d8e1ecde"
+dependencies = [
+ "num-traits",
+ "solana-address 2.0.0",
+ "solana-msg",
+ "solana-program-error",
+]
+
+[[package]]
 name = "solana-system-program"
 version = "3.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3318,7 +3331,7 @@ dependencies = [
  "solana-sdk-ids",
  "solana-svm-log-collector",
  "solana-svm-type-overrides",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
  "solana-sysvar",
  "solana-transaction-context",
 ]
@@ -3448,7 +3461,7 @@ dependencies = [
  "solana-serde-varint",
  "solana-serialize-utils",
  "solana-short-vec",
- "solana-system-interface",
+ "solana-system-interface 2.0.0",
 ]
 
 [[package]]
