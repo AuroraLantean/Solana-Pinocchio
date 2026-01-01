@@ -1,4 +1,5 @@
 import { expect } from "bun:test";
+
 import {
 	ACCOUNT_SIZE,
 	AccountLayout,
@@ -64,23 +65,6 @@ export const vaultPDA = vaultPdaBump.pda;
 export const vaultPDA1 = vaultPdaBump1.pda;
 export const vaultPDA2 = vaultPdaBump2.pda;
 export const vaultPDA3 = vaultPdaBump3.pda;
-
-export type ConfigT = {
-	owner: PublicKey;
-	deadline: number;
-	deposit: bigint;
-};
-export const getConfigAcct = (
-	programId: PublicKey,
-	pdaName: string,
-): PublicKey => {
-	const [configPbk, _configBump] = PublicKey.findProgramAddressSync(
-		[Buffer.from("proj_config")],
-		programId,
-	);
-	ll(pdaName, ":", configPbk.toBase58());
-	return configPbk;
-};
 
 export const makeAccount = (
 	svm: LiteSVM,

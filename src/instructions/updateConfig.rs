@@ -3,7 +3,7 @@ use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramR
 use pinocchio_log::log;
 
 use crate::{
-  check_pda, instructions::check_signer, max_data_len, parse_u32, parse_u64, to32bytes, u8_to_bool,
+  check_pda, instructions::check_signer, min_data_len, parse_u32, parse_u64, to32bytes, u8_to_bool,
   writable, Config, MyError, StatusEnum,
 };
 
@@ -36,10 +36,10 @@ impl<'a> UpdateConfig<'a> {
 
   pub fn add_tokens(self) -> ProgramResult {
     log!("UpdateConfig add_tokens()");
-    let mutated_state = u64::from_le_bytes(self.config.token_balance)
+    let mutated_state = (self.config.token_balance())
       .checked_add(self.u64s[1])
       .ok_or_else(|| ProgramError::ArithmeticOverflow)?;
-    self.config.token_balance = mutated_state.to_le_bytes();
+    //self.config.token_balance = mutated_state.to_le_bytes();
     Ok(())
   }
 
@@ -75,7 +75,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    /* check all data size in every function
+    /* check minimum data size in try_from!
     u32size = core::mem::size_of::<u32>();//4
     u64size = core::mem::size_of::<u64>();//8
     let expected_size = 8 + u32size * 4 + u64size * 4; // 8 + 4*4+ 8*4 = 56
@@ -85,7 +85,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
       return Err(MyError::InputDataLen.into());
     }*/
     let max_data_size1 = 88;
-    max_data_len(data, max_data_size1)?; //56+32
+    min_data_len(data, max_data_size1)?; //56+32
 
     let b0 = u8_to_bool(data[0])?;
     let b1 = u8_to_bool(data[1])?;

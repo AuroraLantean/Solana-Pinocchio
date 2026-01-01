@@ -164,16 +164,4 @@ test("infinite usdc mint", () => {
 	expect(decoded.amount).toStrictEqual(amt);
 });
 
-/*Test with Time Travel: https://litesvm.github.io/litesvm/tutorial.html#time-travel
-const c = svm.getClock();
-svm.setClock(
-  new Clock(c.slot, c.epochStartTimestamp, c.epoch, c.leaderScheduleEpoch, BigInt(quarterTime))    );
-
-Test with arbitrary accounts
-https://litesvm.github.io/litesvm/tutorial.html#time-travel      
-
-Copying Accounts from a live environment 
-https://litesvm.github.io/litesvm/tutorial.html#copying-accounts-from-a-live-environment
-*/
-
 ll("LiteSVM1 finished");

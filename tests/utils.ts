@@ -108,9 +108,9 @@ export const bigintToBytes = (input: bigint | number, bit = 64) => {
 		throw new Error("bit unknown");
 		//lamportsEncoder = getDefaultLamportsEncoder()
 	}
-	const lamportsBytes: Uint8Array = lamportsEncoder.encode(amtLam);
-	ll("lamportsBytes", lamportsBytes);
-	return lamportsBytes;
+	const u8Bytes: Uint8Array = lamportsEncoder.encode(amtLam);
+	ll("u8Bytes", u8Bytes);
+	return u8Bytes;
 };
 export const bytesToBigint = (bytes: Uint8Array) => {
 	let bigint: Lamports = lamports(0n);

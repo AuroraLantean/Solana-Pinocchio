@@ -30,9 +30,9 @@ expect(adminBalc).toStrictEqual(initBalc);
 let disc = 0; //discriminator
 let _payerKp: Keypair;
 let authorityKp: Keypair;
-let _authority: PublicKey;
+let authority: PublicKey;
 let originalOwner: PublicKey;
-let amount: bigint;
+let _amount: bigint;
 let _amt: bigint;
 let argData: Uint8Array<ArrayBufferLike>;
 let blockhash: string;
@@ -47,16 +47,18 @@ test("InitConfig", () => {
 	ll("vaultPDA1:", vaultPDA1.toBase58());
 	ll(`configPDA: ${configPDA}`);
 	authorityKp = adminKp;
-	originalOwner = authorityKp.publicKey;
-	amount = as9zBn(111);
-	argData = bigintToBytes(amount);
+	authority = authorityKp.publicKey;
+	ll("authority:", authority.toBase58());
+	originalOwner = authority;
+	const fee = as9zBn(111);
+	argData = bigintToBytes(fee);
 	//const bytes = [disc, ...argData];
 	//ll("bytes:", bytes);
 
 	blockhash = svm.latestBlockhash();
 	ix = new TransactionInstruction({
 		keys: [
-			{ pubkey: authorityKp.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: authority, isSigner: true, isWritable: true },
 			{ pubkey: configPDA, isSigner: false, isWritable: true },
 			{ pubkey: originalOwner, isSigner: false, isWritable: false },
 			{ pubkey: systemProgram, isSigner: false, isWritable: false },
@@ -72,6 +74,19 @@ test("InitConfig", () => {
 	simRes = svm.simulateTransaction(tx);
 	sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
+
+	//TODO: read ConfigPDA and check values
+	const configPDAraw = svm.getAccount(configPDA);
+	expect(configPDAraw).not.toBeNull();
+	const rawAccountData = configPDAraw?.data;
+	ll("rawAccountData:", rawAccountData);
+
+	const decoded = ConfigLayout.decode(rawAccountData!);
+	ll("decoded:", decoded);
+	ll("authority:", decoded.authority.toBase58());
+	ll("fee:", decoded.fee);
+	ll("bump:", decoded.bump);
+	//expect(decoded.amount).toStrictEqual(amt);
 });
 
 test("inputNum to/from Bytes", () => {});

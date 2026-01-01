@@ -12,3 +12,7 @@ use solana_kite::{
 fn test_make_offer_succeeds() {
   let mut test_environment = setup_escrow_test();
 }
+/* use solana_program::borsh::try_from_slice_unchecked;
+let counter_account = svm.get_account(&address()).unwrap();
+let mut buffer = &counter_account.data[8..];
+try_from_slice_unchecked::<Counter>(buffer).unwrap() */
