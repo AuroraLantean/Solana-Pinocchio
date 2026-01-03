@@ -220,5 +220,11 @@ export const statusToByte = (status: Status) => {
 };
 
 export const getTime = () => {
-	return Math.floor(Date.now() / 1000);
+	const time = Math.floor(Date.now() / 1000);
+	ll("time:", time);
+	return time;
+};
+export const getTimeB = () => {
+	const time = getTime();
+	return BigInt(time);
 };

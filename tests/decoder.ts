@@ -10,6 +10,7 @@ import {
 	getEnumDecoder,
 	getStructDecoder,
 	getU8Decoder,
+	getU32Decoder,
 	getU64Decoder,
 	getUtf8Decoder,
 } from "@solana/kit";
@@ -26,6 +27,7 @@ export type ConfigAcct = {
 	fee: bigint;
 	solBalance: bigint;
 	tokenBalance: bigint;
+	updatedAt: number;
 	isAuthorized: boolean;
 	status: Status;
 	bump: number;
@@ -49,6 +51,7 @@ export const configAcctDecoder: FixedSizeDecoder<ConfigAcct> = getStructDecoder(
 		["fee", getU64Decoder()],
 		["solBalance", getU64Decoder()],
 		["tokenBalance", getU64Decoder()],
+		["updatedAt", getU32Decoder()],
 		["isAuthorized", getBooleanDecoder()],
 		["status", getEnumDecoder(Status)],
 		//https://github.com/anza-xyz/kit/tree/main/packages/codecs-data-structures#enum-codec
@@ -68,37 +71,41 @@ export const solanaKitDecode = (
 		ll("fee:", decoded.fee);
 		ll("solBalance:", decoded.solBalance);
 		ll("tokenBalance:", decoded.tokenBalance);
+		ll("updatedAt:", decoded.updatedAt);
 		ll("isAuthorized:", decoded.isAuthorized);
 		ll("status:", decoded.status);
 		ll("bump:", decoded.bump);
 	}
 	return decoded;
 };
+// This below is only used for testing as it is outputing PublicKey, not Address
 export const solanaKitDecodeDev = (
 	bytes: ReadonlyUint8Array | Uint8Array<ArrayBufferLike> | undefined,
 ) => {
 	if (!bytes) throw new Error("bytes invalid");
 	const decoded = solanaKitDecode(bytes, true);
-	const decoded2: ConfigAcct2 = {
+	const decodedV1: ConfigAcctV1 = {
 		progOwner: new PublicKey(decoded.progOwner.toString()),
 		admin: new PublicKey(decoded.admin.toString()),
 		strU8array: decoded.strU8array,
 		fee: decoded.fee,
 		solBalance: decoded.solBalance,
 		tokenBalance: decoded.tokenBalance,
+		updatedAt: decoded.updatedAt,
 		isAuthorized: decoded.isAuthorized,
 		status: decoded.status,
 		bump: decoded.bump,
 	};
-	return decoded2;
+	return decodedV1;
 };
-export type ConfigAcct2 = {
+export type ConfigAcctV1 = {
 	progOwner: PublicKey;
 	admin: PublicKey;
 	strU8array: string;
 	fee: bigint;
 	solBalance: bigint;
 	tokenBalance: bigint;
+	updatedAt: number;
 	isAuthorized: boolean;
 	status: Status;
 	bump: number;

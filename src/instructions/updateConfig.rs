@@ -3,13 +3,13 @@ use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramR
 use pinocchio_log::log;
 
 use crate::{
-  check_pda, instructions::check_signer, min_data_len, parse_u32, parse_u64, to32bytes, u8_to_bool,
-  writable, Config, MyError, Status,
+  check_pda, get_time, instructions::check_signer, min_data_len, parse_u32, parse_u64, to32bytes,
+  u8_to_bool, writable, Config, MyError, Status,
 };
 
 /// Update Config PDA
 pub struct UpdateConfig<'a> {
-  pub authority: &'a AccountInfo,
+  pub signer: &'a AccountInfo,
   pub config_pda: &'a AccountInfo,
   pub account1: &'a AccountInfo,
   pub account2: &'a AccountInfo,
@@ -53,18 +53,30 @@ impl<'a> UpdateConfig<'a> {
   pub fn update_fee(self) -> ProgramResult {
     log!("UpdateConfig update_fee()");
     self.config.set_fee(self.u64s[0]);
+    let time = get_time()?;
+    self.config.set_updated_at(time);
+
     let status = Status::from(self.u8s[1]);
     self.config.set_status(status);
     self.config.set_str_u8array(self.str_u8array);
+
+    self.config.set_admin(*self.account1.key());
     self.add_tokens()?;
-    //self.update_admin()?;
+    Ok(())
+  }
+  pub fn only_owner(&self) -> ProgramResult {
+    if self.config.prog_owner != *self.signer.key() {
+      return Err(MyError::OnlyOwner.into());
+    }
     Ok(())
   }
   pub fn update_admin(self) -> ProgramResult {
+    self.only_owner()?;
     self.config.set_admin(*self.account1.key());
     Ok(())
   }
   pub fn update_prog_owner(self) -> ProgramResult {
+    self.only_owner()?;
     self.config.set_prog_owner(*self.account1.key());
     Ok(())
   }
@@ -77,10 +89,11 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-    let [authority, config_pda, account1, account2] = accounts else {
+    let [signer, config_pda, account1, account2] = accounts else {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
-    check_signer(authority)?;
+    log!("check accounts");
+    check_signer(signer)?;
     writable(config_pda)?;
     check_pda(config_pda)?;
 
@@ -96,6 +109,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let min_data_size1 = 88;
     min_data_len(data, min_data_size1)?; //56+32
 
+    log!("parse input arguments");
     let b0 = u8_to_bool(data[0])?;
     let b1 = u8_to_bool(data[1])?;
     let b2 = u8_to_bool(data[2])?;
@@ -125,12 +139,12 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
 
     config_pda.can_borrow_mut_data()?;
     let config: &mut Config = Config::load(&config_pda)?;
-    if config.admin != *authority.key() || config.prog_owner != *authority.key() {
-      return Err(MyError::PdaAuthority.into());
+    if config.admin != *signer.key() && config.prog_owner != *signer.key() {
+      return Err(ProgramError::IncorrectAuthority);
     }
     // cannot use self in "0 => Self.process(),
     Ok(Self {
-      authority,
+      signer,
       config_pda,
       account1,
       account2,

@@ -11,6 +11,7 @@ pub struct Config {
   fee: [u8; 8],              // 8 for u64,
   sol_balance: [u8; 8],      // 8
   token_balance: [u8; 8],    // 8
+  updated_at: [u8; 4],       // 4 for u32
   pub is_authorized: bool,   // 1
   pub status: Status,        // 1
   pub bump: u8,              // 1
@@ -27,6 +28,9 @@ impl Config {
   }
   pub fn token_balance(&self) -> u64 {
     u64::from_le_bytes(self.token_balance)
+  }
+  pub fn updated_at(&self) -> u32 {
+    u32::from_le_bytes(self.updated_at)
   }
   pub fn read(pda: &AccountInfo) -> Result<&Self, ProgramError> {
     Self::check(pda)?;
@@ -69,6 +73,9 @@ impl Config {
   }
   pub fn set_token_balance(&mut self, amt: u64) {
     self.token_balance = amt.to_le_bytes();
+  }
+  pub fn set_updated_at(&mut self, amt: u32) {
+    self.updated_at = amt.to_le_bytes();
   }
   pub fn set_bump(&mut self, amt: u8) {
     self.bump = amt;

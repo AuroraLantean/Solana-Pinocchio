@@ -122,6 +122,8 @@ pub enum MyError {
   AtokenGPvbd,
   #[error("ClockGet")]
   ClockGet,
+  #[error("OnlyOwner")]
+  OnlyOwner,
 }
 impl From<MyError> for ProgramError {
   fn from(e: MyError) -> Self {
@@ -186,6 +188,7 @@ impl TryFrom<u32> for MyError {
       50 => Ok(MyError::ByteSliceSize6),
       51 => Ok(MyError::AtokenGPvbd),
       52 => Ok(MyError::ClockGet),
+      53 => Ok(MyError::OnlyOwner),
       _ => Err(MyError::ErrorValue.into()),
     }
   }
@@ -248,6 +251,7 @@ impl ToStr for MyError {
       MyError::ByteSliceSize6 => "ByteSliceSize6",
       MyError::AtokenGPvbd => "AtokenGPvbd",
       MyError::ClockGet => "ClockGet",
+      MyError::OnlyOwner => "OnlyOwner",
     }
   }
 }
@@ -625,6 +629,6 @@ pub fn check_tokacct_interface(ata: &AccountInfo) -> Result<(), ProgramError> {
 pub fn get_time() -> Result<u32, ProgramError> {
   let clock = Clock::get().map_err(|_| MyError::ClockGet)?;
   let time = clock.unix_timestamp as u32;
-  log!("Solana time:{}", time);
+  log!("Solana time: {}", time);
   Ok(time)
 }

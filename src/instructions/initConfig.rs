@@ -9,8 +9,8 @@ use pinocchio::{
 use pinocchio_log::log;
 
 use crate::{
-  check_sysprog, derive_pda1, empty_lamport, instructions::check_signer, min_data_len, parse_u64,
-  to32bytes, u8_to_bool, u8_to_status, Config, MyError, Status, CONFIG_SEED,
+  check_sysprog, derive_pda1, empty_lamport, get_time, instructions::check_signer, min_data_len,
+  parse_u64, to32bytes, u8_to_bool, u8_to_status, Config, MyError, Status, CONFIG_SEED,
 };
 
 /// Init Config PDA
@@ -74,12 +74,14 @@ impl<'a> InitConfig<'a> {
     .invoke_signed(&seed_signer)?;
 
     log!("InitConfig after initialization");
+    let time = get_time()?;
     self.config_pda.can_borrow_mut_data()?;
     let config = Config::load(&config_pda)?;
     config.set_prog_owner(*prog_owner.key());
     config.set_admin(*prog_admin.key());
     config.set_str_u8array(str_u8array);
     config.set_fee(fee);
+    config.set_updated_at(time);
     config.set_is_authorized(is_authorized);
     config.set_status(status);
     config.set_bump(bump);
