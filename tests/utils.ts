@@ -20,7 +20,7 @@ import {
 } from "@solana/kit";
 import chalk from "chalk";
 import * as vault from "../clients/js/src/generated/index";
-import { Status } from "./web3jsSetup";
+import { Status } from "./decoder";
 
 //-----------== General Config
 export const network = "mainnet-beta"; //devnet
@@ -166,6 +166,7 @@ export const strToU8Fixed = (str: string, size = 32) => {
 	ll("u8out:", u8out);
 	return u8out;
 };
+//ASCII: Each char uses exactly 1 byte(8 bits)
 export const strToU8Array = (str: string) => {
 	const u8array = Uint8Array.from(
 		Array.from(str).map((letter) => letter.charCodeAt(0)),

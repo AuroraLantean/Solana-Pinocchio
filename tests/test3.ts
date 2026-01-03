@@ -6,6 +6,7 @@ import {
 	adminAddr,
 	adminKp,
 	configPDA,
+	ownerKp,
 	readConfigData,
 	sendTxn,
 	vaultProgAddr,
@@ -32,19 +33,23 @@ test("InitConfig", async () => {
 	ll("\n------== InitConfig");
 	ll("payer:", adminAddr);
 	const fee: bigint = as9zBn(111);
+	const isAuthorized = true;
 
 	const methodIx = vault.getInitConfigInstruction({
-		authority: adminKp,
+		signer: adminKp,
 		configPda: configPDA,
-		originalOwner: adminKp.address,
+		progOwner: ownerKp.address,
+		progAdmin: adminKp.address,
 		systemProgram: SYSTEM_PROGRAM_ADDRESS,
 		fee,
+		isAuthorized,
 	});
 	await sendTxn(methodIx, adminKp);
 	ll("program execution successful");
 
 	const configData = await readConfigData(configPDA, "configPDA");
-	expect(configData.authority).toEqual(adminAddr);
+	expect(configData.progOwner).toEqual(adminAddr);
+	expect(configData.admin).toEqual(adminAddr);
 	expect(configData.fee).toEqual(fee);
 }, 10000); //Timeouts
 
@@ -76,7 +81,7 @@ test("UpdateConfig", async () => {
 	ll("program execution successful");
 
 	const configData = await readConfigData(configPDA, "configPDA");
-	expect(configData.authority).toEqual(adminAddr);
+	expect(configData.admin).toEqual(adminAddr);
 	expect(configData.fee).toEqual(newFee);
 	expect(configData.tokenBalance).toEqual(newTokBalc);
 });

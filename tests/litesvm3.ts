@@ -7,7 +7,7 @@ import type {
 	SimulatedTransactionInfo,
 	TransactionMetadata,
 } from "litesvm";
-
+import { Status, solanaKitDecode } from "./decoder";
 import {
 	checkSuccess,
 	configPDA,
@@ -27,7 +27,6 @@ import {
 	adminAddr,
 	adminKp,
 	ownerAddr,
-	Status,
 	systemProgram,
 	vaultProgAddr,
 } from "./web3jsSetup";
@@ -60,12 +59,11 @@ test("InitConfig", () => {
 	disc = 12; //discriminator
 	ll("vaultPDA1:", vaultPDA1.toBase58());
 	ll(`configPDA: ${configPDA}`);
-	ll("admin:", adminAddr.toBase58());
 	progOwner = ownerAddr;
 	progAdmin = adminAddr;
 	const fee = as9zBn(111);
 	isAuthorized = true;
-	status = Status.Waiting;
+	status = Status.Active;
 	str = "MoonDog to the Moon!";
 	argData = [
 		boolToByte(isAuthorized),
@@ -73,8 +71,8 @@ test("InitConfig", () => {
 		...bigintToBytes(fee),
 		...strToU8Fixed(str),
 	];
-	//const bytes = [disc, ...argData];
-	//ll("bytes:", bytes);
+	ll("progOwner:", progOwner.toBase58(), progOwner.toBytes());
+	ll("progAdmin:", progAdmin.toBase58(), progAdmin.toBytes());
 
 	blockhash = svm.latestBlockhash();
 	ix = new TransactionInstruction({
@@ -97,18 +95,13 @@ test("InitConfig", () => {
 	sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 
-	//TODO: read ConfigPDA and check values
 	const configPDAraw = svm.getAccount(configPDA);
 	expect(configPDAraw).not.toBeNull();
 	const rawAccountData = configPDAraw?.data;
 	ll("rawAccountData:", rawAccountData);
 
-	/*const decoded = ConfigLayout.decode(rawAccountData!);
-	ll("decoded:", decoded);
-	ll("authority:", decoded.authority.toBase58());
-	ll("fee:", decoded.fee);
-	ll("bump:", decoded.bump);*/
-	//expect(decoded.amount).toStrictEqual(amt);
+	const decoded = solanaKitDecode(rawAccountData);
+	expect(decoded.progOwner.toString()).toEqual(progOwner.toString());
 });
 
 test("inputNum to/from Bytes", () => {});
