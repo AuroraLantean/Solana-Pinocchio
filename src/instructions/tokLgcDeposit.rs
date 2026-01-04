@@ -11,7 +11,7 @@ use pinocchio_system::instructions::CreateAccount;
 
 use crate::{
   check_ata, check_decimals, check_mint0a, check_pda, check_sysprog, derive_pda1, executable,
-  instructions::check_signer, min_data_len, parse_u64, rent_exempt, writable, MyError,
+  instructions::check_signer, min_data_len, parse_u64, rent_exempt, writable, Ee,
   ACCOUNT_DISCRIMINATOR_SIZE, VAULT_SEED,
 };
 
@@ -58,7 +58,7 @@ impl<'a> TokLgcDeposit<'a> {
       log!("TokLgcDeposit 6: make to_wallet");
       let (expected_vault_pda, bump) = derive_pda1(user, VAULT_SEED)?;
       if to_wallet.key() != &expected_vault_pda {
-        return Err(MyError::VaultPDA.into());
+        return Err(Ee::VaultPDA.into());
       }
       let signer_seeds = [
         Seed::from(VAULT_SEED),

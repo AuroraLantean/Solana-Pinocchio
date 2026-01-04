@@ -4,7 +4,7 @@ use pinocchio_log::log;
 
 use crate::{
   check_pda, get_time, instructions::check_signer, min_data_len, parse_u32, parse_u64, to32bytes,
-  u8_to_bool, writable, Config, MyError, Status,
+  u8_to_bool, writable, Config, Ee, Status,
 };
 
 /// Update Config PDA
@@ -30,7 +30,7 @@ impl<'a> UpdateConfig<'a> {
       0 => self.update_status(),
       1 => self.update_fee(),
       2 => self.update_admin(),
-      _ => Err(MyError::FunctionSelector.into()),
+      _ => Err(Ee::FunctionSelector.into()),
     }
   }
 
@@ -49,7 +49,7 @@ impl<'a> UpdateConfig<'a> {
     self.config.set_status(status);
     Ok(())
   }
-  //TODO: WHY do tests run twice??
+
   pub fn update_fee(self) -> ProgramResult {
     log!("UpdateConfig update_fee()");
     self.config.set_fee(self.u64s[0]);
@@ -66,7 +66,7 @@ impl<'a> UpdateConfig<'a> {
   }
   pub fn only_owner(&self) -> ProgramResult {
     if self.config.prog_owner != *self.signer.key() {
-      return Err(MyError::OnlyOwner.into());
+      return Err(Ee::OnlyOwner.into());
     }
     Ok(())
   }
@@ -104,7 +104,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let expected_size: usize = 56;
     log!("expected_size: {}", expected_size);
     if data.len() != expected_size {
-      return Err(MyError::InputDataLen.into());
+      return Err(Ee::InputDataLen.into());
     }*/
     let min_data_size1 = 88;
     min_data_len(data, min_data_size1)?; //56+32
@@ -134,7 +134,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
 
     //check Status input range
     if u8s[1] > 3 {
-      return Err(MyError::InputStatus.into());
+      return Err(Ee::InputStatus.into());
     }
 
     config_pda.can_borrow_mut_data()?;

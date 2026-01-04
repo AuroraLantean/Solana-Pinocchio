@@ -1,6 +1,6 @@
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
-use crate::MyError;
+use crate::Ee;
 
 #[derive(Clone, Copy, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
@@ -38,10 +38,10 @@ impl Config {
   }
   pub fn check(pda: &AccountInfo) -> Result<(), ProgramError> {
     if pda.data_len() != Self::LEN {
-      return Err(MyError::ConfigDataLengh.into());
+      return Err(Ee::ConfigDataLengh.into());
     }
     if pda.owner() != &crate::ID {
-      return Err(MyError::ForeignPDA.into());
+      return Err(Ee::ForeignPDA.into());
     }
     // CHECK alignment for the most restrictive field (u64 in this case)... Alignment requirement checking can be removed ONLY IF you know all numbers are using u8 arrays
     /*if (pda.borrow_mut_data_unchecked().as_ptr() as usize) % core::mem::align_of::<Self>() != 0 { return Err();  }*/
@@ -127,11 +127,11 @@ impl Escrow {
 
   pub fn load(pda: &AccountInfo) -> Result<&mut Self, ProgramError> {
     if pda.data_len() != Escrow::LEN {
-      return Err(MyError::PdaDataLen.into());
+      return Err(Ee::PdaDataLen.into());
     }
     //assert_eq!(pda.data_len(), Escrow::LEN);
     if pda.owner() != &crate::ID {
-      return Err(MyError::ForeignPDA.into());
+      return Err(Ee::ForeignPDA.into());
     }
     //assert_eq!(pda.owner(), &crate::ID);
     unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }

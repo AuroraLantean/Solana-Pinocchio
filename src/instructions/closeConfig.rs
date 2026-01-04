@@ -2,7 +2,7 @@ use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
 use pinocchio_log::log;
 
-use crate::{check_pda, instructions::check_signer, writable, Config, MyError};
+use crate::{check_pda, instructions::check_signer, writable, Config, Ee};
 
 /// Close PDA
 pub struct CloseConfigPda<'a> {
@@ -53,7 +53,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for CloseConfigPda<'a> {
     config_pda.can_borrow_mut_data()?;
     let config: &mut Config = Config::load(&config_pda)?;
     if config.admin != *authority.key() || config.prog_owner != *authority.key() {
-      return Err(MyError::PdaAuthority.into());
+      return Err(Ee::PdaAuthority.into());
     }
     Ok(Self {
       authority,

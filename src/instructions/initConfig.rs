@@ -10,7 +10,7 @@ use pinocchio_log::log;
 
 use crate::{
   check_sysprog, derive_pda1, empty_lamport, get_time, instructions::check_signer, min_data_len,
-  parse_u64, to32bytes, u8_to_bool, u8_to_status, Config, MyError, Status, CONFIG_SEED,
+  parse_u64, to32bytes, u8_to_bool, u8_to_status, Config, Ee, Status, CONFIG_SEED,
 };
 
 /// Init Config PDA
@@ -52,7 +52,7 @@ impl<'a> InitConfig<'a> {
 
     log!("InitConfig 5");
     if expected_config_pda != *config_pda.key() {
-      return Err(MyError::ConfigPDA.into());
+      return Err(Ee::ConfigPDA.into());
     }
 
     log!("InitConfig 6");

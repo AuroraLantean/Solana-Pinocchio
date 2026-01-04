@@ -54,6 +54,6 @@ fn process_instruction(
     EscrowTokMake::DISCRIMINATOR => EscrowTokMake::try_from((data, accounts))?.process(),
     //EscrowTokTake::DISCRIMINATOR => EscrowTokTake::try_from((data, accounts))?.process(),
     //EscrowTokRefund::DISCRIMINATOR => EscrowTokRefund::try_from((data, accounts))?.process(),
-    _ => Err(MyError::InvalidDiscriminator.into()),
+    _ => Err(Ee::InvalidDiscriminator.into()),
   } //file names start with a lower case + Camel cases, but struct names start with Upper case + Camel cases!
 }

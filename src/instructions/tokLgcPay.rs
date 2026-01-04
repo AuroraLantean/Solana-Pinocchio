@@ -4,7 +4,7 @@ use pinocchio_log::log;
 
 use crate::{
   check_ata, check_decimals, check_mint0a, check_pda, check_sysprog, executable,
-  instructions::check_signer, min_data_len, parse_u64, rent_exempt, writable, MyError,
+  instructions::check_signer, min_data_len, parse_u64, rent_exempt, writable, Ee,
 };
 
 /// TokLgc: Users to Pay Tokens to VaultAdmin
@@ -48,7 +48,7 @@ impl<'a> TokLgcPay<'a> {
     log!("TokLgcPay 2");
     //only to_wallet(owner) should make to_wallet
     if to_wallet.lamports() == 0 {
-      return Err(MyError::ToWallet.into());
+      return Err(Ee::ToWallet.into());
     }
     log!("TokLgcPay 7a");
     check_pda(to_wallet)?;

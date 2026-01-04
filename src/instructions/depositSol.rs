@@ -13,7 +13,7 @@ use pinocchio_system::instructions::Transfer as SystemTransfer;
 use crate::{
   check_sysprog,
   instructions::{check_pda, check_signer, derive_pda1, parse_u64},
-  MyError, ACCOUNT_DISCRIMINATOR_SIZE, VAULT_SEED,
+  Ee, ACCOUNT_DISCRIMINATOR_SIZE, VAULT_SEED,
 };
 
 // Deposit SOL to program PDA
@@ -81,7 +81,7 @@ fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramRe
   if vault.lamports() == 0 {
     let (expected_vault_pda, bump) = derive_pda1(user, VAULT_SEED)?;
     if vault.key() != &expected_vault_pda {
-      return Err(MyError::VaultPDA.into());
+      return Err(Ee::VaultPDA.into());
     }
     let signer_seeds = [
       Seed::from(VAULT_SEED),
