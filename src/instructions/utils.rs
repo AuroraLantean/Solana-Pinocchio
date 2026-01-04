@@ -42,8 +42,18 @@ pub enum Ee {
   InputDataUnderMin,
   #[error("InputDataOverMax")]
   InputDataOverMax,
-  #[error("Xyz009")]
-  Xyz009,
+  #[error("Xyz014")]
+  Xyz014,
+  #[error("Xyz015")]
+  Xyz015,
+  #[error("Xyz016")]
+  Xyz016,
+  #[error("Xyz017")]
+  Xyz017,
+  #[error("Xyz018")]
+  Xyz018,
+  #[error("Xyz019")]
+  Xyz019,
   //Bytes for Numerical
   #[error("ZeroAsU128")]
   ZeroAsU128,
@@ -55,20 +65,6 @@ pub enum Ee {
   ZeroAsU16,
   #[error("ZeroAsU8")]
   ZeroAsU8,
-
-  //Inputs
-  #[error("StrOverMax")]
-  StrOverMax,
-  #[error("StrUnderMin")]
-  StrUnderMin,
-  #[error("ArrayLength")]
-  ArrayLength,
-  #[error("ByteForStatus")]
-  ByteForStatus,
-  #[error("ByteForSBool")]
-  ByteForSBool,
-  #[error("Xyz010")]
-  Xyz010,
   //Bytes Sizes
   #[error("ByteSizeForU128")]
   ByteSizeForU128,
@@ -80,9 +76,9 @@ pub enum Ee {
   ByteSizeForU16,
   #[error("ByteSizeForU8")]
   ByteSizeForU8,
-  #[error("Xyz020")]
-  Xyz020,
   //Byte Slice Sizes
+  #[error("ByteSliceSize128")]
+  ByteSliceSize128,
   #[error("ByteSliceSize64")]
   ByteSliceSize64,
   #[error("ByteSliceSize32")]
@@ -91,8 +87,37 @@ pub enum Ee {
   ByteSliceSize10,
   #[error("ByteSliceSize6")]
   ByteSliceSize6,
-  #[error("Xyz030")]
-  Xyz030,
+  #[error("Xyz035")]
+  Xyz035,
+  #[error("Xyz036")]
+  Xyz036,
+  #[error("Xyz037")]
+  Xyz037,
+  #[error("Xyz038")]
+  Xyz038,
+  #[error("Xyz039")]
+  Xyz039,
+  //Inputs
+  #[error("StrOverMax")]
+  StrOverMax,
+  #[error("StrUnderMin")]
+  StrUnderMin,
+  #[error("ArrayLength")]
+  ArrayLength,
+  #[error("ByteForStatus")]
+  ByteForStatus,
+  #[error("ByteForBool")]
+  ByteForBool,
+  #[error("Xyz045")]
+  Xyz045,
+  #[error("Xyz046")]
+  Xyz046,
+  #[error("Xyz047")]
+  Xyz047,
+  #[error("Xyz048")]
+  Xyz048,
+  #[error("Xyz049")]
+  Xyz049,
   //PDA
   #[error("PdaNoLamport")]
   PdaNoLamport,
@@ -110,8 +135,10 @@ pub enum Ee {
   EscrowPDA,
   #[error("ActionPDA")]
   ActionPDA,
-  #[error("Xyz040")]
-  Xyz040,
+  #[error("Xyz058")]
+  Xyz058,
+  #[error("Xyz059")]
+  Xyz059,
   //PDA Data Length
   #[error("ConfigDataLengh")]
   ConfigDataLengh,
@@ -125,8 +152,14 @@ pub enum Ee {
   EscrowDataLengh,
   #[error("ActionDataLengh")]
   ActionDataLengh,
-  #[error("Xyz050")]
-  Xyz050,
+  #[error("Xyz066")]
+  Xyz066,
+  #[error("Xyz067")]
+  Xyz067,
+  #[error("Xyz068")]
+  Xyz068,
+  #[error("Xyz069")]
+  Xyz069,
   //Mint Account
   #[error("DecimalsValue")]
   DecimalsValue,
@@ -136,13 +169,23 @@ pub enum Ee {
   MintOrMintAuthority,
   #[error("MintOrTokenProgram")]
   MintOrTokenProgram,
-  #[error("Xyz060")]
-  Xyz060,
+  #[error("Xyz074")]
+  Xyz074,
+  #[error("Xyz075")]
+  Xyz075,
+  #[error("Xyz076")]
+  Xyz076,
+  #[error("Xyz077")]
+  Xyz077,
+  #[error("Xyz078")]
+  Xyz078,
+  #[error("Xyz079")]
+  Xyz079,
   //ATA
-  #[error("TokAcctDataLen")]
-  TokAcctDataLen,
-  #[error("Tok22AcctDataLen")]
-  Tok22AcctDataLen,
+  #[error("AtaDataLen")]
+  AtaDataLen,
+  #[error("Ata22DataLen")]
+  Ata22DataLen,
   #[error("AtaOrOwner")]
   AtaOrOwner,
   #[error("AtaOrMint")]
@@ -151,33 +194,47 @@ pub enum Ee {
   AtaCheckX1,
   #[error("ForeignAta")]
   ForeignAta,
-  #[error("Xyz070")]
-  Xyz070,
-
+  #[error("Xyz086")]
+  Xyz086,
+  #[error("Xyz087")]
+  Xyz087,
+  #[error("Xyz088")]
+  Xyz088,
+  #[error("Xyz089")]
+  Xyz089,
   //Token 2022
   #[error("Acct22Type")]
   Acct22Type,
   #[error("Tok22AcctDiscOffset")]
   Tok22AcctDiscOffset,
-  #[error("NotRentExamptMint22")]
-  NotRentExamptMint22,
-  #[error("NotRentExamptTokAcct22")]
-  NotRentExamptTokAcct22,
-  #[error("Xyz080")]
-  Xyz080,
-
+  #[error("NotRentExemptMint22")]
+  NotRentExemptMint22,
+  #[error("NotRentExemptTokAcct22")]
+  NotRentExemptTokAcct22,
+  #[error("Xyz094")]
+  Xyz094,
   //Withdraw
-  #[error("PdaToBeBelowRentExampt")]
-  PdaToBeBelowRentExampt,
+  #[error("PdaToBeBelowRentExempt")]
+  PdaToBeBelowRentExempt,
   #[error("ToWallet")]
   ToWallet,
+  #[error("Xyz097")]
+  Xyz097,
+  #[error("Xyz098")]
+  Xyz098,
+  #[error("Xyz099")]
+  Xyz099,
   //Math
   #[error("MathOverflow")]
   MathOverflow,
   #[error("MathUnderflow")]
   MathUnderflow,
-  #[error("Xyz090")]
-  Xyz090,
+  #[error("MultiplyOverflow")]
+  MultiplyOverflow,
+  #[error("DividedByZero")]
+  DividedByZero,
+  #[error("Remainder")]
+  Remainder,
   //Misc...
   #[error("EmptyData")]
   EmptyData,
@@ -192,65 +249,120 @@ impl From<Ee> for ProgramError {
   fn from(e: Ee) -> Self {
     ProgramError::Custom(e as u32)
   }
-}
-//Deserialize Errors from Raw Values
+} //TODO: fix tryFrom and to_str below
+  //Deserialize Errors from Raw Values
 impl TryFrom<u32> for Ee {
   type Error = ProgramError;
   fn try_from(error: u32) -> Result<Self, Self::Error> {
     match error {
       0 => Ok(Ee::InvalidDiscriminator),
       1 => Ok(Ee::NotSigner),
-      2 => Ok(Ee::NotWritable),
-      3 => Ok(Ee::NotExecutable),
-      4 => Ok(Ee::ZeroAsU64),
-      5 => Ok(Ee::DecimalsValue),
-      6 => Ok(Ee::MintDataLen),
-      7 => Ok(Ee::TokAcctDataLen),
-      8 => Ok(Ee::Tok22AcctDataLen),
+      2 => Ok(Ee::OnlyOwner),
+      3 => Ok(Ee::OnlyAdmin),
+      4 => Ok(Ee::OnlyUser),
+      5 => Ok(Ee::Xyz005),
+      6 => Ok(Ee::Xyz006),
+      7 => Ok(Ee::NotWritable),
+      8 => Ok(Ee::NotExecutable),
       9 => Ok(Ee::TokenProgram),
-      10 => Ok(Ee::SystemProgram),
-      11 => Ok(Ee::AtaOrOwner),
-      12 => Ok(Ee::AtaOrMint),
-      13 => Ok(Ee::AtaCheckX1),
-      14 => Ok(Ee::ForeignAta),
-      15 => Ok(Ee::ForeignPDA),
-      17 => Ok(Ee::EmptyData),
-      18 => Ok(Ee::Acct22Type),
-      19 => Ok(Ee::StrOverMax),
-      20 => Ok(Ee::StrUnderMin),
-      21 => Ok(Ee::InputDataUnderMin),
-      22 => Ok(Ee::InputDataOverMax),
-      23 => Ok(Ee::PdaNoLamport),
-      25 => Ok(Ee::Tok22AcctDiscOffset),
-      26 => Ok(Ee::ByteForStatus),
-      27 => Ok(Ee::ByteForSBool),
-      28 => Ok(Ee::ByteSizeForU64),
-      29 => Ok(Ee::ByteSizeForU32),
-      30 => Ok(Ee::ByteSizeForU16),
-      31 => Ok(Ee::ByteSizeForU8),
-      32 => Ok(Ee::VaultPDA),
-      33 => Ok(Ee::ConfigDataLengh),
-      34 => Ok(Ee::FunctionSelector),
-      35 => Ok(Ee::ConfigPDA),
-
-      37 => Ok(Ee::MathOverflow),
-      38 => Ok(Ee::MathUnderflow),
-      39 => Ok(Ee::NotRentExamptMint22),
-      40 => Ok(Ee::NotRentExamptTokAcct22),
-      42 => Ok(Ee::MintOrMintAuthority),
-      43 => Ok(Ee::MintOrTokenProgram),
-      45 => Ok(Ee::PdaToBeBelowRentExampt),
-      46 => Ok(Ee::ToWallet),
-
-      48 => Ok(Ee::ByteSliceSize32),
-      49 => Ok(Ee::ByteSliceSize10),
-      50 => Ok(Ee::ByteSliceSize6),
-      51 => Ok(Ee::AtokenGPvbd),
-      52 => Ok(Ee::ClockGet),
-      53 => Ok(Ee::OnlyOwner),
-      54 => Ok(Ee::UserPDA),
-      55 => Ok(Ee::ZeroAsU32),
-      56 => Ok(Ee::EscrowDataLengh),
+      10 => Ok(Ee::AtokenGPvbd),
+      11 => Ok(Ee::SystemProgram),
+      12 => Ok(Ee::InputDataUnderMin),
+      13 => Ok(Ee::InputDataOverMax),
+      14 => Ok(Ee::Xyz014),
+      15 => Ok(Ee::Xyz015),
+      16 => Ok(Ee::Xyz016),
+      17 => Ok(Ee::Xyz017),
+      18 => Ok(Ee::Xyz018),
+      19 => Ok(Ee::Xyz019),
+      20 => Ok(Ee::ZeroAsU128),
+      21 => Ok(Ee::ZeroAsU64),
+      22 => Ok(Ee::ZeroAsU32),
+      23 => Ok(Ee::ZeroAsU16),
+      24 => Ok(Ee::ZeroAsU8),
+      25 => Ok(Ee::ByteSizeForU128),
+      26 => Ok(Ee::ByteSizeForU64),
+      27 => Ok(Ee::ByteSizeForU32),
+      28 => Ok(Ee::ByteSizeForU16),
+      29 => Ok(Ee::ByteSizeForU8),
+      30 => Ok(Ee::ByteSliceSize128),
+      31 => Ok(Ee::ByteSliceSize64),
+      32 => Ok(Ee::ByteSliceSize32),
+      33 => Ok(Ee::ByteSliceSize10),
+      34 => Ok(Ee::ByteSliceSize6),
+      35 => Ok(Ee::Xyz035),
+      36 => Ok(Ee::Xyz036),
+      37 => Ok(Ee::Xyz037),
+      38 => Ok(Ee::Xyz038),
+      39 => Ok(Ee::Xyz039),
+      40 => Ok(Ee::StrOverMax),
+      41 => Ok(Ee::StrUnderMin),
+      42 => Ok(Ee::ArrayLength),
+      43 => Ok(Ee::ByteForStatus),
+      44 => Ok(Ee::ByteForBool),
+      45 => Ok(Ee::Xyz045),
+      46 => Ok(Ee::Xyz046),
+      47 => Ok(Ee::Xyz047),
+      48 => Ok(Ee::Xyz048),
+      49 => Ok(Ee::Xyz049),
+      50 => Ok(Ee::PdaNoLamport),
+      51 => Ok(Ee::ForeignPDA),
+      52 => Ok(Ee::ConfigPDA),
+      53 => Ok(Ee::VaultPDA),
+      54 => Ok(Ee::AdminPDA),
+      55 => Ok(Ee::UserPDA),
+      56 => Ok(Ee::EscrowPDA),
+      57 => Ok(Ee::ActionPDA),
+      58 => Ok(Ee::Xyz058),
+      59 => Ok(Ee::Xyz059),
+      60 => Ok(Ee::ConfigDataLengh),
+      61 => Ok(Ee::VaultDataLengh),
+      62 => Ok(Ee::AdminDataLengh),
+      63 => Ok(Ee::UserDataLengh),
+      64 => Ok(Ee::EscrowDataLengh),
+      65 => Ok(Ee::ActionDataLengh),
+      66 => Ok(Ee::Xyz066),
+      67 => Ok(Ee::Xyz067),
+      68 => Ok(Ee::Xyz068),
+      69 => Ok(Ee::Xyz069),
+      70 => Ok(Ee::DecimalsValue),
+      71 => Ok(Ee::MintDataLen),
+      72 => Ok(Ee::MintOrMintAuthority),
+      73 => Ok(Ee::MintOrTokenProgram),
+      74 => Ok(Ee::Xyz074),
+      75 => Ok(Ee::Xyz075),
+      76 => Ok(Ee::Xyz076),
+      77 => Ok(Ee::Xyz077),
+      78 => Ok(Ee::Xyz078),
+      79 => Ok(Ee::Xyz079),
+      80 => Ok(Ee::AtaDataLen),
+      81 => Ok(Ee::Ata22DataLen),
+      82 => Ok(Ee::AtaOrOwner),
+      83 => Ok(Ee::AtaOrMint),
+      84 => Ok(Ee::AtaCheckX1),
+      85 => Ok(Ee::ForeignAta),
+      86 => Ok(Ee::Xyz086),
+      87 => Ok(Ee::Xyz087),
+      88 => Ok(Ee::Xyz088),
+      89 => Ok(Ee::Xyz089),
+      90 => Ok(Ee::Acct22Type),
+      91 => Ok(Ee::Tok22AcctDiscOffset),
+      92 => Ok(Ee::NotRentExemptMint22),
+      93 => Ok(Ee::NotRentExemptTokAcct22),
+      94 => Ok(Ee::Xyz094),
+      95 => Ok(Ee::PdaToBeBelowRentExempt),
+      96 => Ok(Ee::ToWallet),
+      97 => Ok(Ee::Xyz097),
+      98 => Ok(Ee::Xyz098),
+      99 => Ok(Ee::Xyz099),
+      100 => Ok(Ee::MathOverflow),
+      101 => Ok(Ee::MathUnderflow),
+      102 => Ok(Ee::MultiplyOverflow),
+      103 => Ok(Ee::DividedByZero),
+      104 => Ok(Ee::Remainder),
+      105 => Ok(Ee::EmptyData),
+      106 => Ok(Ee::FunctionSelector),
+      107 => Ok(Ee::ClockGet),
       _ => Err(Ee::ErrorNotMapped.into()),
     }
   }
@@ -259,22 +371,54 @@ impl TryFrom<u32> for Ee {
 impl ToStr for Ee {
   fn to_str<E>(&self) -> &'static str {
     match self {
-      Ee::Xyz009 => "Xyz009",
-      Ee::Xyz010 => "Xyz010",
-      Ee::Xyz020 => "Xyz020",
-      Ee::Xyz030 => "Xyz030",
-      Ee::Xyz040 => "Xyz040",
-      Ee::Xyz050 => "Xyz050",
-      Ee::Xyz060 => "Xyz060",
-      Ee::Xyz070 => "Xyz070",
-      Ee::Xyz080 => "Xyz080",
-      Ee::Xyz090 => "Xyz090",
+      Ee::Xyz099 => "Xyz099",
+      Ee::Xyz098 => "Xyz098",
+      Ee::Xyz097 => "Xyz097",
+      Ee::Xyz094 => "Xyz094",
+      Ee::Xyz089 => "Xyz089",
+      Ee::Xyz088 => "Xyz088",
+      Ee::Xyz087 => "Xyz087",
+      Ee::Xyz086 => "Xyz086",
+      Ee::Xyz079 => "Xyz079",
+      Ee::Xyz078 => "Xyz078",
+      Ee::Xyz077 => "Xyz077",
+      Ee::Xyz076 => "Xyz076",
+      Ee::Xyz075 => "Xyz075",
+      Ee::Xyz074 => "Xyz074",
+      Ee::Xyz069 => "Xyz069",
+      Ee::Xyz068 => "Xyz068",
+      Ee::Xyz067 => "Xyz067",
+      Ee::Xyz059 => "Xyz059",
+      Ee::Xyz058 => "Xyz058",
+      Ee::Xyz066 => "Xyz066",
+      Ee::Xyz049 => "Xyz049",
+      Ee::Xyz048 => "Xyz048",
+      Ee::Xyz047 => "Xyz047",
+      Ee::Xyz046 => "Xyz046",
+      Ee::Xyz045 => "Xyz045",
+      Ee::Xyz039 => "Xyz039",
+      Ee::Xyz038 => "Xyz038",
+      Ee::Xyz037 => "Xyz037",
+      Ee::Xyz036 => "Xyz036",
+      Ee::Xyz035 => "Xyz035",
+      Ee::Xyz019 => "Xyz019",
+      Ee::Xyz018 => "Xyz018",
+      Ee::Xyz017 => "Xyz017",
+      Ee::Xyz016 => "Xyz016",
+      Ee::Xyz015 => "Xyz015",
+      Ee::Xyz014 => "Xyz014",
+      Ee::Xyz005 => "Xyz005",
+      Ee::Xyz006 => "Xyz006",
+      Ee::MultiplyOverflow => "MultiplyOverflow",
+      Ee::DividedByZero => "DividedByZero",
+      Ee::Remainder => "Remainder",
       Ee::EscrowPDA => "EscrowPDA",
       Ee::EscrowDataLengh => "EscrowDataLengh",
       Ee::ActionDataLengh => "ActionDataLengh",
       Ee::UserDataLengh => "UserDataLengh",
       Ee::AdminDataLengh => "AdminDataLengh",
       Ee::VaultDataLengh => "VaultDataLengh",
+      Ee::ByteSliceSize128 => "ByteSliceSize128",
       Ee::ByteSliceSize64 => "ByteSliceSize64",
       Ee::ArrayLength => "ArrayLength",
       Ee::AdminPDA => "AdminPDA",
@@ -291,8 +435,8 @@ impl ToStr for Ee {
       Ee::ZeroAsU8 => "ZeroAsU8",
       Ee::DecimalsValue => "DecimalsValue",
       Ee::MintDataLen => "MintDataLen",
-      Ee::TokAcctDataLen => "TokAcctDataLen",
-      Ee::Tok22AcctDataLen => "Tok22AcctDataLen",
+      Ee::AtaDataLen => "AtaDataLen",
+      Ee::Ata22DataLen => "Ata22DataLen",
       Ee::TokenProgram => "TokenProgram",
       Ee::SystemProgram => "SystemProgram",
       Ee::AtaOrOwner => "AtaOrOwner",
@@ -309,7 +453,7 @@ impl ToStr for Ee {
       Ee::PdaNoLamport => "PdaNoLamport",
       Ee::Tok22AcctDiscOffset => "Tok22AcctDiscOffset",
       Ee::ByteForStatus => "ByteForStatus",
-      Ee::ByteForSBool => "ByteForSBool",
+      Ee::ByteForBool => "ByteForBool",
       Ee::ByteSizeForU128 => "ByteSizeForU128",
       Ee::ByteSizeForU64 => "ByteSizeForU64",
       Ee::ByteSizeForU32 => "ByteSizeForU32",
@@ -322,13 +466,12 @@ impl ToStr for Ee {
       Ee::UserPDA => "UserPDA",
       Ee::MathOverflow => "MathOverflow",
       Ee::MathUnderflow => "MathUnderflow",
-      Ee::NotRentExamptMint22 => "NotRentExamptMint22",
-      Ee::NotRentExamptTokAcct22 => "NotRentExamptTokAcct22",
+      Ee::NotRentExemptMint22 => "NotRentExemptMint22",
+      Ee::NotRentExemptTokAcct22 => "NotRentExemptTokAcct22",
       Ee::MintOrMintAuthority => "MintOrMintAuthority",
       Ee::MintOrTokenProgram => "MintOrTokenProgram",
-      Ee::PdaToBeBelowRentExampt => "PdaToBeBelowRentExampt",
+      Ee::PdaToBeBelowRentExempt => "PdaToBeBelowRentExempt",
       Ee::ToWallet => "ToWallet",
-
       Ee::ByteSliceSize32 => "ByteSliceSize32",
       Ee::ByteSliceSize10 => "ByteSliceSize10",
       Ee::ByteSliceSize6 => "ByteSliceSize6",
@@ -337,8 +480,6 @@ impl ToStr for Ee {
       Ee::OnlyOwner => "OnlyOwner",
       Ee::OnlyAdmin => "OnlyAdmin",
       Ee::OnlyUser => "OnlyUser",
-      Ee::Xyz005 => "Xyz005",
-      Ee::Xyz006 => "Xyz006",
     }
   }
 }
@@ -429,7 +570,7 @@ pub fn check_ata(
     .data_len()
     .ne(&pinocchio_token::state::TokenAccount::LEN)
   {
-    return Err(Ee::TokAcctDataLen.into());
+    return Err(Ee::AtaDataLen.into());
   }
   let ata_info = pinocchio_token::state::TokenAccount::from_account_info(ata)?;
   if !ata_info.owner().eq(owner.key()) {
@@ -518,10 +659,10 @@ pub fn executable(account: &AccountInfo) -> Result<(), ProgramError> {
 /// acc_type: 0 Mint, 1 TokenAccount
 pub fn rent_exempt22(account: &AccountInfo, acc_type: u8) -> Result<(), ProgramError> {
   if acc_type == 0 && account.lamports() < Rent::get()?.minimum_balance(Mint22::BASE_LEN) {
-    return Err(Ee::NotRentExamptMint22.into());
+    return Err(Ee::NotRentExemptMint22.into());
   }
   if acc_type == 1 && account.lamports() < Rent::get()?.minimum_balance(TokenAccount22::BASE_LEN) {
-    return Err(Ee::NotRentExamptTokAcct22.into());
+    return Err(Ee::NotRentExemptTokAcct22.into());
   }
   if acc_type > 1 {
     return Err(Ee::Acct22Type.into());
@@ -626,7 +767,7 @@ pub fn u8_to_bool(v: u8) -> Result<bool, ProgramError> {
   match v {
     0 => Ok(false),
     1 => Ok(true),
-    _ => Err(Ee::ByteForSBool.into()),
+    _ => Err(Ee::ByteForBool.into()),
   }
 }
 pub fn u8_to_status(v: u8) -> Result<Status, ProgramError> {
@@ -680,7 +821,7 @@ pub fn check_mint_interface(mint: &AccountInfo) -> Result<(), ProgramError> {
 
     if data.len().ne(&pinocchio_token::state::Mint::LEN) {
       if data.len().le(&TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET) {
-        return Err(Ee::Tok22AcctDataLen.into());
+        return Err(Ee::Ata22DataLen.into());
       }
       if data[TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET].ne(&TOKEN_2022_MINT_DISCRIMINATOR) {
         return Err(Ee::Tok22AcctDiscOffset.into());
@@ -700,7 +841,7 @@ pub fn check_tokacct_interface(ata: &AccountInfo) -> Result<(), ProgramError> {
         .data_len()
         .ne(&pinocchio_token::state::TokenAccount::LEN)
       {
-        return Err(Ee::TokAcctDataLen.into());
+        return Err(Ee::AtaDataLen.into());
       }
     }
   } else {
@@ -709,7 +850,7 @@ pub fn check_tokacct_interface(ata: &AccountInfo) -> Result<(), ProgramError> {
 
     if data.len().ne(&pinocchio_token::state::TokenAccount::LEN) {
       if data.len().le(&TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET) {
-        return Err(Ee::Tok22AcctDataLen.into());
+        return Err(Ee::Ata22DataLen.into());
       }
       if data[TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET].ne(&TOKEN_2022_TOKEN_ACCOUNT_DISCRIMINATOR) {
         return Err(Ee::Tok22AcctDiscOffset.into());

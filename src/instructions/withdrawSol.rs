@@ -42,7 +42,7 @@ impl<'a> WithdrawSol<'a> {
         .checked_add(amount)
         .ok_or_else(|| ProgramError::ArithmeticOverflow)?
     {
-      return Err(Ee::PdaToBeBelowRentExampt.into());
+      return Err(Ee::PdaToBeBelowRentExempt.into());
     }
 
     // Transfer SOL from vault to user
