@@ -9,9 +9,8 @@ use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
 
 use crate::{
-  check_decimals_max, check_sysprog, empty_data, executable, initialized,
-  instructions::check_signer, min_data_len, not_initialized, to10bytes, to32bytes, to6bytes,
-  writable,
+  check_decimals_max, check_sysprog, executable, initialized, instructions::check_signer,
+  min_data_len, not_initialized, to10bytes, to32bytes, to6bytes, writable,
 };
 use pinocchio_token_2022::{instructions::InitializeMint2, state::Mint};
 

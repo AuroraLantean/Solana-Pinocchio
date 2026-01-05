@@ -1,6 +1,6 @@
 use crate::{
   check_mint0a, check_sysprog, executable, initialized, instructions::check_signer,
-  not_initialized, rent_exempt22, writable,
+  not_initialized, rent_exempt22,
 };
 use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};

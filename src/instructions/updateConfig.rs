@@ -66,7 +66,7 @@ impl<'a> UpdateConfig<'a> {
   }
   pub fn only_owner(&self) -> ProgramResult {
     if self.config.prog_owner != *self.signer.key() {
-      return Err(ProgramError::IllegalOwner);
+      return Err(Ee::OnlyProgOwner.into());
     }
     Ok(())
   }
