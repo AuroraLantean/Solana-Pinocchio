@@ -9,8 +9,8 @@ use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
 
 use crate::{
-  check_decimals_max, check_initialized, check_sysprog, empty_data, empty_lamport, executable,
-  instructions::check_signer, min_data_len, writable,
+  check_decimals_max, check_sysprog, empty_data, executable, initialized,
+  instructions::check_signer, min_data_len, not_initialized, writable,
 };
 use pinocchio_token::{instructions::InitializeMint2, state::Mint};
 
@@ -36,23 +36,11 @@ impl<'a> TokenLgcInitMint<'a> {
       decimals,
     } = self;
     log!("TokenLgcInitMint process()");
-    empty_lamport(mint)?;
-    log!("TokenLgcInitMint 3");
-    empty_data(mint)?;
 
-    check_decimals_max(decimals, 18)?;
-    log!("TokenLgcInitMint 4");
-    /*TODO: let toklgc = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-    .as_bytes()
-    .try_into()
-    .expect("token addr");*/
-
-    log!("TokenLgcInitMint 5");
     let lamports = Rent::get()?.minimum_balance(Mint::LEN);
     log!("TokenLgcInitMint 6");
     let space = Mint::LEN as u64;
     log!("lamports: {}, space: {}", lamports, space);
-    //log!("payer: {}", payer.key());
     //let mint = Keypair::new();
 
     log!("Make Mint Account"); //payer and mint are both keypairs!
@@ -64,7 +52,6 @@ impl<'a> TokenLgcInitMint<'a> {
       space,
     }
     .invoke()?;
-
     log!("TokenLgcInitMint 7");
     writable(mint)?;
 
@@ -75,14 +62,14 @@ impl<'a> TokenLgcInitMint<'a> {
       mint_authority: mint_authority.key(),
       freeze_authority: freeze_authority_opt,
     }
-    .invoke()?; //authority: Address
+    .invoke()?;
     Ok(())
   }
   pub fn init_if_needed(self) -> ProgramResult {
-    match empty_lamport(self.mint) {
-      Ok(_) => Self::process(self),
-      Err(_) => Ok(()),
+    if self.mint.lamports() == 0 {
+      Self::process(self)?;
     }
+    Ok(())
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitMint<'a> {
@@ -102,16 +89,20 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitMint<'a> {
     executable(token_program)?;
     check_sysprog(system_program)?;
     //check_pda(config_pda)?;
-    check_initialized(mint)?;
+    not_initialized(mint)?;
+    initialized(mint_authority)?;
+    log!("TokenLgcInitMint try_from 3");
 
     let freeze_authority_opt: Option<&'a [u8; 32]> = if freeze_authority_opt1 == system_program {
       Some(freeze_authority_opt1.key())
     } else {
       None
     };
+
     min_data_len(data, 1)?;
     let decimals = data[0];
     log!("decimals: {}", decimals);
+    check_decimals_max(decimals, 18)?;
 
     Ok(Self {
       payer,

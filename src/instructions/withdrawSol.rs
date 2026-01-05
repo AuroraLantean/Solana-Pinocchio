@@ -4,7 +4,7 @@ use pinocchio_log::log;
 
 use crate::{
   instructions::{check_pda, check_signer, derive_pda1, parse_u64},
-  is_rent_exempt, Ee, VAULT_SEED,
+  rent_exempt, Ee, VAULT_SEED,
 };
 
 //  vault is owned by the program, matches the PDA derived from user. The withdrawn amount is everything above the rent minimum.
@@ -31,7 +31,7 @@ impl<'a> WithdrawSol<'a> {
     }
 
     // Compute how much can be withdrawn while keeping the account rent-exempt
-    let (current, min_balance) = is_rent_exempt(vault)?;
+    let (current, min_balance) = rent_exempt(vault)?;
     log!("withdraw amt: {}", amount);
     log!("vault balc: {}", current);
     if current <= amount {

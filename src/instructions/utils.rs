@@ -16,10 +16,10 @@ use crate::Status;
 pub enum Ee {
   #[error("InvalidDiscriminator")]
   InvalidDiscriminator,
-  #[error("NotSigner")]
-  NotSigner,
-  #[error("OnlyOwner")]
-  OnlyOwner,
+  #[error("Xyz001")]
+  Xyz001,
+  #[error("Xyz002")]
+  Xyz002,
   #[error("OnlyAdmin")]
   OnlyAdmin,
   #[error("OnlyUser")]
@@ -244,6 +244,7 @@ pub enum Ee {
   ClockGet,
   #[error("ErrorNotMapped")]
   ErrorNotMapped,
+  //ProgramError: AccountBorrowFailed
 }
 impl From<Ee> for ProgramError {
   fn from(e: Ee) -> Self {
@@ -256,8 +257,8 @@ impl TryFrom<u32> for Ee {
   fn try_from(error: u32) -> Result<Self, Self::Error> {
     match error {
       0 => Ok(Ee::InvalidDiscriminator),
-      1 => Ok(Ee::NotSigner),
-      2 => Ok(Ee::OnlyOwner),
+      1 => Ok(Ee::Xyz001),
+      2 => Ok(Ee::Xyz002),
       3 => Ok(Ee::OnlyAdmin),
       4 => Ok(Ee::OnlyUser),
       5 => Ok(Ee::Xyz005),
@@ -425,7 +426,7 @@ impl ToStr for Ee {
       Ee::ActionPDA => "ActionPDA",
       Ee::ErrorNotMapped => "ErrorNotMapped",
       Ee::InvalidDiscriminator => "InvalidDiscriminator",
-      Ee::NotSigner => "NotSigner",
+      Ee::Xyz001 => "Xyz001",
       Ee::NotWritable => "NotWritable",
       Ee::NotExecutable => "NotExecutable",
       Ee::ZeroAsU128 => "ZeroAsU128",
@@ -477,7 +478,7 @@ impl ToStr for Ee {
       Ee::ByteSliceSize6 => "ByteSliceSize6",
       Ee::AtokenGPvbd => "AtokenGPvbd",
       Ee::ClockGet => "ClockGet",
-      Ee::OnlyOwner => "OnlyOwner",
+      Ee::Xyz002 => "Xyz002",
       Ee::OnlyAdmin => "OnlyAdmin",
       Ee::OnlyUser => "OnlyUser",
     }
@@ -487,7 +488,7 @@ impl ToStr for Ee {
 //----------------== Account Verification Functions
 pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
   if !account.is_signer() {
-    return Err(Ee::NotSigner.into());
+    return Err(ProgramError::MissingRequiredSignature);
   }
   Ok(())
 }
@@ -622,12 +623,6 @@ pub fn check_pda(account: &AccountInfo) -> Result<(), ProgramError> {
   }
   Ok(())
 }
-pub fn check_initialized(account: &AccountInfo) -> Result<(), ProgramError> {
-  if account.lamports() > 0 {
-    return Err(ProgramError::AccountAlreadyInitialized);
-  }
-  Ok(())
-}
 pub fn check_sysprog(system_program: &AccountInfo) -> Result<(), ProgramError> {
   if !system_program.key().eq(&pinocchio_system::ID) {
     return Err(Ee::SystemProgram.into());
@@ -658,9 +653,11 @@ pub fn executable(account: &AccountInfo) -> Result<(), ProgramError> {
 //TODO: Mint and ATA from TokenLgc works. For mint and ATA from Token2022?
 /// acc_type: 0 Mint, 1 TokenAccount
 pub fn rent_exempt22(account: &AccountInfo, acc_type: u8) -> Result<(), ProgramError> {
+  //Check Mint
   if acc_type == 0 && account.lamports() < Rent::get()?.minimum_balance(Mint22::BASE_LEN) {
     return Err(Ee::NotRentExemptMint22.into());
   }
+  //Check TokenAccount
   if acc_type == 1 && account.lamports() < Rent::get()?.minimum_balance(TokenAccount22::BASE_LEN) {
     return Err(Ee::NotRentExemptTokAcct22.into());
   }
@@ -669,7 +666,7 @@ pub fn rent_exempt22(account: &AccountInfo, acc_type: u8) -> Result<(), ProgramE
   }
   Ok(())
 }
-pub fn is_rent_exempt(account: &AccountInfo) -> Result<(u64, u64), ProgramError> {
+pub fn rent_exempt(account: &AccountInfo) -> Result<(u64, u64), ProgramError> {
   let min_balance = Rent::get()?.minimum_balance(account.data_len());
   let current = account.lamports();
   if current < min_balance {
@@ -677,11 +674,17 @@ pub fn is_rent_exempt(account: &AccountInfo) -> Result<(u64, u64), ProgramError>
   }
   Ok((current, min_balance))
 }
-pub fn empty_lamport(account: &AccountInfo) -> Result<(), ProgramError> {
-  if account.lamports() == 0 {
-    return Ok(());
+pub fn not_initialized(account: &AccountInfo) -> Result<(), ProgramError> {
+  if account.lamports() > 0 {
+    return Err(ProgramError::AccountAlreadyInitialized);
   }
-  Err(ProgramError::AccountAlreadyInitialized)
+  Ok(())
+}
+pub fn initialized(account: &AccountInfo) -> Result<(), ProgramError> {
+  if account.lamports() == 0 {
+    return Err(ProgramError::UninitializedAccount);
+  }
+  Ok(())
 }
 pub fn empty_data(account: &AccountInfo) -> Result<(), ProgramError> {
   if account.data_len() == 0 {

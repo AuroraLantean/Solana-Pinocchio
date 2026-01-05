@@ -9,8 +9,9 @@ use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
 
 use crate::{
-  check_decimals_max, check_initialized, check_sysprog, empty_data, empty_lamport, executable,
-  instructions::check_signer, min_data_len, to10bytes, to32bytes, to6bytes, writable,
+  check_decimals_max, check_sysprog, empty_data, executable, initialized,
+  instructions::check_signer, min_data_len, not_initialized, to10bytes, to32bytes, to6bytes,
+  writable,
 };
 use pinocchio_token_2022::{instructions::InitializeMint2, state::Mint};
 
@@ -42,21 +43,8 @@ impl<'a> Token2022InitMint<'a> {
       token_uri: _,
     } = self;
     log!("Token2022InitMint process()");
-    empty_lamport(mint)?;
-    log!("here 3");
-    empty_data(mint)?;
-    log!("here 4");
 
-    check_decimals_max(decimals, 18)?;
-    log!("Token2022InitMint 4()");
-    /*TODO: let toklgc = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
-    .as_bytes()
-    .try_into()
-    .expect("token addr");*/
-
-    log!("Token2022InitMint 5");
     let lamports = Rent::get()?.minimum_balance(Mint::BASE_LEN);
-    log!("Token2022InitMint 6");
     let space = Mint::BASE_LEN as u64;
     log!("lamports: {}, space: {}", lamports, space);
     //let mint = Keypair::new();
@@ -65,7 +53,7 @@ impl<'a> Token2022InitMint<'a> {
     CreateAccount {
       from: payer, //Keypair
       to: mint,
-      owner: token_program.key(),
+      owner: token_program.key(), //address("TokenXYZ");
       lamports,
       space,
     }
@@ -86,10 +74,10 @@ impl<'a> Token2022InitMint<'a> {
     Ok(())
   }
   pub fn init_if_needed(self) -> ProgramResult {
-    match empty_lamport(self.mint) {
-      Ok(_) => Self::process(self),
-      Err(_) => Ok(()),
+    if self.mint.lamports() == 0 {
+      Self::process(self)?;
     }
+    Ok(())
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitMint<'a> {
@@ -110,7 +98,9 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitMint<'a> {
     executable(token_program)?;
     check_sysprog(system_program)?;
     //check_pda(config_pda)?;
-    check_initialized(mint)?;
+    not_initialized(mint)?;
+    initialized(mint_authority)?;
+    log!("Token2022InitMint try_from 3");
 
     let freeze_authority_opt: Option<&'a [u8; 32]> = if freeze_authority_opt1 == token_program {
       Some(freeze_authority_opt1.key())
@@ -121,6 +111,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitMint<'a> {
     min_data_len(data, 49)?; //1+16+32=49
     let decimals = data[0];
     log!("decimals: {}", decimals);
+    check_decimals_max(decimals, 18)?;
 
     // 16 = 10 token name + 6 token symbol
     let token_name = *to10bytes(&data[1..11])?;

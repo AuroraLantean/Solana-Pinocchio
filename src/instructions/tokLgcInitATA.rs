@@ -1,6 +1,6 @@
 use crate::{
-  check_initialized, check_mint0a, check_sysprog, empty_data, empty_lamport, executable,
-  instructions::check_signer, rent_exempt22, writable,
+  check_mint0a, check_sysprog, executable, initialized, instructions::check_signer,
+  not_initialized, rent_exempt22, writable,
 };
 use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
@@ -30,16 +30,6 @@ impl<'a> TokenLgcInitAta<'a> {
       atoken_program: _,
     } = self;
     log!("TokenLgcInitAta process()");
-    rent_exempt22(mint, 0)?;
-    check_mint0a(mint, token_program)?;
-    //writable(mint)?;//Shank IDL definition
-
-    log!("TokenLgcInitAta 2");
-    empty_lamport(token_account)?;
-    empty_data(token_account)?;
-    writable(token_account)?;
-
-    log!("Make ATA Token Account");
     pinocchio_associated_token_account::instructions::Create {
       funding_account: payer, // Keypair
       account: token_account,
@@ -52,10 +42,10 @@ impl<'a> TokenLgcInitAta<'a> {
     Ok(())
   }
   pub fn init_if_needed(self) -> ProgramResult {
-    match empty_lamport(self.token_account) {
-      Ok(_) => Self::process(self),
-      Err(_) => Ok(()),
+    if self.token_account.lamports() == 0 {
+      Self::process(self)?;
     }
+    Ok(())
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitAta<'a> {
@@ -75,7 +65,11 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitAta<'a> {
     executable(token_program)?;
     check_sysprog(system_program)?;
     //check_pda(config_pda)?;
-    check_initialized(token_account)?;
+    not_initialized(token_account)?;
+    initialized(to_wallet)?;
+    log!("TokenLgcInitAta try_from 3");
+    rent_exempt22(mint, 0)?;
+    check_mint0a(mint, token_program)?;
 
     log!("TokenLgcInitAta try_from end");
     Ok(Self {
