@@ -11,7 +11,7 @@ use pinocchio_log::log;
 use pinocchio_system::instructions::Transfer as SystemTransfer;
 
 use crate::{
-  check_sysprog,
+  check_sysprog, enough_sol,
   instructions::{check_pda, check_signer, derive_pda1, parse_u64},
   none_zero_u64, Ee, ACCOUNT_DISCRIMINATOR_SIZE, VAULT_SEED,
 };
@@ -40,6 +40,8 @@ impl<'a> DepositSol<'a> {
     ensure_deposit_accounts(user, vault)?;
 
     log!("DepositSol 2");
+    enough_sol(user, amount)?;
+    log!("DepositSol 3");
     SystemTransfer {
       from: user,
       to: vault,
@@ -78,6 +80,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositSol<'a> {
 
 /// Ensure the vault exists; if not, create it with PDA seeds. user must be a signer, vault must be writable, and rent minimum must be respected for creation.
 fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramResult {
+  log!("ensure_deposit_accounts");
   // Create when empty and fund rent-exempt.
   if vault.lamports() == 0 {
     let (expected_vault_pda, bump) = derive_pda1(user, VAULT_SEED)?;

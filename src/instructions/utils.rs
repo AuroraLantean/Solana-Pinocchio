@@ -501,7 +501,7 @@ impl ToStr for Ee {
   }
 }
 
-//----------------== Account Verification Functions
+//----------------== Account Verification
 pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
   if !account.is_signer() {
     return Err(ProgramError::MissingRequiredSignature);
@@ -796,7 +796,13 @@ pub fn u8_to_status(v: u8) -> Result<Status, ProgramError> {
     _ => Err(Ee::ByteForStatus.into()),
   }
 }
-
+//----------------== Balance
+pub fn enough_sol(from: &AccountInfo, amount: u64) -> Result<(), ProgramError> {
+  if from.lamports() < amount {
+    return Err(ProgramError::InsufficientFunds);
+  }
+  Ok(())
+}
 //----------------== Derive Functions
 pub fn derive_pda1(user: &AccountInfo, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
   log!("derive_pda1");

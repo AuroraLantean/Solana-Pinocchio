@@ -31,12 +31,7 @@ import { ATokenGPvbd, as9zBn, ll } from "./utils";
 const amtDeposit = as9zBn(10);
 const amtWithdraw = as9zBn(9);
 
-/*const base64Encoder = getBase64Encoder();
-    let bytes = base64Encoder.encode(value.data[0]);
-    const decoded = ammConfigDecoder.decode(bytes);
-    ll(decoded);*/
-
-//BunJs Tests: https://bun.com/docs/test/writing-tests  expect(true).toBe(true);
+//BunJs Tests: https://bun.com/docs/test/writing-tests
 describe("Vault Program", () => {
 	test("programs exist", async () => {
 		const out1 = await acctExists(vaultProgAddr, "Vault");

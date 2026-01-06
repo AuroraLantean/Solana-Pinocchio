@@ -23,12 +23,14 @@ import {
 	initBalc,
 	makeMint,
 	svm,
+	vaultPDA,
 	vaultPDA1,
 } from "./litesvm-utils";
 import { as9zBn, bigintToBytes, bytesToBigint, ll } from "./utils";
 import {
 	adminAddr,
 	adminKp,
+	ownerKp,
 	systemProgram,
 	usdcMint,
 	user1Addr,
@@ -53,7 +55,7 @@ expect(adminBalc).toStrictEqual(initBalc);
 
 test("transfer SOL", () => {
 	blockhash = svm.latestBlockhash();
-	amount = 1_000_000n;
+	amount = as9zBn(0.001);
 	const ixs = [
 		SystemProgram.transfer({
 			fromPubkey: adminKp.publicKey,
@@ -70,6 +72,36 @@ test("transfer SOL", () => {
 	expect(balanceAfter).toStrictEqual(amount + initBalc);
 });
 
+test("Owner Deposits SOL to VaultPDA", () => {
+	ll("\n------== Owner Deposits SOL to VaultPDA");
+	disc = 0; //discriminator
+	ll("vaultPDA:", vaultPDA.toBase58());
+	payerKp = ownerKp;
+	amount = as9zBn(0.46);
+	//ll(toLam(amtSol));
+
+	argData = bigintToBytes(amount);
+
+	blockhash = svm.latestBlockhash();
+	ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: payerKp.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: vaultPDA, isSigner: false, isWritable: true },
+			{ pubkey: systemProgram, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(payerKp);
+
+	simRes = svm.simulateTransaction(tx);
+	sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+});
+
 test("User1 Deposits SOL to vault1", () => {
 	ll("\n------== User1 Deposits SOL to vault1");
 	disc = 0; //discriminator
@@ -79,8 +111,6 @@ test("User1 Deposits SOL to vault1", () => {
 	//ll(toLam(amtSol));1230000000n
 
 	argData = bigintToBytes(amount);
-	//const bytes = [disc, ...argData];
-	//ll("bytes:", bytes);
 
 	blockhash = svm.latestBlockhash();
 	ix = new TransactionInstruction({
@@ -131,7 +161,7 @@ test("mint usdc(set arbitrary account data)", () => {
 	expect(decoded.amount).toStrictEqual(amt);
 });
 
-test("copy accounts from devnet", async () => {
+test.skip("copy accounts from devnet", async () => {
 	const connection = new Connection("https://api.devnet.solana.com");
 	const accountInfo = await connection.getAccountInfo(usdcMint);
 	// the rent epoch goes above 2**53 which breaks web3.js, so just set it to 0;

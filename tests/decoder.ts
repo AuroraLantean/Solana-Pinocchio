@@ -39,6 +39,10 @@ export enum Status {
 	Paused,
 	Canceled,
 }
+/*const base64Encoder = getBase64Encoder();
+let bytes = base64Encoder.encode(value.data[0]);
+const decoded = ammConfigDecoder.decode(bytes);*/
+
 //https://www.quicknode.com/guides/solana-development/tooling/web3-2/account-deserialization
 //https://github.com/anza-xyz/kit/tree/main/packages/codecs-core#fixed-size-and-variable-size-codecs
 export const configAcctDecoder: FixedSizeDecoder<ConfigAcct> = getStructDecoder(
