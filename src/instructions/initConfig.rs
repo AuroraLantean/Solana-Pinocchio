@@ -44,7 +44,7 @@ impl<'a> InitConfig<'a> {
     let lamports = Rent::get()?.minimum_balance(Config::LEN); //space.try_into().unwrap()
     let space = Config::LEN as u64;
 
-    log!("InitConfig 4");
+    log!("InitConfig 4. space: {}", space);
     let (expected_config_pda, bump) = derive_pda1(prog_owner, CONFIG_SEED)?;
 
     log!("InitConfig 5");

@@ -97,6 +97,8 @@ fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramRe
     // Make the account rent-exempt.
     const VAULT_SIZE: usize = ACCOUNT_DISCRIMINATOR_SIZE + size_of::<u64>();
     let needed_lamports = Rent::get()?.minimum_balance(VAULT_SIZE);
+    log!("needed_lamports: {}", needed_lamports);
+    log!("VAULT_SIZE: {}", VAULT_SIZE);
 
     pinocchio_system::instructions::CreateAccount {
       from: user,

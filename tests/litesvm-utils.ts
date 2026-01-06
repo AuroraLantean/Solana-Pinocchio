@@ -94,6 +94,26 @@ export const makeAccount = (
 };
 
 //-------------== Program Methods
+export const sendSol = (
+	svm: LiteSVM,
+	addrTo: PublicKey,
+	amount: bigint,
+	signer: Keypair,
+) => {
+	const blockhash = svm.latestBlockhash();
+	const ixs = [
+		SystemProgram.transfer({
+			fromPubkey: signer.publicKey,
+			toPubkey: addrTo,
+			lamports: amount,
+		}),
+	];
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(...ixs);
+	tx.sign(signer);
+	svm.sendTransaction(tx);
+};
 export const depositSol = (
 	svm: LiteSVM,
 	vaultPdaX: PublicKey,
@@ -119,8 +139,32 @@ export const depositSol = (
 	const sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
+export const withdrawSol = (
+	svm: LiteSVM,
+	vaultPdaX: PublicKey,
+	argData: Uint8Array<ArrayBufferLike>,
+	signer: Keypair,
+) => {
+	const disc = 1;
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: signer.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: vaultPdaX, isSigner: false, isWritable: true },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(signer);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
 //-------------== USDC or USDT
-export const makeMint = (
+export const newMint = (
 	svm: LiteSVM,
 	mint: PublicKey,
 	owner: PublicKey,
