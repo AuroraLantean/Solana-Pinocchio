@@ -5,11 +5,10 @@ import { expect, test } from "bun:test";
 import {
 	//	ACCOUNT_SIZE,	TOKEN_PROGRAM_ID,
 	AccountLayout,
-	getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import {
-	Keypair,
-	LAMPORTS_PER_SOL,
+	Connection,
+	type Keypair,
 	SystemProgram,
 	Transaction,
 	TransactionInstruction,
@@ -21,7 +20,6 @@ import type {
 } from "litesvm";
 import {
 	checkSuccess,
-	helloworldProgram,
 	initBalc,
 	makeMint,
 	svm,
@@ -72,40 +70,6 @@ test("transfer SOL", () => {
 	expect(balanceAfter).toStrictEqual(amount + initBalc);
 });
 
-test("hello world", () => {
-	const [programId, greetedPubkey] = helloworldProgram(svm);
-
-	payerKp = new Keypair();
-	amount = BigInt(LAMPORTS_PER_SOL);
-	svm.airdrop(payerKp.publicKey, amount);
-	const amt = svm.getBalance(greetedPubkey);
-	ll("payer SOL balc:", amt);
-	expect(amt).toStrictEqual(amount);
-
-	blockhash = svm.latestBlockhash();
-
-	const greetedAccountBefore = svm.getAccount(greetedPubkey);
-	expect(greetedAccountBefore).not.toBeNull();
-	expect(greetedAccountBefore?.data).toStrictEqual(
-		new Uint8Array([0, 0, 0, 0]),
-	);
-
-	ix = new TransactionInstruction({
-		keys: [{ pubkey: greetedPubkey, isSigner: false, isWritable: true }],
-		programId,
-		data: Buffer.from([0]),
-	});
-	tx = new Transaction();
-	tx.recentBlockhash = blockhash;
-	tx.add(ix); //tx.add(...ixs);
-	tx.sign(payerKp);
-	svm.sendTransaction(tx);
-
-	const greetedAccountAfter = svm.getAccount(greetedPubkey);
-	expect(greetedAccountAfter).not.toBeNull();
-	expect(greetedAccountAfter?.data).toStrictEqual(new Uint8Array([1, 0, 0, 0]));
-});
-
 test("User1 Deposits SOL to vault1", () => {
 	ll("\n------== User1 Deposits SOL to vault1");
 	disc = 0; //discriminator
@@ -153,15 +117,27 @@ test("inputNum to/from Bytes", () => {
 	const _amtOut8 = bytesToBigint(argDataU8);
 });
 
-test("infinite usdc mint", () => {
-	const adminUsdcAta = getAssociatedTokenAddressSync(usdcMint, adminAddr, true);
+test("mint usdc(set arbitrary account data)", () => {
 	amt = 1_000_000_000_000n;
-	const rawAccount = makeMint(svm, usdcMint, adminAddr, adminUsdcAta, amt);
-
+	const { rawAccount, ata: _adminUsdcAta } = makeMint(
+		svm,
+		usdcMint,
+		adminAddr,
+		amt,
+	);
 	expect(rawAccount).not.toBeNull();
 	const rawAccountData = rawAccount?.data;
 	const decoded = AccountLayout.decode(rawAccountData!);
 	expect(decoded.amount).toStrictEqual(amt);
 });
 
-ll("LiteSVM1 finished");
+test("copy accounts from devnet", async () => {
+	const connection = new Connection("https://api.devnet.solana.com");
+	const accountInfo = await connection.getAccountInfo(usdcMint);
+	// the rent epoch goes above 2**53 which breaks web3.js, so just set it to 0;
+	if (!accountInfo) throw new Error("accountInfo is null");
+	accountInfo.rentEpoch = 0;
+	svm.setAccount(usdcMint, accountInfo);
+	const rawAccount = svm.getAccount(usdcMint);
+	expect(rawAccount).not.toBeNull();
+});

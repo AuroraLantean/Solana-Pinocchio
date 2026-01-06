@@ -128,6 +128,10 @@ solana program deploy --program-id target/deploy/pinocchio_vault-keypair.json ta
 bun test ./tests/test1.ts
 ```
 
+### TODO
+
+- Solana Kite to replace some SolanaKit: <https://github.com/solanakite/kite>; AND <https://solanakite.org/docs>
+
 ### References
 
 - Pinocchio: <https://github.com/anza-xyz/pinocchio>

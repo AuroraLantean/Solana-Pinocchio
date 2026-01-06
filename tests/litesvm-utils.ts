@@ -2,6 +2,8 @@ import { expect } from "bun:test";
 import {
 	ACCOUNT_SIZE,
 	AccountLayout,
+	ASSOCIATED_TOKEN_PROGRAM_ID,
+	getAssociatedTokenAddressSync,
 	TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import type { Keypair } from "@solana/web3.js";
@@ -96,15 +98,55 @@ export const makeMint = (
 	svm: LiteSVM,
 	mint: PublicKey,
 	owner: PublicKey,
-	ata: PublicKey,
 	tokenAmount: bigint,
+	programId = TOKEN_PROGRAM_ID,
+	associatedTokenProgramId = ASSOCIATED_TOKEN_PROGRAM_ID,
 ) => {
+	const ata = getAssociatedTokenAddressSync(
+		mint,
+		adminAddr,
+		true,
+		programId,
+		associatedTokenProgramId,
+	); //allowOwnerOffCurve?
+
+	/* Set account via knowing its layout
+  export interface RawAccount {
+    mint: PublicKey;
+    owner: PublicKey;
+    amount: bigint;
+    delegateOption: 1 | 0;
+    delegate: PublicKey;
+    state: AccountState;
+    isNativeOption: 1 | 0;
+    isNative: bigint;
+    delegatedAmount: bigint;
+    closeAuthorityOption: 1 | 0;
+    closeAuthority: PublicKey;
+}
+
+// Buffer layout for de/serializing a token account
+export const AccountLayout = struct<RawAccount>([
+    publicKey('mint'),
+    publicKey('owner'),
+    u64('amount'),
+    u32('delegateOption'),
+    publicKey('delegate'),
+    u8('state'),
+    u32('isNativeOption'),
+    u64('isNative'),
+    u64('delegatedAmount'),
+    u32('closeAuthorityOption'),
+    publicKey('closeAuthority'),
+]);
+
+// Byte length of a token account 
+export const ACCOUNT_SIZE = AccountLayout.span; */
 	const tokenAccData = Buffer.alloc(ACCOUNT_SIZE);
 	AccountLayout.encode(
 		{
 			mint,
 			owner,
-			//decimal: 6,
 			amount: tokenAmount,
 			delegateOption: 0,
 			delegate: PublicKey.default,
@@ -120,11 +162,11 @@ export const makeMint = (
 	svm.setAccount(ata, {
 		lamports: 1_000_000_000,
 		data: tokenAccData,
-		owner: TOKEN_PROGRAM_ID,
+		owner: programId,
 		executable: false,
 	});
 	const rawAccount = svm.getAccount(ata);
-	return rawAccount;
+	return { rawAccount, ata };
 };
 
 //---------------== Deployment
@@ -140,30 +182,6 @@ export const vaultProgram = (svm: LiteSVM, computeMaxUnits?: bigint) => {
 	//return [programId];
 };
 vaultProgram(svm);
-
-export function helloworldProgram(
-	svm: LiteSVM,
-	computeMaxUnits?: bigint,
-): [PublicKey, PublicKey] {
-	const programId = PublicKey.unique();
-	const greetedPubkey = PublicKey.unique();
-	//let svm = new LiteSVM();
-
-	if (computeMaxUnits) {
-		const computeBudget = new ComputeBudget();
-		computeBudget.computeUnitLimit = computeMaxUnits;
-		svm = svm.withComputeBudget(computeBudget);
-	}
-	svm.setAccount(greetedPubkey, {
-		executable: false,
-		owner: programId,
-		lamports: LAMPORTS_PER_SOL,
-		data: new Uint8Array([0, 0, 0, 0]),
-	});
-	const programPath = "program_bytes/counter.so";
-	svm.addProgramFromFile(programId, programPath);
-	return [programId, greetedPubkey];
-}
 
 export const checkSuccess = (
 	simRes: FailedTransactionMetadata | SimulatedTransactionInfo,

@@ -7,7 +7,10 @@ use solana_kite::{
 };
 
 //TODO: unresolved import in dependencies #273 https://github.com/LiteSVM/litesvm/issues/273
-//TODO: you will build a solana program/programs/escrow/src/tests.rs
+//TODO: you will build a solana program/programs/escrow/src/tests.rs AND https://github.com/quiknode-labs/you-will-build-a-solana-program/tree/main
+//TODO: https://www.litesvm.com/docs/examples/sol-transfer
+//TODO: QuickNode on LiteSVM: https://www.quicknode.com/guides/solana-development/tooling/litesvm
+//TODO: Anchor LiteSVM https://github.com/brimigs/anchor-litesvm
 #[test]
 fn test_make_offer_succeeds() {
   let mut test_environment = setup_escrow_test();
