@@ -4,6 +4,8 @@ import {
 	AccountLayout,
 	ASSOCIATED_TOKEN_PROGRAM_ID,
 	getAssociatedTokenAddressSync,
+	MINT_SIZE,
+	MintLayout,
 	TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
@@ -20,10 +22,13 @@ import type {
 } from "litesvm";
 import { ComputeBudget, LiteSVM, TransactionMetadata } from "litesvm";
 import {
+	ATokenGPvbd,
 	admin,
+	dragonCoinAuthority,
 	hacker,
 	owner,
 	systemProgram,
+	usdtMint,
 	user1,
 	user2,
 	user3,
@@ -40,9 +45,9 @@ svm.airdrop(user1, initBalc);
 svm.airdrop(user2, initBalc);
 svm.airdrop(user3, initBalc);
 svm.airdrop(hacker, initBalc);
+svm.airdrop(dragonCoinAuthority, initBalc);
 
 export function getRawAccount(address: PublicKey) {
-	//svm: LiteSVM
 	const rawAccount = svm.getAccount(address);
 	return rawAccount;
 }
@@ -71,16 +76,16 @@ export const vault1 = vaultPdaBump1.pda;
 export const vault2 = vaultPdaBump2.pda;
 export const vault3 = vaultPdaBump3.pda;
 
+//Or just send some SOL
 export const makeAccount = (
-	//svm: LiteSVM,
 	payer: Keypair,
-	acctKp: Keypair,
+	newAccount: PublicKey,
 	programId: PublicKey,
 ) => {
 	const ixs = [
 		SystemProgram.createAccount({
 			fromPubkey: payer.publicKey,
-			newAccountPubkey: acctKp.publicKey,
+			newAccountPubkey: newAccount,
 			lamports: Number(svm.minimumBalanceForRentExemption(BigInt(4))),
 			space: 4,
 			programId: programId,
@@ -94,13 +99,8 @@ export const makeAccount = (
 	svm.sendTransaction(tx);
 };
 
-//-------------== Program Methods
-export const sendSol = (
-	//svm: LiteSVM,
-	addrTo: PublicKey,
-	amount: bigint,
-	signer: Keypair,
-) => {
+//-------------== LiteSVM Methods
+export const sendSol = (addrTo: PublicKey, amount: bigint, signer: Keypair) => {
 	const blockhash = svm.latestBlockhash();
 	const ixs = [
 		SystemProgram.transfer({
@@ -115,8 +115,8 @@ export const sendSol = (
 	tx.sign(signer);
 	svm.sendTransaction(tx);
 };
+//-------------== Program Methods
 export const depositSol = (
-	//svm: LiteSVM,
 	vaultPdaX: PublicKey,
 	argData: Uint8Array<ArrayBufferLike>,
 	signer: Keypair,
@@ -141,7 +141,6 @@ export const depositSol = (
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
 export const withdrawSol = (
-	//svm: LiteSVM,
 	vaultPdaX: PublicKey,
 	argData: Uint8Array<ArrayBufferLike>,
 	signer: Keypair,
@@ -164,9 +163,133 @@ export const withdrawSol = (
 	const sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
+export const lgcInitMint = (
+	signer: Keypair,
+	mint: PublicKey,
+	mintAuthority: PublicKey,
+	freezeAuthorityOpt: PublicKey,
+	decimals: number,
+	//argData: Uint8Array<ArrayBufferLike>,
+	tokenProg = TOKEN_PROGRAM_ID,
+) => {
+	ll("lgcInitMint 1");
+	const disc = 2;
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: signer.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: mint, isSigner: false, isWritable: true },
+			{ pubkey: mintAuthority, isSigner: false, isWritable: false },
+			{ pubkey: tokenProg, isSigner: false, isWritable: false },
+			{ pubkey: freezeAuthorityOpt, isSigner: false, isWritable: false },
+			{ pubkey: systemProgram, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, decimals]),
+	});
+	ll("lgcInitMint 3");
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	ll("lgcInitMint 6");
+	tx.sign(signer);
+	ll("lgcInitMint 7");
+	//tx.sign(mintKp);
+	ll("lgcInitMint 8");
+	const simRes = svm.simulateTransaction(tx);
+	ll("lgcInitMint 9");
+	const sendRes = svm.sendTransaction(tx);
+	ll("lgcInitMint 10");
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
+export const lgcInitAta = (
+	signer: Keypair,
+	toWallet: PublicKey,
+	mint: PublicKey,
+	tokenAcct: PublicKey,
+	tokenProg = TOKEN_PROGRAM_ID,
+	atokenProg = ATokenGPvbd,
+) => {
+	const disc = 3;
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: signer.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: toWallet, isSigner: false, isWritable: false },
+			{ pubkey: mint, isSigner: false, isWritable: false },
+			{ pubkey: tokenAcct, isSigner: false, isWritable: true },
+			{ pubkey: tokenProg, isSigner: false, isWritable: false },
+			{ pubkey: systemProgram, isSigner: false, isWritable: false },
+			{ pubkey: atokenProg, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(signer);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
+
+//-------------==
+//https://solana.com/docs/tokens/basics/create-mint
+export const setNewMint = (mint: PublicKey, programId = TOKEN_PROGRAM_ID) => {
+	const rawMintAcctData = Buffer.alloc(MINT_SIZE);
+	MintLayout.encode(
+		{
+			mintAuthorityOption: 0,
+			mintAuthority: PublicKey.default,
+			supply: 0n,
+			decimals: 0,
+			isInitialized: false,
+			freezeAuthorityOption: 0,
+			freezeAuthority: PublicKey.default,
+		},
+		rawMintAcctData,
+	);
+	svm.setAccount(mint, {
+		lamports: 1_000_000_000,
+		data: rawMintAcctData,
+		owner: programId,
+		executable: false,
+	});
+	const raw = svm.getAccount(mint);
+	return { raw, mint };
+};
 //-------------== USDC or USDT
+export const acctIsNull = (account: PublicKey) => {
+	const raw = svm.getAccount(account);
+	expect(raw).toBeNull();
+};
+export const acctExists = (account: PublicKey) => {
+	const raw = svm.getAccount(account);
+	expect(raw).not.toBeNull();
+};
+export const getAta = (
+	mint: PublicKey,
+	owner: PublicKey,
+	allowOwnerOffCurve = true,
+	programId = TOKEN_PROGRAM_ID,
+	associatedTokenProgramId = ASSOCIATED_TOKEN_PROGRAM_ID,
+) => {
+	const ata = getAssociatedTokenAddressSync(
+		mint,
+		owner,
+		allowOwnerOffCurve,
+		programId,
+		associatedTokenProgramId,
+	);
+	return ata;
+};
+export const vaultAtaO = getAta(usdtMint, vaultO);
+export const vaultAta1 = getAta(usdtMint, vault1);
+export const vaultAta2 = getAta(usdtMint, vault2);
+export const vaultAta3 = getAta(usdtMint, vault3);
+
 export const newAta = (
-	//svm: LiteSVM,
 	mint: PublicKey,
 	owner: PublicKey,
 	tokenAmount: bigint,
@@ -213,7 +336,7 @@ export const AccountLayout = struct<RawAccount>([
 
 // Byte length of a token account 
 export const ACCOUNT_SIZE = AccountLayout.span; */
-	const tokenAccData = Buffer.alloc(ACCOUNT_SIZE);
+	const rawTokenAcctData = Buffer.alloc(ACCOUNT_SIZE);
 	AccountLayout.encode(
 		{
 			mint,
@@ -228,11 +351,11 @@ export const ACCOUNT_SIZE = AccountLayout.span; */
 			closeAuthorityOption: 0,
 			closeAuthority: PublicKey.default,
 		},
-		tokenAccData,
+		rawTokenAcctData,
 	);
 	svm.setAccount(ata, {
 		lamports: 1_000_000_000,
-		data: tokenAccData,
+		data: rawTokenAcctData,
 		owner: programId,
 		executable: false,
 	});
@@ -240,7 +363,6 @@ export const ACCOUNT_SIZE = AccountLayout.span; */
 	return { raw, ata };
 };
 export const tokBalc = (
-	//svm: LiteSVM,
 	mint: PublicKey,
 	owner: PublicKey,
 	programId = TOKEN_PROGRAM_ID,
