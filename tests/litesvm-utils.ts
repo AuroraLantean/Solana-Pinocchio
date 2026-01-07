@@ -32,7 +32,7 @@ import {
 
 const ll = console.log;
 ll("\n------== litesvm-utils");
-export const svm = new LiteSVM();
+export let svm = new LiteSVM();
 export const initBalc = BigInt(LAMPORTS_PER_SOL) * BigInt(10);
 svm.airdrop(ownerAddr, initBalc);
 svm.airdrop(adminAddr, initBalc);
@@ -41,7 +41,8 @@ svm.airdrop(user2Addr, initBalc);
 svm.airdrop(user3Addr, initBalc);
 svm.airdrop(hackerAddr, initBalc);
 
-export function getRawAccount(svm: LiteSVM, address: PublicKey) {
+export function getRawAccount(address: PublicKey) {
+	//svm: LiteSVM
 	const rawAccount = svm.getAccount(address);
 	return rawAccount;
 }
@@ -71,7 +72,7 @@ export const vaultPDA2 = vaultPdaBump2.pda;
 export const vaultPDA3 = vaultPdaBump3.pda;
 
 export const makeAccount = (
-	svm: LiteSVM,
+	//svm: LiteSVM,
 	payer: Keypair,
 	acctKp: Keypair,
 	programId: PublicKey,
@@ -95,7 +96,7 @@ export const makeAccount = (
 
 //-------------== Program Methods
 export const sendSol = (
-	svm: LiteSVM,
+	//svm: LiteSVM,
 	addrTo: PublicKey,
 	amount: bigint,
 	signer: Keypair,
@@ -115,7 +116,7 @@ export const sendSol = (
 	svm.sendTransaction(tx);
 };
 export const depositSol = (
-	svm: LiteSVM,
+	//svm: LiteSVM,
 	vaultPdaX: PublicKey,
 	argData: Uint8Array<ArrayBufferLike>,
 	signer: Keypair,
@@ -140,7 +141,7 @@ export const depositSol = (
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
 export const withdrawSol = (
-	svm: LiteSVM,
+	//svm: LiteSVM,
 	vaultPdaX: PublicKey,
 	argData: Uint8Array<ArrayBufferLike>,
 	signer: Keypair,
@@ -164,8 +165,8 @@ export const withdrawSol = (
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
 //-------------== USDC or USDT
-export const newMint = (
-	svm: LiteSVM,
+export const newAta = (
+	//svm: LiteSVM,
 	mint: PublicKey,
 	owner: PublicKey,
 	tokenAmount: bigint,
@@ -174,11 +175,11 @@ export const newMint = (
 ) => {
 	const ata = getAssociatedTokenAddressSync(
 		mint,
-		adminAddr,
-		true,
+		owner,
+		true, //allowOwnerOffCurve?
 		programId,
 		associatedTokenProgramId,
-	); //allowOwnerOffCurve?
+	);
 
 	/* Set account via knowing its layout
   export interface RawAccount {
@@ -235,12 +236,49 @@ export const ACCOUNT_SIZE = AccountLayout.span; */
 		owner: programId,
 		executable: false,
 	});
-	const rawAccount = svm.getAccount(ata);
-	return { rawAccount, ata };
+	const raw = svm.getAccount(ata);
+	return { raw, ata };
 };
-
+export const tokBalc = (
+	//svm: LiteSVM,
+	mint: PublicKey,
+	owner: PublicKey,
+	programId = TOKEN_PROGRAM_ID,
+	associatedTokenProgramId = ASSOCIATED_TOKEN_PROGRAM_ID,
+) => {
+	const ata = getAssociatedTokenAddressSync(
+		mint,
+		owner,
+		true, //allowOwnerOffCurve?
+		programId,
+		associatedTokenProgramId,
+	);
+	const raw = svm.getAccount(ata);
+	if (!raw) throw new Error("Ata is null");
+	const rawAcctData = raw?.data;
+	const decoded = AccountLayout.decode(rawAcctData);
+	return decoded.amount;
+};
+export const newAtaTest = (
+	mint: PublicKey,
+	user: PublicKey,
+	amt: bigint,
+	user_and_mint: string,
+) => {
+	const { raw: rawData, ata } = newAta(mint, user, amt);
+	ll(user_and_mint, "ata:", ata.toBase58());
+	expect(rawData).not.toBeNull();
+	const rawAcctData = rawData?.data;
+	if (rawAcctData) {
+		const decoded = AccountLayout.decode(rawAcctData);
+		ll(user_and_mint, "balc:", decoded.amount);
+		expect(decoded.amount).toStrictEqual(amt);
+	} else {
+		ll(user_and_mint, "rawAcctData is undefined");
+	}
+};
 //---------------== Deployment
-export const vaultProgram = (svm: LiteSVM, computeMaxUnits?: bigint) => {
+export const vaultProgram = (computeMaxUnits?: bigint) => {
 	ll("load VaultProgram...");
 	if (computeMaxUnits) {
 		const computeBudget = new ComputeBudget();
@@ -251,7 +289,7 @@ export const vaultProgram = (svm: LiteSVM, computeMaxUnits?: bigint) => {
 	svm.addProgramFromFile(vaultProgAddr, programPath);
 	//return [programId];
 };
-vaultProgram(svm);
+vaultProgram();
 
 export const checkSuccess = (
 	simRes: FailedTransactionMetadata | SimulatedTransactionInfo,

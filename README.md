@@ -130,6 +130,15 @@ bun test ./tests/test1.ts
 
 ### TODO
 
+- Update Dependencies: <https://github.com/anza-xyz/pinocchio/releases>
+- Codama can generate TS and Rust client: <https://solana.com/docs/programs/codama/clients>, but not yet Go client: <https://github.com/codama-idl/codama/issues/973>
+- StackExchange: <https://solana.stackexchange.com/questions/23991/how-to-generate-a-go-client-from-pinocchio-rust>
+- Anchor Go: <https://github.com/gagliardetto/anchor-go>
+- Anchor Go fork by Fragmetric-labs: <https://github.com/fragmetric-labs/solana-anchor-go>
+- Solana Go SDK: <https://github.com/gagliardetto/solana-go>
+- Developing a Native Rust program and its Rust client: <https://solana.com/docs/programs/rust>
+- Rust(2 years old): <https://github.com/cenwadike/solana-program-client>
+
 - Solana Kite to replace some SolanaKit: <https://github.com/solanakite/kite>; AND <https://solanakite.org/docs>
 
 ### References
