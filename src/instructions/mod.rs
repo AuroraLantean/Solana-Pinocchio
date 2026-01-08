@@ -57,7 +57,7 @@ use shank::ShankInstruction;
 /// Shank IDL enum describes all program instructions and their required accounts.
 /// Manually write this below, then run IDL generation; This below does not affect runtime behavior.
 /// TODO: when is signer writable?
-/// writable(to be modified):, name= signer, token_account, pda
+/// writable(to be modified):, name= signer, ata, pda
 /// non writable: program, system_program, mint
 #[derive(ShankInstruction)]
 pub enum ProgramIx {
@@ -165,7 +165,7 @@ pub enum ProgramIx {
   #[account(0, signer, writable, name = "payer", desc = "Payer")]
   #[account(1, name = "to_wallet", desc = "To Wallet")]
   #[account(2, name = "mint", desc = "Mint")]
-  #[account(3, writable, name = "token_account", desc = "ATA Token Account")]
+  #[account(3, writable, name = "ata", desc = "ATA Token Account")]
   #[account(4, name = "token_program", desc = "Token Program")]
   #[account(5, name = "system_program", desc = "System Program")]
   #[account(6, name = "atoken_program", desc = "AToken Program")]
@@ -175,7 +175,7 @@ pub enum ProgramIx {
   #[account(0, signer, writable, name = "mint_authority", desc = "Mint Authority")]
   #[account(1, name = "to_wallet", desc = "ToWallet")]
   #[account(2, writable, name = "mint", desc = "Mint")]
-  #[account(3, writable, name = "token_account", desc = "ATA Token Account")]
+  #[account(3, writable, name = "ata", desc = "ATA Token Account")]
   #[account(4, name = "token_program", desc = "Token Program")]
   #[account(5, name = "system_program", desc = "System Program")]
   #[account(6, name = "atoken_program", desc = "AToken Program")]

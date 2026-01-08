@@ -7,6 +7,7 @@ use pinocchio::{
   ProgramResult,
 };
 use pinocchio_log::log;
+use pinocchio_token::state::TokenAccount;
 use pinocchio_token_2022::state::{Mint as Mint22, TokenAccount as TokenAccount22};
 use thiserror::Error;
 
@@ -578,6 +579,21 @@ pub fn check_mint22b(
   Ok(())
 }
 
+//----------------== ATA
+pub fn check_from_balc(from_ata: &AccountInfo, amount: u64) -> Result<(), ProgramError> {
+  let from_ata_info = TokenAccount::from_account_info(from_ata)?;
+  if from_ata_info.amount() < amount {
+    return Err(ProgramError::InsufficientFunds);
+  }
+  Ok(())
+}
+pub fn check_from_balc22(from_ata: &AccountInfo, amount: u64) -> Result<(), ProgramError> {
+  let from_ata_info = TokenAccount22::from_account_info(from_ata)?;
+  if from_ata_info.amount() < amount {
+    return Err(ProgramError::InsufficientFunds);
+  }
+  Ok(())
+}
 pub fn check_ata(
   ata: &AccountInfo,
   owner: &AccountInfo,
@@ -630,6 +646,7 @@ pub fn check_ata_x1(
   }
   Ok(())
 }
+//----------------== Other Accounts
 pub fn check_pda(account: &AccountInfo) -> Result<(), ProgramError> {
   if account.lamports() == 0 {
     return Ee::PdaNoLamport.e();

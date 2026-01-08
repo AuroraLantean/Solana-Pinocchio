@@ -7,13 +7,14 @@ import {
 	acctIsNull,
 	ataBalcCheck,
 	depositSol,
+	findPdaV1,
 	getAta,
 	initBalc,
+	lgcDeposit,
 	lgcInitAta,
 	lgcInitMint,
 	lgcMintToken,
 	sendSol,
-	setAta,
 	setAtaCheck,
 	setMint,
 	svm,
@@ -22,7 +23,7 @@ import {
 	vaultO,
 	withdrawSol,
 } from "./litesvm-utils";
-import { as9zBn, bigintAmt, bigintToBytes, ll } from "./utils";
+import { as9zBn, bigintAmt, ll } from "./utils";
 import {
 	admin,
 	adminKp,
@@ -51,7 +52,6 @@ let amtWithdraw: bigint;
 let amt: bigint;
 let balcBf: bigint | null;
 let balcAf: bigint | null;
-let argData: Uint8Array<ArrayBufferLike>;
 const vaultRent = 1002240n; //from Rust
 
 balcBf = svm.getBalance(admin);
@@ -73,9 +73,8 @@ test("Owner Deposits SOL to VaultPDA", () => {
 	ll("vaultO:", vaultO.toBase58());
 	signerKp = ownerKp;
 	amtDeposit = as9zBn(0.46);
-	argData = bigintToBytes(amtDeposit);
 
-	depositSol(vaultO, argData, signerKp);
+	depositSol(vaultO, amtDeposit, signerKp);
 	balcAf = svm.getBalance(vaultO);
 	ll("vaultO SOL:", balcAf);
 	expect(balcAf).toStrictEqual(vaultRent + amtDeposit);
@@ -86,9 +85,8 @@ test("User1 Deposits SOL to vault1", () => {
 	ll("vault1:", vault1.toBase58());
 	signerKp = user1Kp;
 	amtDeposit = as9zBn(1.23); //1230000000n
-	argData = bigintToBytes(amtDeposit);
 
-	depositSol(vault1, argData, signerKp);
+	depositSol(vault1, amtDeposit, signerKp);
 	balcAf = svm.getBalance(vault1);
 	ll("vault1 SOL:", balcAf);
 	expect(balcAf).toStrictEqual(vaultRent + amtDeposit);
@@ -99,9 +97,8 @@ test("User1 Withdraws SOL from vault1", () => {
 	ll("vault1:", vault1.toBase58());
 	signerKp = user1Kp;
 	amtWithdraw = as9zBn(0.48); //480000000n
-	argData = bigintToBytes(amtWithdraw);
 
-	withdrawSol(vault1, argData, signerKp);
+	withdrawSol(vault1, amtWithdraw, signerKp);
 	balcAf = svm.getBalance(vault1);
 	ll("vault1 SOL:", balcAf);
 	expect(balcAf).toStrictEqual(vaultRent + amtDeposit - amtWithdraw);
@@ -110,19 +107,10 @@ test.failing("hacker cannot withdraw SOL from  vault1", () => {
 	ll("\n------== Hacker cannot withdraw SOL from vault1");
 	signerKp = hackerKp;
 	amtWithdraw = as9zBn(0.48); //480000000n
-	argData = bigintToBytes(amtWithdraw);
-	withdrawSol(vault1, argData, signerKp);
+	withdrawSol(vault1, amtWithdraw, signerKp);
 });
 
 //------------------==
-test("New user ATA with balance(set arbitrary account data)", () => {
-	ll("\n------== New ATA with balance(set arbitrary account data)");
-	amt = 1_000_000_000n;
-	setAtaCheck(usdtMint, admin, amt, "Admin USDT");
-	setAtaCheck(usdtMint, user1, amt, "User1 USDT");
-	setAtaCheck(usdtMint, user2, amt, "User2 USDT");
-});
-
 test("Make DragonCoin Mint, ATA, Tokens", () => {
 	ll("\n------== Make DragonCoin Mint, ATA, Tokens");
 	signerKp = adminKp;
@@ -161,17 +149,29 @@ test("Set USDT Mint and ATAs", () => {
 	acctExists(usdtMint);
 	ll("usdtMint is set");
 
-	amt = 1_000_000_000n;
-	const ataOutAdmin = setAta(usdtMint, admin, amount);
-	acctExists(ataOutAdmin.ata);
-
-	const ataOut1 = setAta(usdtMint, user1, amount);
-	acctExists(ataOut1.ata);
-
-	const ataOut2 = setAta(usdtMint, user2, amount);
-	acctExists(ataOut2.ata);
+	amt = bigintAmt(1000, 6);
+	setAtaCheck(usdtMint, admin, amt, "Admin USDT");
+	setAtaCheck(usdtMint, user1, amt, "User1 USDT");
+	setAtaCheck(usdtMint, user2, amt, "User2 USDT");
+	//TODO: transfer set USDT
 });
-//TODO: transfer set USDT
+
+test("Deposit Tokens", () => {
+	ll("\n------== Deposit Tokens");
+	signerKp = user1Kp;
+	mint = usdtMint;
+	decimals = 6;
+	amt = bigintAmt(370, decimals);
+
+	signer = signerKp.publicKey;
+	const fromAta = getAta(mint, signer);
+	const vaultBump = findPdaV1(signer, "vault", "signerVault");
+	const toAta = getAta(mint, vaultBump.pda);
+	lgcDeposit(signerKp, fromAta, toAta, vaultBump.pda, mint, decimals, amt);
+	ataBalcCheck(toAta, bigintAmt(370, 6));
+	ataBalcCheck(fromAta, bigintAmt(630, 6));
+});
+
 test.skip("copy accounts from devnet", async () => {
 	const connection = new Connection("https://api.devnet.solana.com");
 	const accountInfo = await connection.getAccountInfo(usdtMint);

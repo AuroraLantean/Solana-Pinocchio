@@ -12,7 +12,7 @@ pub struct Token2022InitAta<'a> {
   pub payer: &'a AccountInfo,
   pub to_wallet: &'a AccountInfo,
   pub mint: &'a AccountInfo,
-  pub token_account: &'a AccountInfo,
+  pub ata: &'a AccountInfo,
   pub token_program: &'a AccountInfo,
   pub system_program: &'a AccountInfo,
   pub atoken_program: &'a AccountInfo,
@@ -25,7 +25,7 @@ impl<'a> Token2022InitAta<'a> {
       payer,
       to_wallet,
       mint,
-      token_account,
+      ata,
       token_program,
       system_program,
       atoken_program: _,
@@ -33,7 +33,7 @@ impl<'a> Token2022InitAta<'a> {
     log!("Token2022InitAta process()");
     pinocchio_associated_token_account::instructions::Create {
       funding_account: payer, // Keypair
-      account: token_account,
+      account: ata,
       wallet: to_wallet,
       mint: mint,
       system_program: system_program,
@@ -41,7 +41,7 @@ impl<'a> Token2022InitAta<'a> {
     }
     .invoke()?;
     /*pinocchio_token_2022::instructions::InitializeAccount3 {
-        account: token_account,
+        account: ata,
         mint: mint,
         owner: to_wallet.key(),
         token_program: token_program.key(),
@@ -50,7 +50,7 @@ impl<'a> Token2022InitAta<'a> {
     Ok(())
   }
   pub fn init_if_needed(self) -> ProgramResult {
-    if self.token_account.lamports() == 0 {
+    if self.ata.lamports() == 0 {
       Self::process(self)?;
     }
     Ok(())
@@ -64,8 +64,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitAta<'a> {
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-    let [payer, to_wallet, mint, token_account, token_program, system_program, atoken_program] =
-      accounts
+    let [payer, to_wallet, mint, ata, token_program, system_program, atoken_program] = accounts
     else {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
@@ -73,8 +72,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitAta<'a> {
     executable(token_program)?;
     check_sysprog(system_program)?;
     //check_pda(config_pda)?;
-    not_initialized(token_account)?;
-    writable(token_account)?;
+    not_initialized(ata)?;
+    writable(ata)?;
     initialized(to_wallet)?;
     log!("Token2022InitAta try_from 3");
     rent_exempt22(mint, 0)?;
@@ -84,7 +83,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitAta<'a> {
       payer,
       to_wallet,
       mint,
-      token_account,
+      ata,
       token_program,
       system_program,
       atoken_program,

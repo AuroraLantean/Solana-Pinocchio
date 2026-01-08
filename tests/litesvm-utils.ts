@@ -20,6 +20,7 @@ import type {
 	FailedTransactionMetadata,
 	SimulatedTransactionInfo,
 } from "litesvm";
+
 import { ComputeBudget, LiteSVM, TransactionMetadata } from "litesvm";
 import { bigintToBytes } from "./utils";
 import {
@@ -67,16 +68,16 @@ export const findPdaV1 = (
 	ll(`${pdaName} pda: ${pda.toBase58()}, bump: ${bump}`);
 	return { pda, bump };
 };
-export const configPdaBump = findPdaV1(owner, "config", "ConfigPDA");
-export const vaultPdaBump = findPdaV1(owner, "vault", "VaultO ");
-export const vaultPdaBump1 = findPdaV1(user1, "vault", "Vault1");
-export const vaultPdaBump2 = findPdaV1(user2, "vault", "Vault2");
-export const vaultPdaBump3 = findPdaV1(user3, "vault", "Vault3");
-export const configPDA = configPdaBump.pda;
-export const vaultO = vaultPdaBump.pda;
-export const vault1 = vaultPdaBump1.pda;
-export const vault2 = vaultPdaBump2.pda;
-export const vault3 = vaultPdaBump3.pda;
+export const configBump = findPdaV1(owner, "config", "ConfigPDA");
+export const vaultBump = findPdaV1(owner, "vault", "VaultO ");
+export const vaultBump1 = findPdaV1(user1, "vault", "Vault1");
+export const vaultBump2 = findPdaV1(user2, "vault", "Vault2");
+export const vaultBump3 = findPdaV1(user3, "vault", "Vault3");
+export const configPDA = configBump.pda;
+export const vaultO = vaultBump.pda;
+export const vault1 = vaultBump1.pda;
+export const vault2 = vaultBump2.pda;
+export const vault3 = vaultBump3.pda;
 
 //Or just send some SOL
 export const makeAccount = (
@@ -120,10 +121,11 @@ export const sendSol = (addrTo: PublicKey, amount: bigint, signer: Keypair) => {
 //-------------== Program Methods
 export const depositSol = (
 	vaultPdaX: PublicKey,
-	argData: Uint8Array<ArrayBufferLike>,
+	amount: bigint,
 	signer: Keypair,
 ) => {
 	const disc = 0;
+	const argData = bigintToBytes(amount);
 	const blockhash = svm.latestBlockhash();
 	const ix = new TransactionInstruction({
 		keys: [
@@ -144,10 +146,11 @@ export const depositSol = (
 };
 export const withdrawSol = (
 	vaultPdaX: PublicKey,
-	argData: Uint8Array<ArrayBufferLike>,
+	amount: bigint,
 	signer: Keypair,
 ) => {
 	const disc = 1;
+	const argData = bigintToBytes(amount);
 	const blockhash = svm.latestBlockhash();
 	const ix = new TransactionInstruction({
 		keys: [
@@ -263,6 +266,42 @@ export const lgcMintToken = (
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
 
+export const lgcDeposit = (
+	userSigner: Keypair,
+	fromAta: PublicKey,
+	toAta: PublicKey,
+	toWallet: PublicKey,
+	mint: PublicKey,
+	decimals: number,
+	amount: bigint,
+	tokenProg = TOKEN_PROGRAM_ID,
+	atokenProg = ATokenGPvbd,
+) => {
+	const disc = 5;
+	const argData = [decimals, ...bigintToBytes(amount)];
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: userSigner.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: fromAta, isSigner: false, isWritable: true },
+			{ pubkey: toAta, isSigner: false, isWritable: true },
+			{ pubkey: toWallet, isSigner: false, isWritable: false },
+			{ pubkey: mint, isSigner: false, isWritable: false },
+			{ pubkey: tokenProg, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
+			{ pubkey: atokenProg, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(userSigner);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
 //-------------==
 //When you want to make Mint without the Mint Keypair. E.g. UsdtMintKp;
 //https://solana.com/docs/tokens/basics/create-mint
@@ -508,3 +547,45 @@ export const checkSuccess = (
 		throw new Error("Unexpected tx failure");
 	}
 };
+/*export const setAta22 = (
+	mint: PublicKey,
+	owner: PublicKey,
+	tokenAmount: bigint,
+	allowOwnerOffCurve = true,
+	programId = TOKEN_PROGRAM_ID,
+	associatedTokenProgramId = ASSOCIATED_TOKEN_PROGRAM_ID,
+) => {
+	const ata = getAssociatedTokenAddressSync(
+		mint,
+		owner,
+		allowOwnerOffCurve,
+		programId,
+		associatedTokenProgramId,
+	);
+
+	const rawToken2022AcctData = Buffer.alloc(AccountLayout2022);
+	ACCOUNT_SIZE2022.encode(
+		{
+			mint,
+			owner,
+			amount: tokenAmount,
+			delegateFlag: 0,
+			delegate: PublicKey.default,
+			delegatedAmount: 0n,
+			state: 1,
+			isNative: 0,
+			isNativeAmount: 0n,
+			closeAuthorityFlag: 0,
+			closeAuthority: PublicKey.default,
+		},
+		rawToken2022AcctData,
+	);
+	svm.setAccount(ata, {
+		lamports: 1_000_000_000,
+		data: rawToken2022AcctData,
+		owner: programId,
+		executable: false,
+	});
+	const raw = svm.getAccount(ata);
+	return { raw, ata };
+};*/

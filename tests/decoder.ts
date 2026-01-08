@@ -219,6 +219,39 @@ export const MintLayout = struct<RawMint>([
 	u32("freezeAuthorityOption"),
 	publicKey("freezeAuthority"),
 ]);
+
+//Set account via knowing its layout
+export interface RawTokenAcct2022 {
+	mint: PublicKey;
+	owner: PublicKey;
+	amount: bigint;
+	delegateFlag: number;
+	delegate: PublicKey;
+	state: number;
+	isNative: number;
+	nativeAmount: bigint;
+	delegatedAmount: bigint;
+	closeAuthorityFlag: number;
+	closeAuthority: PublicKey;
+}
+// Buffer layout for de/serializing a token account
+export const AccountLayout2022 = struct<RawTokenAcct2022>([
+	publicKey("mint"),
+	publicKey("owner"),
+	u64("amount"),
+	u32("delegateFlag"),
+	publicKey("delegate"),
+	u8("state"),
+	u32("isNative"),
+	u64("nativeAmount"),
+	u64("delegatedAmount"),
+	u32("closeAuthorityFlag"),
+	publicKey("closeAuthority"),
+]);
+
+// Byte length of a token account
+export const ACCOUNT_SIZE2022 = AccountLayout2022.span;
+
 //---------------== Borsh Decoder
 /*export const borshAccountSchema = borsh.struct([
 	borsh.publicKey("progOwner"),
