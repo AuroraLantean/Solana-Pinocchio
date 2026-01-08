@@ -172,7 +172,6 @@ export const lgcInitMint = (
 	//argData: Uint8Array<ArrayBufferLike>,
 	tokenProg = TOKEN_PROGRAM_ID,
 ) => {
-	ll("lgcInitMint 1");
 	const disc = 2;
 	const blockhash = svm.latestBlockhash();
 	const ix = new TransactionInstruction({
@@ -187,19 +186,12 @@ export const lgcInitMint = (
 		programId: vaultProgAddr,
 		data: Buffer.from([disc, decimals]),
 	});
-	ll("lgcInitMint 3");
 	const tx = new Transaction();
 	tx.recentBlockhash = blockhash;
 	tx.add(ix); //tx.add(...ixs);
-	ll("lgcInitMint 6");
-	tx.sign(signer);
-	ll("lgcInitMint 7");
-	//tx.sign(mintKp);
-	ll("lgcInitMint 8");
+	tx.sign(signer, mintKp); //first signature is considered "primary" and is used identify and confirm transactions.
 	const simRes = svm.simulateTransaction(tx);
-	ll("lgcInitMint 9");
 	const sendRes = svm.sendTransaction(tx);
-	ll("lgcInitMint 10");
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
 export const lgcInitAta = (
@@ -235,6 +227,7 @@ export const lgcInitAta = (
 };
 
 //-------------==
+//When you want to make Mint without the Mint Keypair. E.g. UsdtMintKp;
 //https://solana.com/docs/tokens/basics/create-mint
 export const setMint = (
 	mint: PublicKey,
@@ -263,8 +256,6 @@ export const setMint = (
 		owner: programId,
 		executable: false,
 	});
-	const raw = svm.getAccount(mint);
-	return { raw, mint };
 };
 //-------------== USDC or USDT
 export const acctIsNull = (account: PublicKey) => {
@@ -300,13 +291,14 @@ export const setAta = (
 	mint: PublicKey,
 	owner: PublicKey,
 	tokenAmount: bigint,
+	allowOwnerOffCurve = true,
 	programId = TOKEN_PROGRAM_ID,
 	associatedTokenProgramId = ASSOCIATED_TOKEN_PROGRAM_ID,
 ) => {
 	const ata = getAssociatedTokenAddressSync(
 		mint,
 		owner,
-		true, //allowOwnerOffCurve?
+		allowOwnerOffCurve,
 		programId,
 		associatedTokenProgramId,
 	);
@@ -388,7 +380,7 @@ export const tokBalc = (
 	const decoded = AccountLayout.decode(rawAcctData);
 	return decoded.amount;
 };
-export const newAtaTest = (
+export const setAtaCheck = (
 	mint: PublicKey,
 	user: PublicKey,
 	amt: bigint,

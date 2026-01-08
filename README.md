@@ -39,7 +39,7 @@ Rust: 1.92.0 (ded5c06cf 2025-12-08);
 solana-cli: 3.0.12 or 2.3.13;
 BunJs:  1.3.5; PNPM: 10.27.0
 
-Install Solana CLI: <https://solana.com/docs/intro/installation>
+Install Solana CLI: <https://solana.com/docs/intro/installation> Or <https://docs.anza.xyz/cli/install>
 
 Install Biome: <https://biomejs.dev/guides/getting-started/>
 

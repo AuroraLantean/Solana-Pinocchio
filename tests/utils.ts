@@ -115,6 +115,20 @@ export const bigintToBytes = (input: bigint | number, bit = 64) => {
 	ll("u8Bytes", u8Bytes);
 	return u8Bytes;
 };
+export const testByteConversion = () => {
+	ll("\n------== inputNum to/from Bytes");
+	const amountNum = as9zBn(1.23);
+	const argData64 = bigintToBytes(amountNum);
+	const _amtOut64 = bytesToBigint(argData64);
+
+	const time1 = 1766946349;
+	const argData32 = bigintToBytes(time1, 32);
+	const _amtOut32 = bytesToBigint(argData32);
+
+	const u8Num = 37;
+	const argDataU8 = bigintToBytes(u8Num, 8);
+	const _amtOut8 = bytesToBigint(argDataU8);
+};
 export const bytesToBigint = (bytes: Uint8Array) => {
 	let bigint: Lamports = lamports(0n);
 	const length = bytes.length;

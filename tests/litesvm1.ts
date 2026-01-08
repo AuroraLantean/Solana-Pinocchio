@@ -9,8 +9,10 @@ import {
 	getAta,
 	initBalc,
 	lgcInitAta,
-	newAtaTest,
+	lgcInitMint,
 	sendSol,
+	setAta,
+	setAtaCheck,
 	setMint,
 	svm,
 	vault1,
@@ -18,7 +20,7 @@ import {
 	vaultO,
 	withdrawSol,
 } from "./litesvm-utils";
-import { as9zBn, bigintToBytes, bytesToBigint, ll } from "./utils";
+import { as9zBn, bigintToBytes, ll } from "./utils";
 import {
 	admin,
 	adminKp,
@@ -35,11 +37,13 @@ import {
 
 //let disc = 0; //discriminator
 let signerKp: Keypair;
-let _mintKp: Keypair;
+let mintKp: Keypair;
 let mint: PublicKey;
+let signer: PublicKey;
+let ata: PublicKey;
 let mintAuthority: PublicKey;
-let _freezeAuthorityOpt: PublicKey;
-let _decimals = 9;
+let freezeAuthorityOpt: PublicKey;
+let decimals = 9;
 let amount: bigint;
 let amtDeposit: bigint;
 let amtWithdraw: bigint;
@@ -53,7 +57,7 @@ balcBf = svm.getBalance(admin);
 ll("admin SOL:", balcBf);
 expect(balcBf).toStrictEqual(initBalc);
 
-test("inittial conditions", () => {
+test("initial conditions", () => {
 	acctIsNull(vaultAta1);
 });
 test("transfer SOL", () => {
@@ -110,63 +114,57 @@ test.failing("hacker cannot withdraw SOL from  vault1", () => {
 });
 
 //------------------==
-test("inputNum to/from Bytes", () => {
-	ll("\n------== inputNum to/from Bytes");
-	const amountNum = as9zBn(1.23);
-	const argData64 = bigintToBytes(amountNum);
-	const _amtOut64 = bytesToBigint(argData64);
-
-	const time1 = 1766946349;
-	const argData32 = bigintToBytes(time1, 32);
-	const _amtOut32 = bytesToBigint(argData32);
-
-	const u8Num = 37;
-	const argDataU8 = bigintToBytes(u8Num, 8);
-	const _amtOut8 = bytesToBigint(argDataU8);
-});
 test("New user ATA with balance(set arbitrary account data)", () => {
 	ll("\n------== New ATA with balance(set arbitrary account data)");
 	amt = 1_000_000_000n;
-	newAtaTest(usdtMint, admin, amt, "Admin USDT");
-	newAtaTest(usdtMint, user1, amt, "User1 USDT");
-	newAtaTest(usdtMint, user2, amt, "User2 USDT");
+	setAtaCheck(usdtMint, admin, amt, "Admin USDT");
+	setAtaCheck(usdtMint, user1, amt, "User1 USDT");
+	setAtaCheck(usdtMint, user2, amt, "User2 USDT");
 });
 
 test("New DragonCoin Mint", () => {
 	ll("\n------== New DragonCoin Mint");
-	amt = 1_000_000_000n;
+	amt = 1000_000_000_000n;
 	signerKp = adminKp;
 	mint = dragonCoin;
-	_mintKp = dragonCoinKp;
+	mintKp = dragonCoinKp;
 	mintAuthority = dragonCoinAuthority;
-	_freezeAuthorityOpt = dragonCoinAuthority;
-	_decimals = 9;
+	freezeAuthorityOpt = dragonCoinAuthority;
+	decimals = 9;
+	signer = signerKp.publicKey;
 	ll("signer", signerKp.publicKey.toBase58());
 	ll("mint", mint.toBase58());
 
 	acctIsNull(mint);
 	acctExists(mintAuthority);
-	//TODO: mint -> mintKp & multi sign
-	//lgcInitMint(signerKp, mintKp, mintAuthority, freezeAuthorityOpt, decimals);
-	setMint(dragonCoin);
-	acctExists(dragonCoin);
-});
-test("Set USDT Mint", () => {
-	ll("\n------== Set USDT Mint");
-	setMint(usdtMint);
-	acctExists(usdtMint);
-});
-test("New Vault ATA", () => {
-	ll("\n------== New Vault ATA");
-	amt = 1_000_000_000n;
-	signerKp = user1Kp;
-	const vaultAta1 = getAta(usdtMint, vault1);
-	acctIsNull(vaultAta1);
-	lgcInitAta(signerKp, vault1, usdtMint, vaultAta1);
-	//setAta(mint, owner, amount)
-	acctExists(vaultAta1);
+	lgcInitMint(signerKp, mintKp, mintAuthority, freezeAuthorityOpt, decimals);
+	acctExists(mint);
+
+	ata = getAta(mint, signer);
+	lgcInitAta(signerKp, signer, mint, ata);
+	acctExists(ata);
+
+	//TODO: mint tokens
+	//TODO: transfer set minted tokens
 });
 
+test("Set USDT Mint and ATAs", () => {
+	ll("\n------== Set USDT Mint and ATAs");
+	setMint(usdtMint);
+	acctExists(usdtMint);
+	ll("usdtMint is set");
+
+	amt = 1_000_000_000n;
+	const ataOutAdmin = setAta(usdtMint, admin, amount);
+	acctExists(ataOutAdmin.ata);
+
+	const ataOut1 = setAta(usdtMint, user1, amount);
+	acctExists(ataOut1.ata);
+
+	const { raw: _2, ata: ata2 } = setAta(usdtMint, user2, amount);
+	acctExists(ata2);
+});
+//TODO: transfer set USDT
 test.skip("copy accounts from devnet", async () => {
 	const connection = new Connection("https://api.devnet.solana.com");
 	const accountInfo = await connection.getAccountInfo(usdtMint);
