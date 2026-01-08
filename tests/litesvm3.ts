@@ -14,7 +14,7 @@ import {
 	configPDA,
 	initBalc,
 	svm,
-	vaultPDA1,
+	vault1,
 } from "./litesvm-utils";
 import {
 	as9zBn,
@@ -28,16 +28,16 @@ import {
 	u64Bytes,
 } from "./utils";
 import {
-	adminAddr,
-	ownerAddr,
+	admin,
+	owner,
 	ownerKp,
-	systemProgram,
-	user1Addr,
+	SYSTEM_PROGRAM,
+	user1,
 	user1Kp,
 	vaultProgAddr,
 } from "./web3jsSetup";
 
-const adminBalc = svm.getBalance(adminAddr);
+const adminBalc = svm.getBalance(admin);
 ll("admin SOL:", adminBalc);
 expect(adminBalc).toStrictEqual(initBalc);
 
@@ -69,11 +69,11 @@ let sendRes: FailedTransactionMetadata | TransactionMetadata;
 test("InitConfig", () => {
 	ll("\n------== InitConfig");
 	disc = 12; //discriminator
-	ll("vaultPDA1:", vaultPDA1.toBase58());
+	ll("vaultPDA1:", vault1.toBase58());
 	ll(`configPDA: ${configPDA}`);
 	signerKp = user1Kp;
-	progOwner = ownerAddr;
-	progAdmin = user1Addr;
+	progOwner = owner;
+	progAdmin = user1;
 	fee = 111000000n;
 	isAuthorized = true;
 	status = Status.Active;
@@ -94,7 +94,7 @@ test("InitConfig", () => {
 			{ pubkey: configPDA, isSigner: false, isWritable: true },
 			{ pubkey: progOwner, isSigner: false, isWritable: false },
 			{ pubkey: progAdmin, isSigner: false, isWritable: false },
-			{ pubkey: systemProgram, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
 		],
 		programId: vaultProgAddr,
 		data: Buffer.from([disc, ...argData]),
@@ -129,11 +129,11 @@ test("InitConfig", () => {
 test("updateConfig + time travel", () => {
 	ll("\n------== updateConfig + time travel");
 	disc = 13; //discriminator
-	ll("vaultPDA1:", vaultPDA1.toBase58());
+	ll("vaultPDA1:", vault1.toBase58());
 	ll(`configPDA: ${configPDA}`);
 	signerKp = ownerKp;
-	const acct1 = adminAddr;
-	const acct2 = adminAddr;
+	const acct1 = admin;
+	const acct2 = admin;
 	fee = 123000000n;
 	//const fee2 = bytesToBigint(bigintToBytes(fee));	ll("fee2:", fee2);
 	isAuthorized = true;

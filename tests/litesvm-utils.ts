@@ -21,13 +21,14 @@ import type {
 	SimulatedTransactionInfo,
 } from "litesvm";
 import { ComputeBudget, LiteSVM, TransactionMetadata } from "litesvm";
+import { bigintToBytes } from "./utils";
 import {
 	ATokenGPvbd,
 	admin,
-	dragonCoinAuthority,
+	dgcAuthority,
 	hacker,
 	owner,
-	systemProgram,
+	SYSTEM_PROGRAM,
 	usdtMint,
 	user1,
 	user2,
@@ -39,18 +40,19 @@ const ll = console.log;
 ll("\n------== litesvm-utils");
 export let svm = new LiteSVM();
 export const initBalc = BigInt(LAMPORTS_PER_SOL) * BigInt(10);
+ll("initialize accounts by airdropping SOLs");
 svm.airdrop(owner, initBalc);
 svm.airdrop(admin, initBalc);
 svm.airdrop(user1, initBalc);
 svm.airdrop(user2, initBalc);
 svm.airdrop(user3, initBalc);
 svm.airdrop(hacker, initBalc);
-svm.airdrop(dragonCoinAuthority, initBalc);
+svm.airdrop(dgcAuthority, initBalc);
 
-export function getRawAccount(address: PublicKey) {
+export const getRawAccount = (address: PublicKey) => {
 	const rawAccount = svm.getAccount(address);
 	return rawAccount;
-}
+};
 
 export const findPdaV1 = (
 	userAddr: PublicKey,
@@ -127,7 +129,7 @@ export const depositSol = (
 		keys: [
 			{ pubkey: signer.publicKey, isSigner: true, isWritable: true },
 			{ pubkey: vaultPdaX, isSigner: false, isWritable: true },
-			{ pubkey: systemProgram, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
 		],
 		programId: vaultProgAddr,
 		data: Buffer.from([disc, ...argData]),
@@ -181,7 +183,7 @@ export const lgcInitMint = (
 			{ pubkey: mintAuthority, isSigner: false, isWritable: false },
 			{ pubkey: tokenProg, isSigner: false, isWritable: false },
 			{ pubkey: freezeAuthorityOpt, isSigner: false, isWritable: false },
-			{ pubkey: systemProgram, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
 		],
 		programId: vaultProgAddr,
 		data: Buffer.from([disc, decimals]),
@@ -198,7 +200,7 @@ export const lgcInitAta = (
 	signer: Keypair,
 	toWallet: PublicKey,
 	mint: PublicKey,
-	tokenAcct: PublicKey,
+	ata: PublicKey,
 	tokenProg = TOKEN_PROGRAM_ID,
 	atokenProg = ATokenGPvbd,
 ) => {
@@ -209,9 +211,9 @@ export const lgcInitAta = (
 			{ pubkey: signer.publicKey, isSigner: true, isWritable: true },
 			{ pubkey: toWallet, isSigner: false, isWritable: false },
 			{ pubkey: mint, isSigner: false, isWritable: false },
-			{ pubkey: tokenAcct, isSigner: false, isWritable: true },
+			{ pubkey: ata, isSigner: false, isWritable: true },
 			{ pubkey: tokenProg, isSigner: false, isWritable: false },
-			{ pubkey: systemProgram, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
 			{ pubkey: atokenProg, isSigner: false, isWritable: false },
 		],
 		programId: vaultProgAddr,
@@ -221,6 +223,41 @@ export const lgcInitAta = (
 	tx.recentBlockhash = blockhash;
 	tx.add(ix); //tx.add(...ixs);
 	tx.sign(signer);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
+export const lgcMintToken = (
+	mintAuthority: Keypair,
+	toWallet: PublicKey,
+	mint: PublicKey,
+	ata: PublicKey,
+	decimals: number,
+	amount: bigint,
+	tokenProg = TOKEN_PROGRAM_ID,
+	atokenProg = ATokenGPvbd,
+) => {
+	const disc = 4;
+	const argData = [decimals, ...bigintToBytes(amount)];
+
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: mintAuthority.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: toWallet, isSigner: false, isWritable: false },
+			{ pubkey: mint, isSigner: false, isWritable: true },
+			{ pubkey: ata, isSigner: false, isWritable: true },
+			{ pubkey: tokenProg, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
+			{ pubkey: atokenProg, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(mintAuthority);
 	const simRes = svm.simulateTransaction(tx);
 	const sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
@@ -379,6 +416,17 @@ export const tokBalc = (
 	const rawAcctData = raw?.data;
 	const decoded = AccountLayout.decode(rawAcctData);
 	return decoded.amount;
+};
+export const ataBalc = (ata: PublicKey) => {
+	const raw = svm.getAccount(ata);
+	if (!raw) throw new Error("Ata is null");
+	const rawAcctData = raw?.data;
+	const decoded = AccountLayout.decode(rawAcctData);
+	return decoded.amount;
+};
+export const ataBalcCheck = (ata: PublicKey, _expectedAmount: bigint) => {
+	const amount = ataBalc(ata);
+	expect(amount).toStrictEqual(amount);
 };
 export const setAtaCheck = (
 	mint: PublicKey,

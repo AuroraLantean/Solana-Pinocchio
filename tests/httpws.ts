@@ -35,6 +35,7 @@ console.log(`✅ - Established connection to ${httpProvider}`);
 //https://www.solanakit.com/docs/getting-started/signers
 export const ownerKp = await generateKeyPairSigner();
 export const adminKp = await generateKeyPairSigner();
+//TODO: remove mintAuthority. use dragonCoinAuthority
 export const mintAuthorityKp = await generateKeyPairSigner();
 export const user1Kp = await generateKeyPairSigner();
 export const user2Kp = await generateKeyPairSigner();

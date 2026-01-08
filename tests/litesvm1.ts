@@ -5,11 +5,13 @@ import { Connection, type Keypair, type PublicKey } from "@solana/web3.js";
 import {
 	acctExists,
 	acctIsNull,
+	ataBalcCheck,
 	depositSol,
 	getAta,
 	initBalc,
 	lgcInitAta,
 	lgcInitMint,
+	lgcMintToken,
 	sendSol,
 	setAta,
 	setAtaCheck,
@@ -20,12 +22,11 @@ import {
 	vaultO,
 	withdrawSol,
 } from "./litesvm-utils";
-import { as9zBn, bigintToBytes, ll } from "./utils";
+import { as9zBn, bigintAmt, bigintToBytes, ll } from "./utils";
 import {
 	admin,
 	adminKp,
-	dragonCoin,
-	dragonCoinAuthority,
+	dgcAuthorityKp,
 	dragonCoinKp,
 	hackerKp,
 	ownerKp,
@@ -38,11 +39,11 @@ import {
 //let disc = 0; //discriminator
 let signerKp: Keypair;
 let mintKp: Keypair;
-let mint: PublicKey;
+let mintAuthorityKp: Keypair;
 let signer: PublicKey;
-let ata: PublicKey;
+let mint: PublicKey;
 let mintAuthority: PublicKey;
-let freezeAuthorityOpt: PublicKey;
+let ata: PublicKey;
 let decimals = 9;
 let amount: bigint;
 let amtDeposit: bigint;
@@ -122,29 +123,35 @@ test("New user ATA with balance(set arbitrary account data)", () => {
 	setAtaCheck(usdtMint, user2, amt, "User2 USDT");
 });
 
-test("New DragonCoin Mint", () => {
-	ll("\n------== New DragonCoin Mint");
-	amt = 1000_000_000_000n;
+test("Make DragonCoin Mint, ATA, Tokens", () => {
+	ll("\n------== Make DragonCoin Mint, ATA, Tokens");
 	signerKp = adminKp;
-	mint = dragonCoin;
 	mintKp = dragonCoinKp;
-	mintAuthority = dragonCoinAuthority;
-	freezeAuthorityOpt = dragonCoinAuthority;
+	mintAuthorityKp = dgcAuthorityKp;
 	decimals = 9;
+	amt = bigintAmt(1000, decimals);
 	signer = signerKp.publicKey;
+	mint = mintKp.publicKey;
+	mintAuthority = mintAuthorityKp.publicKey;
 	ll("signer", signerKp.publicKey.toBase58());
 	ll("mint", mint.toBase58());
-
+	//TODO: Codama to defined optional account
 	acctIsNull(mint);
-	acctExists(mintAuthority);
-	lgcInitMint(signerKp, mintKp, mintAuthority, freezeAuthorityOpt, decimals);
+	lgcInitMint(signerKp, mintKp, mintAuthority, mintAuthority, decimals);
 	acctExists(mint);
 
 	ata = getAta(mint, signer);
 	lgcInitAta(signerKp, signer, mint, ata);
 	acctExists(ata);
+	lgcMintToken(mintAuthorityKp, signer, mint, ata, decimals, amt);
+	ataBalcCheck(ata, amt);
+	ll("can mint to admin with ATA");
 
-	//TODO: mint tokens
+	ata = getAta(mint, user1);
+	acctIsNull(ata);
+	lgcMintToken(mintAuthorityKp, user1, mint, ata, decimals, amt);
+	ataBalcCheck(ata, amt);
+	ll("can mint to user1 without ATA");
 	//TODO: transfer set minted tokens
 });
 
@@ -161,8 +168,8 @@ test("Set USDT Mint and ATAs", () => {
 	const ataOut1 = setAta(usdtMint, user1, amount);
 	acctExists(ataOut1.ata);
 
-	const { raw: _2, ata: ata2 } = setAta(usdtMint, user2, amount);
-	acctExists(ata2);
+	const ataOut2 = setAta(usdtMint, user2, amount);
+	acctExists(ataOut2.ata);
 });
 //TODO: transfer set USDT
 test.skip("copy accounts from devnet", async () => {

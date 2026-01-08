@@ -12,7 +12,7 @@ pub struct TokLgcMintToken<'a> {
   pub mint_authority: &'a AccountInfo, //signer
   pub to_wallet: &'a AccountInfo,
   pub mint: &'a AccountInfo,
-  pub token_account: &'a AccountInfo,
+  pub ata: &'a AccountInfo,
   pub token_program: &'a AccountInfo,
   pub system_program: &'a AccountInfo,
   pub atoken_program: &'a AccountInfo,
@@ -27,7 +27,7 @@ impl<'a> TokLgcMintToken<'a> {
       mint_authority,
       to_wallet,
       mint,
-      token_account,
+      ata,
       token_program,
       system_program,
       atoken_program: _,
@@ -40,11 +40,11 @@ impl<'a> TokLgcMintToken<'a> {
     check_mint0b(mint, mint_authority, token_program, decimals)?;
 
     log!("TokLgcMintToken 2");
-    if token_account.data_is_empty() {
-      log!("Make token_account");
+    if ata.data_is_empty() {
+      log!("Make ata");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: mint_authority,
-        account: token_account,
+        account: ata,
         wallet: to_wallet,
         mint,
         system_program,
@@ -53,17 +53,17 @@ impl<'a> TokLgcMintToken<'a> {
       .invoke()?;
       //Please upgrade to SPL Token 2022 for immutable owner support
     } else {
-      log!("token_account has data");
-      check_ata(token_account, to_wallet, mint)?;
+      log!("ata has data");
+      check_ata(ata, to_wallet, mint)?;
     }
-    writable(token_account)?;
-    rent_exempt22(token_account, 1)?;
+    writable(ata)?;
+    rent_exempt22(ata, 1)?;
     log!("Token Account found/verified");
 
     log!("Mint Tokens");
     pinocchio_token::instructions::MintToChecked {
       mint,
-      account: token_account,
+      account: ata,
       mint_authority,
       amount,
       decimals,
@@ -80,7 +80,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcMintToken<'a> {
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-    let [mint_authority, to_wallet, mint, token_account, token_program, system_program, atoken_program] =
+    let [mint_authority, to_wallet, mint, ata, token_program, system_program, atoken_program] =
       accounts
     else {
       return Err(ProgramError::NotEnoughAccountKeys);
@@ -96,11 +96,12 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcMintToken<'a> {
     let amount = parse_u64(&data[1..])?;
     log!("decimals: {}, amount: {}", decimals, amount);
     none_zero_u64(amount)?;
+
     Ok(Self {
       mint_authority,
       to_wallet,
       mint,
-      token_account,
+      ata,
       token_program,
       system_program,
       atoken_program,

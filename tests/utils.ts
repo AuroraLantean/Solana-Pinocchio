@@ -36,6 +36,9 @@ export const decimalsSOL = BigInt(9);
 export const baseSOL = BigInt(10) ** decimalsSOL;
 
 //-----------==
+export const bigintAmt = (amount: number, decimals: number) =>
+	BigInt(amount) * 10n ** BigInt(decimals);
+
 export const as9zBn = (amt: number) => {
 	if (Number.isInteger(amt)) {
 		return BigInt(amt) * baseSOL;
