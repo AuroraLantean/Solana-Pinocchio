@@ -134,7 +134,6 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let u64d = parse_u64(&data[48..56])?;
     let u64s = [u64a, u64b, u64c, u64d];
     log!("u64a: {}", u64a);
-    //TODO: WHY u64a is not parsed properly???
     //log!("u8s: {}", &u8s);
     //log!("u32s: {}", &u32s);
     //log!("u64s: {}", &u64s);

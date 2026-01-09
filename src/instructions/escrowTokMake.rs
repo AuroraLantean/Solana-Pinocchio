@@ -124,7 +124,12 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
 
     none_zero_u64(amount)?;
     ata_balc(from_ata, amount)?;
-
+    /*let seeds = &[User::SEED_PREFIX, self.accounts.payer.key().as_ref()];
+    let (t_account, bump) = find_program_address(
+        seeds, &crate::ID);
+    if t_account.ne(self.accounts.target_account.key()) {
+        return Err(ProgramError::InvalidAccountData);
+        }*/
     Ok(Self {
       maker,
       from_ata,

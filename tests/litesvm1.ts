@@ -14,6 +14,7 @@ import {
 	lgcInitAta,
 	lgcInitMint,
 	lgcMintToken,
+	lgcWithdraw,
 	sendSol,
 	setAtaCheck,
 	setMint,
@@ -156,8 +157,8 @@ test("Set USDT Mint and ATAs", () => {
 	//TODO: transfer set USDT
 });
 
-test("Deposit Tokens", () => {
-	ll("\n------== Deposit Tokens");
+test("Deposit Lgc Tokens", () => {
+	ll("\n------== Deposit Lgc Tokens");
 	signerKp = user1Kp;
 	mint = usdtMint;
 	decimals = 6;
@@ -171,6 +172,37 @@ test("Deposit Tokens", () => {
 	ataBalcCheck(toAta, bigintAmt(370, 6));
 	ataBalcCheck(fromAta, bigintAmt(630, 6));
 });
+test("Withdraw Lgc Tokens", () => {
+	ll("\n------== Withdraw Lgc Tokens");
+	signerKp = user1Kp;
+	mint = usdtMint;
+	decimals = 6;
+	amt = bigintAmt(120, decimals);
+
+	signer = signerKp.publicKey;
+	const toAta = getAta(mint, signer);
+	const vaultBump = findPdaV1(signer, "vault", "signerVault");
+	const fromAta = getAta(mint, vaultBump.pda);
+	lgcWithdraw(signerKp, fromAta, toAta, vaultBump.pda, mint, decimals, amt);
+	ataBalcCheck(toAta, bigintAmt(250, 6));
+	ataBalcCheck(fromAta, bigintAmt(750, 6));
+});
+
+/*test("Pay Lgc Tokens", () => {
+	ll("\n------== Pay Lgc Tokens");
+	signerKp = user1Kp;
+	mint = usdtMint;
+	decimals = 6;
+	amt = bigintAmt(120, decimals);
+
+	signer = signerKp.publicKey;
+	const toAta = getAta(mint, signer);
+	const vaultBump = findPdaV1(signer, "vault", "signerVault");
+	const fromAta = getAta(mint, vaultBump.pda);
+	lgcPay(signerKp, fromAta, toAta, vaultBump.pda, mint, decimals, amt);
+	ataBalcCheck(toAta, bigintAmt(250, 6));
+	ataBalcCheck(fromAta, bigintAmt(750, 6));
+});*/
 
 test.skip("copy accounts from devnet", async () => {
 	const connection = new Connection("https://api.devnet.solana.com");

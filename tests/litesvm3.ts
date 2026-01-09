@@ -140,6 +140,8 @@ test("updateConfig + time travel", () => {
 	status = Status.Paused;
 	str = "MoonDog to the Marzzz!";
 	funcSelector = 1; //0 status, 1 fee, 2 admin
+
+	//TODO: wrap below into a func
 	bytes4bools = [0, 0, 0, 0];
 	bytes4u8s = [funcSelector, statusToByte(status), 0, 0];
 	time = getTime();

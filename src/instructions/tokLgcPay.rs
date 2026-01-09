@@ -4,13 +4,15 @@ use pinocchio_log::log;
 
 use crate::{
   ata_balc, check_ata, check_decimals, check_mint0a, check_pda, check_sysprog, data_len,
-  executable, instructions::check_signer, none_zero_u64, parse_u64, rent_exempt22, writable, Ee,
+  executable, instructions::check_signer, none_zero_u64, parse_u64, rent_exempt22, writable,
+  Config, Ee,
 };
 
 /// TokLgc: Users to Pay Tokens to VaultAdmin
 pub struct TokLgcPay<'a> {
   pub user: &'a AccountInfo, //signer
   pub from_ata: &'a AccountInfo,
+  //pub config_pda: &'a AccountInfo,
   pub to_ata: &'a AccountInfo,
   pub to_wallet: &'a AccountInfo,
   pub mint: &'a AccountInfo,
@@ -40,15 +42,6 @@ impl<'a> TokLgcPay<'a> {
     rent_exempt22(mint, 0)?;
     check_decimals(mint, decimals)?;
     check_mint0a(mint, token_program)?;
-
-    log!("TokLgcPay 2");
-    //only to_wallet(owner) should make to_wallet
-    if to_wallet.lamports() == 0 {
-      return Ee::ToWallet.e();
-    }
-    log!("TokLgcPay 7a");
-    check_pda(to_wallet)?;
-    log!("TokLgcPay 7b: to_wallet is verified");
 
     if to_ata.data_is_empty() {
       log!("Make to_ata");
@@ -103,8 +96,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcPay<'a> {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(user)?;
-    executable(token_program)?;
     check_sysprog(system_program)?;
+    executable(token_program)?;
     //check_pda(config_pda)?;
     writable(from_ata)?;
     check_ata(from_ata, user, mint)?;
@@ -117,6 +110,17 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcPay<'a> {
 
     none_zero_u64(amount)?;
     ata_balc(from_ata, amount)?;
+
+    log!("fetch from ConfigPDA");
+    //writable(config_pda)?;
+    //TODO:config_pda.can_borrow_data()?;
+    //let config: &Config = Config::read(&config_pda)?;
+
+    if to_wallet.lamports() == 0 {
+      return Err(Ee::ToWallet.into());
+    }
+    log!("to_wallet exists");
+    check_pda(to_wallet)?;
 
     Ok(Self {
       user,

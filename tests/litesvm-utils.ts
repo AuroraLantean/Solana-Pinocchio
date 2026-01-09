@@ -302,6 +302,78 @@ export const lgcDeposit = (
 	const sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
+export const lgcWithdraw = (
+	userSigner: Keypair,
+	fromAta: PublicKey,
+	toAta: PublicKey,
+	fromWallet: PublicKey,
+	mint: PublicKey,
+	decimals: number,
+	amount: bigint,
+	tokenProg = TOKEN_PROGRAM_ID,
+	atokenProg = ATokenGPvbd,
+) => {
+	const disc = 6;
+	const argData = [decimals, ...bigintToBytes(amount)];
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: userSigner.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: fromAta, isSigner: false, isWritable: true },
+			{ pubkey: toAta, isSigner: false, isWritable: true },
+			{ pubkey: fromWallet, isSigner: false, isWritable: false },
+			{ pubkey: mint, isSigner: false, isWritable: false },
+			{ pubkey: tokenProg, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
+			{ pubkey: atokenProg, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(userSigner);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
+/*export const lgcPay = (
+	userSigner: Keypair,
+	fromAta: PublicKey,
+	toAta: PublicKey,
+	fromWallet: PublicKey,
+	mint: PublicKey,
+	decimals: number,
+	amount: bigint,
+	tokenProg = TOKEN_PROGRAM_ID,
+	atokenProg = ATokenGPvbd,
+) => {
+	const disc = 6;
+	const argData = [decimals, ...bigintToBytes(amount)];
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: userSigner.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: fromAta, isSigner: false, isWritable: true },
+			{ pubkey: toAta, isSigner: false, isWritable: true },
+			{ pubkey: fromWallet, isSigner: false, isWritable: false },
+			{ pubkey: mint, isSigner: false, isWritable: false },
+			{ pubkey: tokenProg, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
+			{ pubkey: atokenProg, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(userSigner);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};*/
 //-------------==
 //When you want to make Mint without the Mint Keypair. E.g. UsdtMintKp;
 //https://solana.com/docs/tokens/basics/create-mint

@@ -123,7 +123,7 @@ pub enum ProgramIx {
   #[account(7, name = "atoken_program", desc = "AToken Program")]
   TokLgcWithdraw { decimals: u8, amount: u64 },
 
-  /// 7 TokLgc User Pays Tokens to VaultAdmin
+  /// 7 TokLgc User Pays Tokens to VaultPDA
   #[account(0, signer, writable, name = "user", desc = "User")]
   #[account(1, writable, name = "from", desc = "From ATA")]
   #[account(2, writable, name = "to", desc = "To ATA")]
