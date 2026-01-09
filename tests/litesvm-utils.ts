@@ -338,18 +338,19 @@ export const lgcWithdraw = (
 	const sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
-/*export const lgcPay = (
+export const lgcPay = (
 	userSigner: Keypair,
 	fromAta: PublicKey,
 	toAta: PublicKey,
-	fromWallet: PublicKey,
+	vault: PublicKey,
 	mint: PublicKey,
+	configPda: PublicKey,
 	decimals: number,
 	amount: bigint,
 	tokenProg = TOKEN_PROGRAM_ID,
 	atokenProg = ATokenGPvbd,
 ) => {
-	const disc = 6;
+	const disc = 7;
 	const argData = [decimals, ...bigintToBytes(amount)];
 	const blockhash = svm.latestBlockhash();
 	const ix = new TransactionInstruction({
@@ -357,8 +358,9 @@ export const lgcWithdraw = (
 			{ pubkey: userSigner.publicKey, isSigner: true, isWritable: true },
 			{ pubkey: fromAta, isSigner: false, isWritable: true },
 			{ pubkey: toAta, isSigner: false, isWritable: true },
-			{ pubkey: fromWallet, isSigner: false, isWritable: false },
+			{ pubkey: vault, isSigner: false, isWritable: false },
 			{ pubkey: mint, isSigner: false, isWritable: false },
+			{ pubkey: configPda, isSigner: false, isWritable: true },
 			{ pubkey: tokenProg, isSigner: false, isWritable: false },
 			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
 			{ pubkey: atokenProg, isSigner: false, isWritable: false },
@@ -373,7 +375,7 @@ export const lgcWithdraw = (
 	const simRes = svm.simulateTransaction(tx);
 	const sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
-};*/
+};
 //-------------==
 //When you want to make Mint without the Mint Keypair. E.g. UsdtMintKp;
 //https://solana.com/docs/tokens/basics/create-mint

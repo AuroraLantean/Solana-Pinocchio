@@ -40,8 +40,8 @@ pub enum Ee {
   AtokenGPvbd,
   #[error("SystemProgram")]
   SystemProgram,
-  #[error("Xyz012")]
-  Xyz012,
+  #[error("MintNotAccepted")]
+  MintNotAccepted,
   #[error("Xyz013")]
   Xyz013,
   #[error("Xyz014")]
@@ -220,10 +220,10 @@ pub enum Ee {
   PdaToBeBelowRentExempt,
   #[error("ToWallet")]
   ToWallet,
-  #[error("Xyz097")]
-  Xyz097,
-  #[error("Xyz098")]
-  Xyz098,
+  #[error("ToWalletNoLamport")]
+  ToWalletNoLamport,
+  #[error("ToWalletForeignPDA")]
+  ToWalletForeignPDA,
   #[error("Xyz099")]
   Xyz099,
   //Math
@@ -276,7 +276,7 @@ impl TryFrom<u32> for Ee {
       9 => Ok(Ee::TokenProgram),
       10 => Ok(Ee::AtokenGPvbd),
       11 => Ok(Ee::SystemProgram),
-      12 => Ok(Ee::Xyz012),
+      12 => Ok(Ee::MintNotAccepted),
       13 => Ok(Ee::Xyz013),
       14 => Ok(Ee::Xyz014),
       15 => Ok(Ee::Xyz015),
@@ -361,8 +361,8 @@ impl TryFrom<u32> for Ee {
       94 => Ok(Ee::Xyz094),
       95 => Ok(Ee::PdaToBeBelowRentExempt),
       96 => Ok(Ee::ToWallet),
-      97 => Ok(Ee::Xyz097),
-      98 => Ok(Ee::Xyz098),
+      97 => Ok(Ee::ToWalletNoLamport),
+      98 => Ok(Ee::ToWalletForeignPDA),
       99 => Ok(Ee::Xyz099),
       100 => Ok(Ee::Xyz100),
       101 => Ok(Ee::Xyz101),
@@ -393,7 +393,7 @@ impl ToStr for Ee {
       Ee::TokenProgram => "TokenProgram",
       Ee::AtokenGPvbd => "AtokenGPvbd",
       Ee::SystemProgram => "SystemProgram",
-      Ee::Xyz012 => "Xyz012",
+      Ee::MintNotAccepted => "MintNotAccepted",
       Ee::Xyz013 => "Xyz013",
       Ee::Xyz014 => "Xyz014",
       Ee::Xyz015 => "Xyz015",
@@ -485,8 +485,8 @@ impl ToStr for Ee {
       Ee::Xyz094 => "Xyz094",
       Ee::PdaToBeBelowRentExempt => "PdaToBeBelowRentExempt",
       Ee::ToWallet => "ToWallet",
-      Ee::Xyz097 => "Xyz097",
-      Ee::Xyz098 => "Xyz098",
+      Ee::ToWalletNoLamport => "ToWalletNoLamport",
+      Ee::ToWalletForeignPDA => "ToWalletForeignPDA",
       Ee::Xyz099 => "Xyz099",
 
       Ee::Xyz100 => "Xyz100",
@@ -656,13 +656,25 @@ pub fn check_pda(account: &AccountInfo) -> Result<(), ProgramError> {
   }
   Ok(())
 }
+pub fn check_vault(input_vault: &AccountInfo, config_vault: &[u8; 32]) -> Result<(), ProgramError> {
+  if input_vault.lamports() == 0 {
+    return Ee::ToWalletNoLamport.e();
+  }
+  if !input_vault.is_owned_by(&crate::ID) {
+    return Ee::ToWalletForeignPDA.e();
+  }
+  if input_vault.key() != config_vault {
+    return Ee::ToWallet.e();
+  }
+  Ok(())
+}
 pub fn check_sysprog(system_program: &AccountInfo) -> Result<(), ProgramError> {
   if !system_program.key().eq(&pinocchio_system::ID) {
     return Ee::SystemProgram.e();
   }
   Ok(())
 }
-pub const ATOKENGPVBD: pinocchio_pubkey::reexport::Pubkey = pinocchio_system::ID; //[0, 0];
+pub const ATOKENGPVBD: pinocchio_pubkey::reexport::Pubkey = pinocchio_associated_token_account::ID; //[0, 0];
 pub fn check_atoken_gpvbd(atoken_program: &AccountInfo) -> Result<(), ProgramError> {
   if !atoken_program.key().eq(&ATOKENGPVBD) {
     return Ee::AtokenGPvbd.e();
@@ -892,6 +904,7 @@ pub fn check_tokacct_interface(ata: &AccountInfo) -> Result<(), ProgramError> {
   }
   Ok(())
 }
+
 pub fn get_time() -> Result<u32, ProgramError> {
   let clock = Clock::get().map_err(|_| Ee::ClockGet)?;
   let time = clock.unix_timestamp as u32;

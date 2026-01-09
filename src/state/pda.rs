@@ -7,6 +7,8 @@ use crate::{none_zero_u64, Ee};
 #[derive(Clone, Copy, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
 pub struct Config {
+  mints: [Pubkey; 4],     // 128 = 32x4
+  vault: Pubkey,          // 32
   prog_owner: Pubkey,     // 32
   admin: Pubkey,          // 32
   str_u8array: [u8; 32],  // 32
@@ -22,6 +24,12 @@ pub struct Config {
 impl Config {
   pub const LEN: usize = core::mem::size_of::<Self>();
   //Getters or Accessors: Safe Direct value copy, no reference created
+  pub fn mints(&self) -> &[Pubkey; 4] {
+    &self.mints
+  }
+  pub fn vault(&self) -> &Pubkey {
+    &self.vault
+  }
   pub fn prog_owner(&self) -> &Pubkey {
     &self.prog_owner
   }
@@ -94,6 +102,12 @@ impl Config {
     &*(bytes.as_ptr() as *const &Config)
   }
   //----------== Setters
+  pub fn set_mints(&mut self, mints: [Pubkey; 4]) {
+    self.mints = mints;
+  }
+  pub fn set_vault(&mut self, vault: Pubkey) {
+    self.vault = vault;
+  }
   pub fn set_prog_owner(&mut self, prog_owner: Pubkey) {
     self.prog_owner = prog_owner;
   }

@@ -6,6 +6,7 @@ import {
 	acctExists,
 	acctIsNull,
 	ataBalcCheck,
+	configPDA,
 	depositSol,
 	findPdaV1,
 	getAta,
@@ -14,6 +15,7 @@ import {
 	lgcInitAta,
 	lgcInitMint,
 	lgcMintToken,
+	lgcPay,
 	lgcWithdraw,
 	sendSol,
 	setAtaCheck,
@@ -188,7 +190,7 @@ test("Withdraw Lgc Tokens", () => {
 	ataBalcCheck(fromAta, bigintAmt(750, 6));
 });
 
-/*test("Pay Lgc Tokens", () => {
+test("Pay Lgc Tokens", () => {
 	ll("\n------== Pay Lgc Tokens");
 	signerKp = user1Kp;
 	mint = usdtMint;
@@ -196,13 +198,13 @@ test("Withdraw Lgc Tokens", () => {
 	amt = bigintAmt(120, decimals);
 
 	signer = signerKp.publicKey;
-	const toAta = getAta(mint, signer);
-	const vaultBump = findPdaV1(signer, "vault", "signerVault");
-	const fromAta = getAta(mint, vaultBump.pda);
-	lgcPay(signerKp, fromAta, toAta, vaultBump.pda, mint, decimals, amt);
+	const fromAta = getAta(mint, signer);
+	const toAta = getAta(mint, vaultO);
+	//init configPDA, fix test3
+	lgcPay(signerKp, fromAta, toAta, vaultO, mint, configPDA, decimals, amt);
 	ataBalcCheck(toAta, bigintAmt(250, 6));
 	ataBalcCheck(fromAta, bigintAmt(750, 6));
-});*/
+});
 
 test.skip("copy accounts from devnet", async () => {
 	const connection = new Connection("https://api.devnet.solana.com");
