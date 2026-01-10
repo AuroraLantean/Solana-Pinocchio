@@ -1,23 +1,17 @@
 /** biome-ignore-all lint/style/noNonNullAssertion: <> */
 import { expect, test } from "bun:test";
 import type { Keypair, PublicKey } from "@solana/web3.js";
-import { Transaction, TransactionInstruction } from "@solana/web3.js";
-import type {
-	Clock,
-	FailedTransactionMetadata,
-	SimulatedTransactionInfo,
-	TransactionMetadata,
-} from "litesvm";
+import type { Clock } from "litesvm";
 import { Status, solanaKitDecodeDev } from "./decoder";
 import {
 	acctExists,
-	checkSuccess,
 	configBump,
 	configPDA,
 	initBalc,
 	initConfig,
 	setMint,
 	svm,
+	updateConfig,
 	vault1,
 	vaultO,
 } from "./litesvm-utils";
@@ -27,7 +21,6 @@ import {
 	getTime,
 	ll,
 	statusToByte,
-	strToU8Fixed,
 	u32Bytes,
 	u64Bytes,
 } from "./utils";
@@ -41,14 +34,12 @@ import {
 	usdtMint,
 	user1,
 	user1Kp,
-	vaultProgAddr,
 } from "./web3jsSetup";
 
 const adminBalc = svm.getBalance(admin);
 ll("admin SOL:", adminBalc);
 expect(adminBalc).toStrictEqual(initBalc);
 
-let disc = 0; //discriminator
 let signerKp: Keypair;
 let _authorityKp: Keypair;
 let _authority: PublicKey;
@@ -67,13 +58,8 @@ let bytes4bools: number[];
 let bytes4u8s: number[];
 let bytes4u32s: number[];
 let bytes4u64s: number[];
-let argData: number[];
-let blockhash: string;
+
 let clock: Clock;
-let ix: TransactionInstruction;
-let tx: Transaction;
-let simRes: FailedTransactionMetadata | SimulatedTransactionInfo;
-let sendRes: FailedTransactionMetadata | TransactionMetadata;
 
 test("Set Mints", () => {
 	ll("\n------== Set Mints");
@@ -88,7 +74,6 @@ test("Set Mints", () => {
 });
 test("InitConfig", () => {
 	ll("\n------== InitConfig");
-	disc = 12; //discriminator
 	ll("vault1:", vault1.toBase58());
 	ll(`configPDA: ${configPDA}`);
 	signerKp = user1Kp;
@@ -138,7 +123,6 @@ test("InitConfig", () => {
 
 test("updateConfig + time travel", () => {
 	ll("\n------== updateConfig + time travel");
-	disc = 13; //discriminator
 	ll(`configPDA: ${configPDA}`);
 	ll("vault1:", vault1.toBase58());
 	signerKp = ownerKp;
@@ -151,11 +135,10 @@ test("updateConfig + time travel", () => {
 	str = "MoonDog to the Marzzz!";
 	funcSelector = 1; //0 status, 1 fee, 2 admin
 
-	//TODO: wrap below into a func
 	bytes4bools = [0, 0, 0, 0];
 	bytes4u8s = [funcSelector, statusToByte(status), 0, 0];
-	time = getTime();
 	tokenAmount = as9zBn(274);
+	time = getTime();
 	bytes4u32s = [
 		...bigintToBytes(time, 32),
 		...u32Bytes,
@@ -168,39 +151,20 @@ test("updateConfig + time travel", () => {
 		...u64Bytes,
 		...u64Bytes,
 	];
-	argData = [
-		...bytes4bools,
-		...bytes4u8s,
-		...bytes4u32s,
-		...bytes4u64s,
-		...strToU8Fixed(str),
-	];
-	ll("acct1:", acct1.toBase58());
-	ll("acct2:", acct2.toBase58());
-
 	clock = svm.getClock();
 	clock.unixTimestamp = BigInt(time);
 	svm.setClock(clock);
 
-	blockhash = svm.latestBlockhash();
-	ix = new TransactionInstruction({
-		keys: [
-			{ pubkey: signerKp.publicKey, isSigner: true, isWritable: true },
-			{ pubkey: configPDA, isSigner: false, isWritable: true },
-			{ pubkey: acct1, isSigner: false, isWritable: false },
-			{ pubkey: acct2, isSigner: false, isWritable: false },
-		],
-		programId: vaultProgAddr,
-		data: Buffer.from([disc, ...argData]),
-	});
-	tx = new Transaction();
-	tx.recentBlockhash = blockhash;
-	tx.add(ix); //tx.add(...ixs);
-	tx.sign(signerKp);
-
-	simRes = svm.simulateTransaction(tx);
-	sendRes = svm.sendTransaction(tx);
-	checkSuccess(simRes, sendRes, vaultProgAddr);
+	updateConfig(
+		bytes4bools,
+		bytes4u8s,
+		bytes4u32s,
+		bytes4u64s,
+		acct1,
+		acct2,
+		str,
+		signerKp,
+	);
 
 	const configPDAraw = svm.getAccount(configPDA);
 	expect(configPDAraw).not.toBeNull();

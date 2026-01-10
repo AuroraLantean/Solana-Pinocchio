@@ -175,6 +175,46 @@ export const initConfig = (
 	const sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
+export const updateConfig = (
+	bytes4bools: number[],
+	bytes4u8s: number[],
+	bytes4u32s: number[],
+	bytes4u64s: number[],
+	acct1: PublicKey,
+	acct2: PublicKey,
+	str: string,
+	signerKp: Keypair,
+) => {
+	const disc = 13;
+	const argData = [
+		...bytes4bools,
+		...bytes4u8s,
+		...bytes4u32s,
+		...bytes4u64s,
+		...strToU8Fixed(str),
+	];
+	ll("acct1:", acct1.toBase58());
+	ll("acct2:", acct2.toBase58());
+
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: signerKp.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: configPDA, isSigner: false, isWritable: true },
+			{ pubkey: acct1, isSigner: false, isWritable: false },
+			{ pubkey: acct2, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(signerKp);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
 
 export const depositSol = (
 	vaultPdaX: PublicKey,
