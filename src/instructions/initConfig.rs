@@ -110,6 +110,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
     check_sysprog(system_program)?;
     //writable(config_pda)?;
     not_initialized(config_pda)?;
+    log!("try check mints");
     rent_exempt_mint22(mint0)?;
     rent_exempt_mint22(mint1)?;
     rent_exempt_mint22(mint2)?;

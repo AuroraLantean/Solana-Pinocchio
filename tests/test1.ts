@@ -245,7 +245,7 @@ describe("Vault Program", () => {
 
 	//------------------==
 	test("Lgc User1 withdraws token from vault1", async () => {
-		ll("\n------== Lgc User1 Withdraws Tokens from VaultPDA1");
+		ll("\n------== Lgc User1 Withdraws Tokens from Vault1");
 		ll("payer:", user1Kp.address);
 		const destAddr = user1Addr;
 		ll("destAddr:", destAddr);

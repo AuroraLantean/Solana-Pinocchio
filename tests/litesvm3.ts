@@ -10,9 +10,13 @@ import type {
 } from "litesvm";
 import { Status, solanaKitDecodeDev } from "./decoder";
 import {
+	acctExists,
 	checkSuccess,
+	configBump,
 	configPDA,
 	initBalc,
+	initConfig,
+	setMint,
 	svm,
 	vault1,
 	vaultO,
@@ -20,7 +24,6 @@ import {
 import {
 	as9zBn,
 	bigintToBytes,
-	boolToByte,
 	getTime,
 	ll,
 	statusToByte,
@@ -33,7 +36,6 @@ import {
 	owner,
 	ownerKp,
 	pyusdMint,
-	SYSTEM_PROGRAM,
 	usdcMint,
 	usdgMint,
 	usdtMint,
@@ -73,53 +75,43 @@ let tx: Transaction;
 let simRes: FailedTransactionMetadata | SimulatedTransactionInfo;
 let sendRes: FailedTransactionMetadata | TransactionMetadata;
 
+test("Set Mints", () => {
+	ll("\n------== Set Mints");
+	setMint(usdcMint);
+	acctExists(usdcMint);
+	setMint(usdtMint);
+	acctExists(usdtMint);
+	setMint(pyusdMint);
+	acctExists(pyusdMint);
+	setMint(usdgMint);
+	acctExists(usdgMint);
+});
 test("InitConfig", () => {
 	ll("\n------== InitConfig");
 	disc = 12; //discriminator
-	ll("vaultPDA1:", vault1.toBase58());
+	ll("vault1:", vault1.toBase58());
 	ll(`configPDA: ${configPDA}`);
 	signerKp = user1Kp;
-	mints = [usdtMint, usdcMint, pyusdMint, usdgMint];
+	mints = [usdcMint, usdtMint, pyusdMint, usdgMint];
 	progOwner = owner;
 	progAdmin = user1;
 	fee = 111000000n;
 	isAuthorized = true;
 	status = Status.Active;
 	str = "MoonDog to the Moon!";
-	argData = [
-		boolToByte(isAuthorized),
-		statusToByte(status),
-		...bigintToBytes(fee),
-		...strToU8Fixed(str),
-	];
+
 	ll("progOwner:", progOwner.toBase58(), progOwner.toBytes());
 	ll("progAdmin:", progAdmin.toBase58(), progAdmin.toBytes());
-
-	blockhash = svm.latestBlockhash();
-	ix = new TransactionInstruction({
-		keys: [
-			{ pubkey: signerKp.publicKey, isSigner: true, isWritable: true },
-			{ pubkey: configPDA, isSigner: false, isWritable: true },
-			{ pubkey: mints[0]!, isSigner: false, isWritable: false },
-			{ pubkey: mints[1]!, isSigner: false, isWritable: false },
-			{ pubkey: mints[2]!, isSigner: false, isWritable: false },
-			{ pubkey: mints[3]!, isSigner: false, isWritable: false },
-			{ pubkey: vaultO, isSigner: false, isWritable: false },
-			{ pubkey: progOwner, isSigner: false, isWritable: false },
-			{ pubkey: progAdmin, isSigner: false, isWritable: false },
-			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
-		],
-		programId: vaultProgAddr,
-		data: Buffer.from([disc, ...argData]),
-	});
-	tx = new Transaction();
-	tx.recentBlockhash = blockhash;
-	tx.add(ix); //tx.add(...ixs);
-	tx.sign(signerKp);
-
-	simRes = svm.simulateTransaction(tx);
-	sendRes = svm.sendTransaction(tx);
-	checkSuccess(simRes, sendRes, vaultProgAddr);
+	initConfig(
+		mints,
+		progOwner,
+		progAdmin,
+		isAuthorized,
+		status,
+		fee,
+		str,
+		signerKp,
+	);
 
 	const configPDAraw = svm.getAccount(configPDA);
 	expect(configPDAraw).not.toBeNull();
@@ -138,17 +130,17 @@ test("InitConfig", () => {
 	expect(decoded.fee).toEqual(fee);
 	expect(decoded.solBalance).toEqual(0n);
 	expect(decoded.tokenBalance).toEqual(0n);
+	ll("updatedAt:", decoded.updatedAt);
 	expect(decoded.isAuthorized).toEqual(isAuthorized);
 	expect(decoded.status).toEqual(status);
-	ll("updatedAt:", decoded.updatedAt);
-	//expect(decoded.bump).toEqual(bump);
+	expect(decoded.bump).toEqual(configBump);
 });
 
 test("updateConfig + time travel", () => {
 	ll("\n------== updateConfig + time travel");
 	disc = 13; //discriminator
-	ll("vaultPDA1:", vault1.toBase58());
 	ll(`configPDA: ${configPDA}`);
+	ll("vault1:", vault1.toBase58());
 	signerKp = ownerKp;
 	const acct1 = admin;
 	const acct2 = admin;

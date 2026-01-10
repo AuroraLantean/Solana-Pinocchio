@@ -22,7 +22,8 @@ import type {
 } from "litesvm";
 
 import { ComputeBudget, LiteSVM, TransactionMetadata } from "litesvm";
-import { bigintToBytes } from "./utils";
+import type { Status } from "./decoder";
+import { bigintToBytes, boolToByte, statusToByte, strToU8Fixed } from "./utils";
 import {
 	ATokenGPvbd,
 	admin,
@@ -68,16 +69,18 @@ export const findPdaV1 = (
 	ll(`${pdaName} pda: ${pda.toBase58()}, bump: ${bump}`);
 	return { pda, bump };
 };
-export const configBump = findPdaV1(owner, "config", "ConfigPDA");
-export const vaultBump = findPdaV1(owner, "vault", "VaultO ");
-export const vaultBump1 = findPdaV1(user1, "vault", "Vault1");
-export const vaultBump2 = findPdaV1(user2, "vault", "Vault2");
-export const vaultBump3 = findPdaV1(user3, "vault", "Vault3");
-export const configPDA = configBump.pda;
-export const vaultO = vaultBump.pda;
-export const vault1 = vaultBump1.pda;
-export const vault2 = vaultBump2.pda;
-export const vault3 = vaultBump3.pda;
+export const configOut = findPdaV1(owner, "config", "ConfigPDA");
+export const vaultOOut = findPdaV1(owner, "vault", "VaultO ");
+export const vaultOut1 = findPdaV1(user1, "vault", "Vault1");
+export const vaultOut2 = findPdaV1(user2, "vault", "Vault2");
+export const vaultOut3 = findPdaV1(user3, "vault", "Vault3");
+export const configPDA = configOut.pda;
+export const configBump = configOut.bump;
+export const vaultO = vaultOOut.pda;
+export const vaultOBump = vaultOOut.bump;
+export const vault1 = vaultOut1.pda;
+export const vault2 = vaultOut2.pda;
+export const vault3 = vaultOut3.pda;
 
 //Or just send some SOL
 export const makeAccount = (
@@ -119,6 +122,60 @@ export const sendSol = (addrTo: PublicKey, amount: bigint, signer: Keypair) => {
 	svm.sendTransaction(tx);
 };
 //-------------== Program Methods
+const _testMint = (item: PublicKey) => item === undefined;
+export const initConfig = (
+	mints: PublicKey[],
+	progOwner: PublicKey,
+	progAdmin: PublicKey,
+	isAuthorized: boolean,
+	status: Status,
+	fee: bigint,
+	str: string,
+	signerKp: Keypair,
+) => {
+	const disc = 12;
+	const argData = [
+		boolToByte(isAuthorized),
+		statusToByte(status),
+		...bigintToBytes(fee),
+		...strToU8Fixed(str),
+	];
+	if (mints.length < 4) throw new Error("mints length should be >= 4");
+	if (mints[0] === undefined) throw new Error("mint0");
+	if (mints[1] === undefined) throw new Error("mint1");
+	if (mints[2] === undefined) throw new Error("mint2");
+	if (mints[3] === undefined) throw new Error("mint3");
+	//	if (mints.some(testMint)) { }
+	// for (const mint of mints) {
+	// 	if (mint === undefined) throw new Error("");
+	// }
+
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: signerKp.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: configPDA, isSigner: false, isWritable: true },
+			{ pubkey: mints[0], isSigner: false, isWritable: false },
+			{ pubkey: mints[1], isSigner: false, isWritable: false },
+			{ pubkey: mints[2], isSigner: false, isWritable: false },
+			{ pubkey: mints[3], isSigner: false, isWritable: false },
+			{ pubkey: vaultO, isSigner: false, isWritable: false },
+			{ pubkey: progOwner, isSigner: false, isWritable: false },
+			{ pubkey: progAdmin, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(signerKp);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
+
 export const depositSol = (
 	vaultPdaX: PublicKey,
 	amount: bigint,
