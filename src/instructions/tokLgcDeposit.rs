@@ -152,7 +152,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
     if !config.mints().contains(&mint.key()) {
       return Err(Ee::MintNotAccepted.into());
     }
-
+    log!("TokLgcDeposit try_from 10");
     rent_exempt_mint(mint)?;
     check_decimals(mint, decimals)?;
     check_mint0a(mint, token_program)?;

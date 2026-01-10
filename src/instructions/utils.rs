@@ -699,7 +699,7 @@ pub fn executable(account: &AccountInfo) -> Result<(), ProgramError> {
 //TODO: Mint and ATA from TokenLgc works. For mint and ATA from Token2022?
 /// acc_type: 0 Mint, 1 TokenAccount
 pub fn rent_exempt_mint(account: &AccountInfo) -> Result<(), ProgramError> {
-  if account.lamports() != Rent::get()?.minimum_balance(Mint::LEN) {
+  if account.lamports() < Rent::get()?.minimum_balance(Mint::LEN) {
     return Ee::NoRentExemptMint.e();
   }
   Ok(())
@@ -711,7 +711,7 @@ pub fn rent_exempt_mint22(account: &AccountInfo) -> Result<(), ProgramError> {
   Ok(())
 }
 pub fn rent_exempt_tokacct(account: &AccountInfo) -> Result<(), ProgramError> {
-  if account.lamports() != Rent::get()?.minimum_balance(TokenAccount::LEN) {
+  if account.lamports() < Rent::get()?.minimum_balance(TokenAccount::LEN) {
     return Ee::NoRentExemptTokAcct22.e();
   }
   Ok(())

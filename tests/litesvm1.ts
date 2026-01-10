@@ -2,6 +2,7 @@
 import { expect, test } from "bun:test";
 //Tutorial: <https://litesvm.github.io/litesvm/tutorial.html>
 import { Connection, type Keypair, type PublicKey } from "@solana/web3.js";
+import { Status } from "./decoder";
 import {
 	acctExists,
 	acctIsNull,
@@ -11,6 +12,7 @@ import {
 	findPdaV1,
 	getAta,
 	initBalc,
+	initConfig,
 	lgcDeposit,
 	lgcInitAta,
 	lgcInitMint,
@@ -33,7 +35,11 @@ import {
 	dgcAuthorityKp,
 	dragonCoinKp,
 	hackerKp,
+	owner,
 	ownerKp,
+	pyusdMint,
+	usdcMint,
+	usdgMint,
 	usdtMint,
 	user1,
 	user1Kp,
@@ -148,34 +154,66 @@ test("Make DragonCoin Mint, ATA, Tokens", () => {
 
 test("Set USDT Mint and ATAs", () => {
 	ll("\n------== Set USDT Mint and ATAs");
+	setMint(usdcMint);
+	acctExists(usdcMint);
 	setMint(usdtMint);
 	acctExists(usdtMint);
-	ll("usdtMint is set");
+	setMint(pyusdMint);
+	acctExists(pyusdMint);
+	setMint(usdgMint);
+	acctExists(usdgMint);
 
 	amt = bigintAmt(1000, 6);
-	setAtaCheck(usdtMint, admin, amt, "Admin USDT");
-	setAtaCheck(usdtMint, user1, amt, "User1 USDT");
-	setAtaCheck(usdtMint, user2, amt, "User2 USDT");
+	setAtaCheck(usdcMint, admin, amt, "Admin USDT");
+	setAtaCheck(usdcMint, user1, amt, "User1 USDT");
+	setAtaCheck(usdcMint, user2, amt, "User2 USDT");
 	//TODO: transfer set USDT
+});
+
+test("InitConfig", () => {
+	ll("\n------== InitConfig");
+	ll("vault1:", vault1.toBase58());
+	ll(`configPDA: ${configPDA}`);
+	signerKp = user1Kp;
+	const mints = [usdcMint, usdtMint, pyusdMint, usdgMint];
+	const progOwner = owner;
+	const progAdmin = user1;
+	const fee = 111000000n;
+	const isAuthorized = true;
+	const status = Status.Active;
+	const str = "MoonDog to the Moon!";
+
+	ll("progOwner:", progOwner.toBase58(), progOwner.toBytes());
+	ll("progAdmin:", progAdmin.toBase58(), progAdmin.toBytes());
+	initConfig(
+		mints,
+		progOwner,
+		progAdmin,
+		isAuthorized,
+		status,
+		fee,
+		str,
+		signerKp,
+	);
 });
 
 test("Deposit Lgc Tokens", () => {
 	ll("\n------== Deposit Lgc Tokens");
 	signerKp = user1Kp;
-	mint = usdtMint;
+	mint = usdcMint;
 	decimals = 6;
 	amt = bigintAmt(370, decimals);
 
 	signer = signerKp.publicKey;
 	const fromAta = getAta(mint, signer);
-	const vaultBump = findPdaV1(signer, "vault", "signerVault");
-	const toAta = getAta(mint, vaultBump.pda);
+	const vaultOut = findPdaV1(signer, "vault", "signerVault");
+	const toAta = getAta(mint, vaultOut.pda);
 
 	lgcDeposit(
 		signerKp,
 		fromAta,
 		toAta,
-		vaultBump.pda,
+		vaultOut.pda,
 		mint,
 		configPDA,
 		decimals,
@@ -187,16 +225,16 @@ test("Deposit Lgc Tokens", () => {
 test("Withdraw Lgc Tokens", () => {
 	ll("\n------== Withdraw Lgc Tokens");
 	signerKp = user1Kp;
-	mint = usdtMint;
+	mint = usdcMint;
 	decimals = 6;
 	amt = bigintAmt(120, decimals);
 
 	signer = signerKp.publicKey;
 	const toAta = getAta(mint, signer);
-	const vaultBump = findPdaV1(signer, "vault", "signerVault");
-	const fromAta = getAta(mint, vaultBump.pda);
+	const vaultOut = findPdaV1(signer, "vault", "signerVault");
+	const fromAta = getAta(mint, vaultOut.pda);
 
-	lgcWithdraw(signerKp, fromAta, toAta, vaultBump.pda, mint, decimals, amt);
+	lgcWithdraw(signerKp, fromAta, toAta, vaultOut.pda, mint, decimals, amt);
 	ataBalcCheck(toAta, bigintAmt(250, 6));
 	ataBalcCheck(fromAta, bigintAmt(750, 6));
 });
@@ -204,7 +242,7 @@ test("Withdraw Lgc Tokens", () => {
 test("Pay Lgc Tokens", () => {
 	ll("\n------== Pay Lgc Tokens");
 	signerKp = user1Kp;
-	mint = usdtMint;
+	mint = usdcMint;
 	decimals = 6;
 	amt = bigintAmt(120, decimals);
 
@@ -219,11 +257,11 @@ test("Pay Lgc Tokens", () => {
 
 test.skip("copy accounts from devnet", async () => {
 	const connection = new Connection("https://api.devnet.solana.com");
-	const accountInfo = await connection.getAccountInfo(usdtMint);
+	const accountInfo = await connection.getAccountInfo(usdcMint);
 	// the rent epoch goes above 2**53 which breaks web3.js, so just set it to 0;
 	if (!accountInfo) throw new Error("accountInfo is null");
 	accountInfo.rentEpoch = 0;
-	svm.setAccount(usdtMint, accountInfo);
-	const rawAccount = svm.getAccount(usdtMint);
+	svm.setAccount(usdcMint, accountInfo);
+	const rawAccount = svm.getAccount(usdcMint);
 	expect(rawAccount).not.toBeNull();
 });
