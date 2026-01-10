@@ -10,9 +10,10 @@ use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
 
 use crate::{
-  check_ata, check_decimals, ata_balc, check_mint0a, check_pda, check_sysprog, data_len,
-  derive_pda1, executable, instructions::check_signer, none_zero_u64, parse_u64, rent_exempt22,
-  writable, Ee, ACCOUNT_DISCRIMINATOR_SIZE, VAULT_SEED,
+  ata_balc, check_ata, check_atoken_gpvbd, check_decimals, check_mint0a, check_pda, check_sysprog,
+  data_len, derive_pda1, executable, instructions::check_signer, none_zero_u64, parse_u64,
+  rent_exempt_mint, rent_exempt_tokacct, writable, Config, Ee, ACCOUNT_DISCRIMINATOR_SIZE,
+  VAULT_SEED,
 };
 
 /// TokLgc: Users to Deposit Tokens
@@ -45,11 +46,7 @@ impl<'a> TokLgcDeposit<'a> {
       amount,
     } = self;
     log!("TokLgcDeposit process()");
-    rent_exempt22(mint, 0)?;
-    check_decimals(mint, decimals)?;
-    check_mint0a(mint, token_program)?;
 
-    log!("TokLgcDeposit 5");
     if to_wallet.lamports() == 0 {
       log!("TokLgcDeposit 6: make to_wallet");
       let (expected_vault_pda, bump) = derive_pda1(user, VAULT_SEED)?;
@@ -96,7 +93,7 @@ impl<'a> TokLgcDeposit<'a> {
       check_ata(to_ata, to_wallet, mint)?;
     }
     writable(to_ata)?;
-    rent_exempt22(to_ata, 1)?;
+    rent_exempt_tokacct(to_ata)?;
     log!("ToATA is found/verified");
 
     log!("Transfer Tokens");
@@ -126,7 +123,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-    let [user, from_ata, to_ata, to_wallet, mint, token_program, system_program, atoken_program] =
+    let [user, from_ata, to_ata, to_wallet, mint, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
       return Err(ProgramError::NotEnoughAccountKeys);
@@ -134,7 +131,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
     check_signer(user)?;
     executable(token_program)?;
     check_sysprog(system_program)?;
-    //TODO: check ATOKEN
+    check_atoken_gpvbd(atoken_program)?;
+
     writable(from_ata)?;
     check_ata(from_ata, user, mint)?;
 
@@ -146,6 +144,18 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
 
     none_zero_u64(amount)?;
     ata_balc(from_ata, amount)?;
+
+    log!("TokLgcDeposit try_from 9");
+    config_pda.can_borrow_mut_data()?;
+    let config: &mut Config = Config::from_account_info(&config_pda)?;
+
+    if !config.mints().contains(&mint.key()) {
+      return Err(Ee::MintNotAccepted.into());
+    }
+
+    rent_exempt_mint(mint)?;
+    check_decimals(mint, decimals)?;
+    check_mint0a(mint, token_program)?;
 
     Ok(Self {
       user,

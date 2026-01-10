@@ -5,7 +5,7 @@ use pinocchio_log::log;
 use crate::{
   ata_balc, check_ata, check_atoken_gpvbd, check_decimals, check_mint0a, check_sysprog,
   check_vault, data_len, executable, instructions::check_signer, none_zero_u64, parse_u64,
-  rent_exempt22, writable, Config, Ee,
+  rent_exempt_mint, rent_exempt_tokacct, writable, Config, Ee,
 };
 
 /// TokLgc: Users to Pay Tokens to VaultAdmin
@@ -59,7 +59,7 @@ impl<'a> TokLgcPay<'a> {
       check_ata(to_ata, vault, mint)?;
     }
     writable(to_ata)?;
-    rent_exempt22(to_ata, 1)?;
+    rent_exempt_tokacct(to_ata)?;
     log!("ToATA is found/verified");
 
     log!("Transfer Tokens");
@@ -89,8 +89,10 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcPay<'a> {
       return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(user)?;
-    check_sysprog(system_program)?;
     executable(token_program)?;
+    check_sysprog(system_program)?;
+    check_atoken_gpvbd(atoken_program)?;
+
     writable(from_ata)?;
     check_ata(from_ata, user, mint)?;
     log!("TokLgcPay try_from 5");
@@ -107,15 +109,14 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcPay<'a> {
     config_pda.can_borrow_mut_data()?;
     let config: &mut Config = Config::from_account_info(&config_pda)?;
 
-    if !config.mints().contains(mint.key()) {
+    if !config.mints().contains(&mint.key()) {
       return Err(Ee::MintNotAccepted.into());
     }
     check_vault(vault, config.vault())?;
 
-    rent_exempt22(mint, 0)?;
+    rent_exempt_mint(mint)?;
     check_decimals(mint, decimals)?;
     check_mint0a(mint, token_program)?;
-    check_atoken_gpvbd(atoken_program)?;
 
     Ok(Self {
       user,

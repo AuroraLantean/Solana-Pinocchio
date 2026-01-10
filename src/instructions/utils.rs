@@ -7,7 +7,7 @@ use pinocchio::{
   ProgramResult,
 };
 use pinocchio_log::log;
-use pinocchio_token::state::TokenAccount;
+use pinocchio_token::state::{Mint, TokenAccount};
 use pinocchio_token_2022::state::{Mint as Mint22, TokenAccount as TokenAccount22};
 use thiserror::Error;
 
@@ -205,16 +205,16 @@ pub enum Ee {
   #[error("Xyz089")]
   Xyz089,
   //Token 2022
-  #[error("Acct22Type")]
-  Acct22Type,
-  #[error("Tok22AcctDiscOffset")]
-  Tok22AcctDiscOffset,
+  #[error("NoRentExemptMint")]
+  NoRentExemptMint,
+  #[error("NoRentExemptTokAcct")]
+  NoRentExemptTokAcct,
   #[error("NoRentExemptMint22")]
   NoRentExemptMint22,
   #[error("NoRentExemptTokAcct22")]
   NoRentExemptTokAcct22,
-  #[error("Xyz094")]
-  Xyz094,
+  #[error("Tok22AcctDiscOffset")]
+  Tok22AcctDiscOffset,
   //Withdraw
   #[error("PdaToBeBelowRentExempt")]
   PdaToBeBelowRentExempt,
@@ -354,11 +354,11 @@ impl TryFrom<u32> for Ee {
       87 => Ok(Ee::Xyz087),
       88 => Ok(Ee::Xyz088),
       89 => Ok(Ee::Xyz089),
-      90 => Ok(Ee::Acct22Type),
-      91 => Ok(Ee::Tok22AcctDiscOffset),
+      90 => Ok(Ee::NoRentExemptMint),
+      91 => Ok(Ee::NoRentExemptTokAcct),
       92 => Ok(Ee::NoRentExemptMint22),
       93 => Ok(Ee::NoRentExemptTokAcct22),
-      94 => Ok(Ee::Xyz094),
+      94 => Ok(Ee::Tok22AcctDiscOffset),
       95 => Ok(Ee::PdaToBeBelowRentExempt),
       96 => Ok(Ee::ToWallet),
       97 => Ok(Ee::ToWalletNoLamport),
@@ -478,11 +478,11 @@ impl ToStr for Ee {
       Ee::Xyz088 => "Xyz088",
       Ee::Xyz089 => "Xyz089",
 
-      Ee::Acct22Type => "Acct22Type",
-      Ee::Tok22AcctDiscOffset => "Tok22AcctDiscOffset",
+      Ee::NoRentExemptMint => "NoRentExemptMint",
+      Ee::NoRentExemptTokAcct => "NoRentExemptTokAcct",
       Ee::NoRentExemptMint22 => "NoRentExemptMint22",
       Ee::NoRentExemptTokAcct22 => "NoRentExemptTokAcct22",
-      Ee::Xyz094 => "Xyz094",
+      Ee::Tok22AcctDiscOffset => "Tok22AcctDiscOffset",
       Ee::PdaToBeBelowRentExempt => "PdaToBeBelowRentExempt",
       Ee::ToWallet => "ToWallet",
       Ee::ToWalletNoLamport => "ToWalletNoLamport",
@@ -674,13 +674,14 @@ pub fn check_sysprog(system_program: &AccountInfo) -> Result<(), ProgramError> {
   }
   Ok(())
 }
-pub const ATOKENGPVBD: pinocchio_pubkey::reexport::Pubkey = pinocchio_associated_token_account::ID; //[0, 0];
+pub const ATOKENGPVBD: pinocchio_pubkey::reexport::Pubkey = pinocchio_associated_token_account::ID;
 pub fn check_atoken_gpvbd(atoken_program: &AccountInfo) -> Result<(), ProgramError> {
   if !atoken_program.key().eq(&ATOKENGPVBD) {
     return Ee::AtokenGPvbd.e();
   }
   Ok(())
 }
+//pub const SYSTEMPROGRAM: pinocchio_pubkey::reexport::Pubkey = solana_system_interface::program::ID;
 
 //----------------== Check Account Properties
 pub fn writable(account: &AccountInfo) -> Result<(), ProgramError> {
@@ -697,17 +698,27 @@ pub fn executable(account: &AccountInfo) -> Result<(), ProgramError> {
 }
 //TODO: Mint and ATA from TokenLgc works. For mint and ATA from Token2022?
 /// acc_type: 0 Mint, 1 TokenAccount
-pub fn rent_exempt22(account: &AccountInfo, acc_type: u8) -> Result<(), ProgramError> {
-  //Check Mint
-  if acc_type == 0 && account.lamports() < Rent::get()?.minimum_balance(Mint22::BASE_LEN) {
+pub fn rent_exempt_mint(account: &AccountInfo) -> Result<(), ProgramError> {
+  if account.lamports() != Rent::get()?.minimum_balance(Mint::LEN) {
+    return Ee::NoRentExemptMint.e();
+  }
+  Ok(())
+}
+pub fn rent_exempt_mint22(account: &AccountInfo) -> Result<(), ProgramError> {
+  if account.lamports() < Rent::get()?.minimum_balance(Mint22::BASE_LEN) {
     return Ee::NoRentExemptMint22.e();
   }
-  //Check TokenAccount
-  if acc_type == 1 && account.lamports() < Rent::get()?.minimum_balance(TokenAccount22::BASE_LEN) {
+  Ok(())
+}
+pub fn rent_exempt_tokacct(account: &AccountInfo) -> Result<(), ProgramError> {
+  if account.lamports() != Rent::get()?.minimum_balance(TokenAccount::LEN) {
     return Ee::NoRentExemptTokAcct22.e();
   }
-  if acc_type > 1 {
-    return Ee::Acct22Type.e();
+  Ok(())
+}
+pub fn rent_exempt_tokacct22(account: &AccountInfo) -> Result<(), ProgramError> {
+  if account.lamports() < Rent::get()?.minimum_balance(TokenAccount22::BASE_LEN) {
+    return Ee::NoRentExemptTokAcct22.e();
   }
   Ok(())
 }

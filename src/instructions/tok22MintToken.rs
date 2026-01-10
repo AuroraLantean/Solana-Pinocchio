@@ -4,7 +4,7 @@ use pinocchio_log::log;
 
 use crate::{
   check_ata22, check_mint22b, check_sysprog, data_len, executable, instructions::check_signer,
-  none_zero_u64, parse_u64, rent_exempt22, writable,
+  none_zero_u64, parse_u64, rent_exempt_mint22, rent_exempt_tokacct22, writable,
 };
 
 /// Token2022 Mint Tokens
@@ -35,7 +35,7 @@ impl<'a> Token2022MintToken<'a> {
       amount,
     } = self;
     log!("Token2022MintToken process()");
-    rent_exempt22(mint, 0)?;
+    rent_exempt_mint22(mint)?;
     writable(mint)?;
     check_mint22b(mint, mint_authority, token_program, decimals)?;
 
@@ -58,7 +58,7 @@ impl<'a> Token2022MintToken<'a> {
     }
     log!("Token2022MintToken 7");
     writable(ata)?;
-    rent_exempt22(ata, 1)?;
+    rent_exempt_tokacct22(ata)?;
     log!("Token Account found/verified");
 
     log!("Mint Tokens");

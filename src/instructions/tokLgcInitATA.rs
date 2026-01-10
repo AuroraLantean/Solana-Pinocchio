@@ -1,6 +1,6 @@
 use crate::{
   check_mint0a, check_sysprog, executable, initialized, instructions::check_signer,
-  not_initialized, rent_exempt22,
+  not_initialized, rent_exempt_mint,
 };
 use core::convert::TryFrom;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
@@ -67,7 +67,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitAta<'a> {
     not_initialized(ata)?;
     initialized(to_wallet)?;
     log!("TokenLgcInitAta try_from 3");
-    rent_exempt22(mint, 0)?;
+    rent_exempt_mint(mint)?;
     check_mint0a(mint, token_program)?;
 
     log!("TokenLgcInitAta try_from end");

@@ -4,7 +4,7 @@ use pinocchio_log::log;
 
 use crate::{
   check_mint22a, check_sysprog, executable, initialized, instructions::check_signer,
-  not_initialized, rent_exempt22, writable,
+  not_initialized, rent_exempt_mint22, writable,
 };
 
 /// Token2022 Init ATA(Associated Token Account)
@@ -76,7 +76,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022InitAta<'a> {
     writable(ata)?;
     initialized(to_wallet)?;
     log!("Token2022InitAta try_from 3");
-    rent_exempt22(mint, 0)?;
+    rent_exempt_mint22(mint)?;
     check_mint22a(mint, token_program)?;
 
     Ok(Self {

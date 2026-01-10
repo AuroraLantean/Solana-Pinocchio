@@ -7,7 +7,10 @@ use crate::{none_zero_u64, Ee};
 #[derive(Clone, Copy, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
 pub struct Config {
-  mints: [Pubkey; 4],     // 128 = 32x4
+  mint0: Pubkey,          // 32
+  mint1: Pubkey,          // 32
+  mint2: Pubkey,          // 32
+  mint3: Pubkey,          // 32
   vault: Pubkey,          // 32
   prog_owner: Pubkey,     // 32
   admin: Pubkey,          // 32
@@ -24,8 +27,20 @@ pub struct Config {
 impl Config {
   pub const LEN: usize = core::mem::size_of::<Self>();
   //Getters or Accessors: Safe Direct value copy, no reference created
-  pub fn mints(&self) -> &[Pubkey; 4] {
-    &self.mints
+  pub fn mint0(&self) -> &Pubkey {
+    &self.mint0
+  }
+  pub fn mint1(&self) -> &Pubkey {
+    &self.mint1
+  }
+  pub fn mint2(&self) -> &Pubkey {
+    &self.mint2
+  }
+  pub fn mint3(&self) -> &Pubkey {
+    &self.mint3
+  }
+  pub fn mints(&self) -> [&Pubkey; 4] {
+    [&self.mint0, &self.mint1, &self.mint2, &self.mint3]
   }
   pub fn vault(&self) -> &Pubkey {
     &self.vault
@@ -102,8 +117,23 @@ impl Config {
     &*(bytes.as_ptr() as *const &Config)
   }
   //----------== Setters
+  pub fn set_mint0(&mut self, mint0: Pubkey) {
+    self.mint0 = mint0;
+  }
+  pub fn set_mint1(&mut self, mint1: Pubkey) {
+    self.mint1 = mint1;
+  }
+  pub fn set_mint2(&mut self, mint2: Pubkey) {
+    self.mint2 = mint2;
+  }
+  pub fn set_mint3(&mut self, mint3: Pubkey) {
+    self.mint3 = mint3;
+  }
   pub fn set_mints(&mut self, mints: [Pubkey; 4]) {
-    self.mints = mints;
+    self.mint0 = mints[0];
+    self.mint1 = mints[1];
+    self.mint2 = mints[2];
+    self.mint3 = mints[3];
   }
   pub fn set_vault(&mut self, vault: Pubkey) {
     self.vault = vault;

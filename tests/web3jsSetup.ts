@@ -31,6 +31,12 @@ export const usdcMint = new PublicKey(
 export const usdtMint = new PublicKey(
 	"Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
 );
+export const pyusdMint = new PublicKey(
+	"2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo",
+); //token2022... https://docs.paxos.com/guides/stablecoin/pyusd/mainnet
+export const usdgMint = new PublicKey(
+	"2u1tszSeqZ3qBWF3uNGPFc8TzMk2tdiwknnRMWGWjGWH",
+); //token2022... https://docs.paxos.com/guides/stablecoin/usdg/mainnet
 export const ATokenGPvbd = new PublicKey(
 	"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );

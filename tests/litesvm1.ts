@@ -170,7 +170,17 @@ test("Deposit Lgc Tokens", () => {
 	const fromAta = getAta(mint, signer);
 	const vaultBump = findPdaV1(signer, "vault", "signerVault");
 	const toAta = getAta(mint, vaultBump.pda);
-	lgcDeposit(signerKp, fromAta, toAta, vaultBump.pda, mint, decimals, amt);
+
+	lgcDeposit(
+		signerKp,
+		fromAta,
+		toAta,
+		vaultBump.pda,
+		mint,
+		configPDA,
+		decimals,
+		amt,
+	);
 	ataBalcCheck(toAta, bigintAmt(370, 6));
 	ataBalcCheck(fromAta, bigintAmt(630, 6));
 });
@@ -185,6 +195,7 @@ test("Withdraw Lgc Tokens", () => {
 	const toAta = getAta(mint, signer);
 	const vaultBump = findPdaV1(signer, "vault", "signerVault");
 	const fromAta = getAta(mint, vaultBump.pda);
+
 	lgcWithdraw(signerKp, fromAta, toAta, vaultBump.pda, mint, decimals, amt);
 	ataBalcCheck(toAta, bigintAmt(250, 6));
 	ataBalcCheck(fromAta, bigintAmt(750, 6));

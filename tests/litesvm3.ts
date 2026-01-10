@@ -15,6 +15,7 @@ import {
 	initBalc,
 	svm,
 	vault1,
+	vaultO,
 } from "./litesvm-utils";
 import {
 	as9zBn,
@@ -31,7 +32,11 @@ import {
 	admin,
 	owner,
 	ownerKp,
+	pyusdMint,
 	SYSTEM_PROGRAM,
+	usdcMint,
+	usdgMint,
+	usdtMint,
 	user1,
 	user1Kp,
 	vaultProgAddr,
@@ -45,6 +50,8 @@ let disc = 0; //discriminator
 let signerKp: Keypair;
 let _authorityKp: Keypair;
 let _authority: PublicKey;
+let mints: PublicKey[];
+let _vault: PublicKey;
 let progOwner: PublicKey;
 let progAdmin: PublicKey;
 let tokenAmount: bigint;
@@ -72,6 +79,7 @@ test("InitConfig", () => {
 	ll("vaultPDA1:", vault1.toBase58());
 	ll(`configPDA: ${configPDA}`);
 	signerKp = user1Kp;
+	mints = [usdtMint, usdcMint, pyusdMint, usdgMint];
 	progOwner = owner;
 	progAdmin = user1;
 	fee = 111000000n;
@@ -92,6 +100,11 @@ test("InitConfig", () => {
 		keys: [
 			{ pubkey: signerKp.publicKey, isSigner: true, isWritable: true },
 			{ pubkey: configPDA, isSigner: false, isWritable: true },
+			{ pubkey: mints[0]!, isSigner: false, isWritable: false },
+			{ pubkey: mints[1]!, isSigner: false, isWritable: false },
+			{ pubkey: mints[2]!, isSigner: false, isWritable: false },
+			{ pubkey: mints[3]!, isSigner: false, isWritable: false },
+			{ pubkey: vaultO, isSigner: false, isWritable: false },
 			{ pubkey: progOwner, isSigner: false, isWritable: false },
 			{ pubkey: progAdmin, isSigner: false, isWritable: false },
 			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
@@ -114,6 +127,11 @@ test("InitConfig", () => {
 	ll("rawAccountData:", rawAccountData);
 
 	const decoded = solanaKitDecodeDev(rawAccountData);
+	expect(decoded.mint0).toEqual(mints[0]!);
+	expect(decoded.mint1).toEqual(mints[1]!);
+	expect(decoded.mint2).toEqual(mints[2]!);
+	expect(decoded.mint3).toEqual(mints[3]!);
+	expect(decoded.vault).toEqual(vaultO);
 	expect(decoded.progOwner).toEqual(progOwner);
 	expect(decoded.admin).toEqual(progAdmin);
 	expect(decoded.str).toEqual(str);

@@ -24,6 +24,11 @@ const ll = console.log;
 
 //converted from Rust code. XyzAcct, xyzAcctDecoder, DecodedXyzAcct should all match in field order and types!
 export type ConfigAcct = {
+	mint0: Address;
+	mint1: Address;
+	mint2: Address;
+	mint3: Address;
+	vault: Address;
 	progOwner: Address;
 	admin: Address;
 	str: string;
@@ -51,6 +56,11 @@ const decoded = ammConfigDecoder.decode(bytes);*/
 export const configAcctDecoder: FixedSizeDecoder<ConfigAcct> = getStructDecoder(
 	[
 		//["discriminator", fixDecoderSize(getBytesDecoder(), 4)],//only for accounts made by Anchor
+		["mint0", getAddressDecoder()],
+		["mint1", getAddressDecoder()],
+		["mint2", getAddressDecoder()],
+		["mint3", getAddressDecoder()],
+		["vault", getAddressDecoder()],
 		["progOwner", getAddressDecoder()],
 		["admin", getAddressDecoder()],
 		["str", fixDecoderSize(getUtf8Decoder(), 32)],
@@ -71,6 +81,11 @@ export const solanaKitDecode = (
 ) => {
 	const decoded = configAcctDecoder.decode(bytes);
 	if (isVerbose) {
+		ll("mint0:", decoded.mint0);
+		ll("mint1:", decoded.mint1);
+		ll("mint2:", decoded.mint2);
+		ll("mint3:", decoded.mint3);
+		ll("vault:", decoded.vault);
 		ll("progOwner:", decoded.progOwner);
 		ll("admin:", decoded.admin);
 		ll("str:", decoded.str);
@@ -90,7 +105,12 @@ export const solanaKitDecodeDev = (
 ) => {
 	if (!bytes) throw new Error("bytes invalid");
 	const decoded = solanaKitDecode(bytes, true);
-	const decodedV1: ConfigAcctV1 = {
+	const decodedV1: ConfigAcctDev = {
+		mint0: new PublicKey(decoded.mint0.toString()),
+		mint1: new PublicKey(decoded.mint1.toString()),
+		mint2: new PublicKey(decoded.mint2.toString()),
+		mint3: new PublicKey(decoded.mint3.toString()),
+		vault: new PublicKey(decoded.vault.toString()),
 		progOwner: new PublicKey(decoded.progOwner.toString()),
 		admin: new PublicKey(decoded.admin.toString()),
 		str: decoded.str,
@@ -104,7 +124,12 @@ export const solanaKitDecodeDev = (
 	};
 	return decodedV1;
 };
-export type ConfigAcctV1 = {
+export type ConfigAcctDev = {
+	mint0: PublicKey;
+	mint1: PublicKey;
+	mint2: PublicKey;
+	mint3: PublicKey;
+	vault: PublicKey;
 	progOwner: PublicKey;
 	admin: PublicKey;
 	str: string;
@@ -137,7 +162,7 @@ export type DecodedConfigAcct = {
 	exists: boolean;
 };
 
-//---------------== BufferLayout code below is replaced by SolanaKit decoder
+//---------------== BufferLayout code below is not working. Use SolanaKit decoder abpve instead
 export type RawConfig = {
 	progOwner: PublicKey;
 	admin: PublicKey;

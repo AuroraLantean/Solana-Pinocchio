@@ -107,9 +107,10 @@ pub enum ProgramIx {
   #[account(2, writable, name = "to", desc = "To ATA")]
   #[account(3, name = "to_wallet", desc = "To Wallet")]
   #[account(4, name = "mint", desc = "Mint")]
-  #[account(5, name = "token_program", desc = "Token Program")]
-  #[account(6, name = "system_program", desc = "System Program")]
-  #[account(7, name = "atoken_program", desc = "AToken Program")]
+  #[account(5, writable, name = "config_pda", desc = "config_pda")]
+  #[account(6, name = "token_program", desc = "Token Program")]
+  #[account(7, name = "system_program", desc = "System Program")]
+  #[account(8, name = "atoken_program", desc = "AToken Program")]
   TokLgcDeposit { decimals: u8, amount: u64 },
 
   /// 6 TokLgc Withdraw Token
@@ -182,12 +183,18 @@ pub enum ProgramIx {
   #[account(6, name = "atoken_program", desc = "AToken Program")]
   Tok22MintToken { decimals: u8, amount: u64 },
 
+  //---------------== Config PDA
   /// 12 Init Config PDA
   #[account(0, signer, writable, name = "signer", desc = "Signer")]
   #[account(1, writable, name = "config_pda", desc = "Config PDA")]
-  #[account(2, name = "prog_owner", desc = "Program Owner")]
-  #[account(3, name = "prog_admin", desc = "Program Admin")]
-  #[account(4, name = "system_program", desc = "System Program")]
+  #[account(2, name = "mint0", desc = "Mint 0")]
+  #[account(3, name = "mint1", desc = "Mint 1")]
+  #[account(4, name = "mint2", desc = "Mint 2")]
+  #[account(5, name = "mint3", desc = "Mint 3")]
+  #[account(6, name = "vault", desc = "Vault")]
+  #[account(7, name = "prog_owner", desc = "Program Owner")]
+  #[account(8, name = "prog_admin", desc = "Program Admin")]
+  #[account(9, name = "system_program", desc = "System Program")]
   InitConfig { fee: u64, is_authorized: bool },
 
   /// 13 Update Config PDA
@@ -210,6 +217,7 @@ pub enum ProgramIx {
   //#[account(5, name = "system_program", desc = "System Program")]
   CloseConfigPda {},
 
+  //---------------== Escrow PDA
   /// 15 Escrow Token Make Offer
   #[account(0, signer, writable, name = "maker", desc = "Maker")]
   #[account(1, writable, name = "from", desc = "From ATA")]
@@ -221,6 +229,9 @@ pub enum ProgramIx {
   #[account(7, name = "system_program", desc = "System Program")]
   #[account(8, name = "atoken_program", desc = "AToken Program")]
   EscrowTokMake { decimals: u8, bump: u8, amount: u64 },
+  //---------------== Admin PDA
+  //---------------== User PDA
+  //---------------== Action PDA
 } //update here and lib.rs for new functions
 
 //---------------== Constant Values

@@ -4,7 +4,7 @@ use pinocchio_log::log;
 
 use crate::{
   check_ata, check_mint0b, check_sysprog, data_len, executable, instructions::check_signer,
-  none_zero_u64, parse_u64, rent_exempt22, writable,
+  none_zero_u64, parse_u64, rent_exempt_mint, rent_exempt_tokacct, writable,
 };
 
 /// TokLgc Mint Tokens
@@ -35,7 +35,7 @@ impl<'a> TokLgcMintToken<'a> {
       amount,
     } = self;
     log!("TokLgcMintToken process()");
-    rent_exempt22(mint, 0)?;
+    rent_exempt_mint(mint)?;
     writable(mint)?;
     check_mint0b(mint, mint_authority, token_program, decimals)?;
 
@@ -57,7 +57,7 @@ impl<'a> TokLgcMintToken<'a> {
       check_ata(ata, to_wallet, mint)?;
     }
     writable(ata)?;
-    rent_exempt22(ata, 1)?;
+    rent_exempt_tokacct(ata)?;
     log!("Token Account found/verified");
 
     log!("Mint Tokens");
