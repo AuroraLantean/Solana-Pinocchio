@@ -1,6 +1,7 @@
 import type { Lamports } from "@solana/kit";
 import {
 	type Address,
+	address,
 	getAddressEncoder,
 	getLamportsDecoder,
 	getLamportsEncoder,
@@ -36,9 +37,10 @@ export const decimalsSOL = BigInt(9);
 export const baseSOL = BigInt(10) ** decimalsSOL;
 
 //-----------==
-export const bigintAmt = (amount: number, decimals: number) =>
+export const bigintAmt = (amount: number, decimals = 6) =>
 	BigInt(amount) * 10n ** BigInt(decimals);
 
+export const as6zBn = (amt: number) => BigInt(amt * 10 ** 6);
 export const as9zBn = (amt: number) => {
 	if (Number.isInteger(amt)) {
 		return BigInt(amt) * baseSOL;
@@ -50,8 +52,17 @@ export const fromLam = (amt: number) => BigInt(amt) / baseSOL;
 //-----------== SolanaKit setup
 export const vaultProgAddr = vault.PINOCCHIO_VAULT_PROGRAM_ADDRESS;
 ll("vaultProgAddr:", vaultProgAddr);
-export const ATokenGPvbd =
-	"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
+export const ATokenGPvbd = address(
+	"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+);
+export const usdcMint = address("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+//decimals = 6
+export const usdtMint = address("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"); //decimals = 6
+export const pyusdMint = address(
+	"2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo",
+); //token2022, decimals = 6... https://docs.paxos.com/guides/stablecoin/pyusd/mainnet
+export const usdgMint = address("2u1tszSeqZ3qBWF3uNGPFc8TzMk2tdiwknnRMWGWjGWH"); //token2022, decimals = 6... https://docs.paxos.com/guides/stablecoin/usdg/mainnet
+
 export const findPdaV2 = async (
 	addr: Address<string>,
 	seedStr: string,

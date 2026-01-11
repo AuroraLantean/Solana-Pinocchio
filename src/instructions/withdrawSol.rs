@@ -62,7 +62,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for WithdrawSol<'a> {
     let amount = parse_u64(data)?;
     none_zero_u64(amount)?;
 
-    let (expected_vault_pda, _bump) = derive_pda1(user, VAULT_SEED)?;
+    let (expected_vault_pda, _bump) = derive_pda1(user.key(), VAULT_SEED)?;
     if vault.key() != &expected_vault_pda {
       return Err(Ee::VaultPDA.into());
     }

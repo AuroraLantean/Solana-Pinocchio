@@ -6,18 +6,19 @@ import { Status } from "./decoder";
 import {
 	acctExists,
 	acctIsNull,
-	ataBalcCheck,
+	ataBalcCk,
 	configPDA,
 	depositSol,
 	findPdaV1,
 	getAta,
-	initBalc,
 	initConfig,
+	initSolBalc,
 	lgcDeposit,
 	lgcInitAta,
 	lgcInitMint,
 	lgcMintToken,
 	lgcPay,
+	lgcRedeem,
 	lgcWithdraw,
 	sendSol,
 	setAtaCheck,
@@ -28,12 +29,13 @@ import {
 	vaultO,
 	withdrawSol,
 } from "./litesvm-utils";
-import { as9zBn, bigintAmt, ll } from "./utils";
+import { as6zBn, as9zBn, bigintAmt, ll } from "./utils";
 import {
 	admin,
 	adminKp,
 	dgcAuthorityKp,
 	dragonCoinKp,
+	hacker,
 	hackerKp,
 	owner,
 	ownerKp,
@@ -44,6 +46,7 @@ import {
 	user1,
 	user1Kp,
 	user2,
+	user3,
 } from "./web3jsSetup";
 
 //let disc = 0; //discriminator
@@ -62,10 +65,13 @@ let amt: bigint;
 let balcBf: bigint | null;
 let balcAf: bigint | null;
 const vaultRent = 1002240n; //from Rust
+const decDgc = 9;
+const initDgcBalc = bigintAmt(1000, decDgc);
+const initUsdcBalc = bigintAmt(1000, 6);
 
 balcBf = svm.getBalance(admin);
 ll("admin SOL:", balcBf);
-expect(balcBf).toStrictEqual(initBalc);
+expect(balcBf).toStrictEqual(initSolBalc);
 
 test("initial conditions", () => {
 	acctIsNull(vaultAta1);
@@ -74,7 +80,7 @@ test("transfer SOL", () => {
 	amount = as9zBn(0.001);
 	sendSol(user1, amount, adminKp);
 	balcAf = svm.getBalance(user1);
-	expect(balcAf).toStrictEqual(amount + initBalc);
+	expect(balcAf).toStrictEqual(amount + initSolBalc);
 });
 
 test("Owner Deposits SOL to VaultPDA", () => {
@@ -125,8 +131,8 @@ test("Make DragonCoin Mint, ATA, Tokens", () => {
 	signerKp = adminKp;
 	mintKp = dragonCoinKp;
 	mintAuthorityKp = dgcAuthorityKp;
-	decimals = 9;
-	amt = bigintAmt(1000, decimals);
+	decimals = decDgc;
+	amt = initDgcBalc;
 	signer = signerKp.publicKey;
 	mint = mintKp.publicKey;
 	mintAuthority = mintAuthorityKp.publicKey;
@@ -141,13 +147,13 @@ test("Make DragonCoin Mint, ATA, Tokens", () => {
 	lgcInitAta(signerKp, signer, mint, ata);
 	acctExists(ata);
 	lgcMintToken(mintAuthorityKp, signer, mint, ata, decimals, amt);
-	ataBalcCheck(ata, amt);
+	ataBalcCk(ata, amt, "admin");
 	ll("can mint to admin with ATA");
 
 	ata = getAta(mint, user1);
 	acctIsNull(ata);
 	lgcMintToken(mintAuthorityKp, user1, mint, ata, decimals, amt);
-	ataBalcCheck(ata, amt);
+	ataBalcCk(ata, amt, "user1");
 	ll("can mint to user1 without ATA");
 	//TODO: transfer set minted tokens
 });
@@ -163,11 +169,11 @@ test("Set USDT Mint and ATAs", () => {
 	setMint(usdgMint);
 	acctExists(usdgMint);
 
-	amt = bigintAmt(1000, 6);
-	setAtaCheck(usdcMint, admin, amt, "Admin USDT");
-	setAtaCheck(usdcMint, user1, amt, "User1 USDT");
-	setAtaCheck(usdcMint, user2, amt, "User2 USDT");
-	//TODO: transfer set USDT
+	setAtaCheck(usdcMint, admin, initUsdcBalc, "Admin USDC");
+	setAtaCheck(usdcMint, user1, initUsdcBalc, "User1 USDC");
+	setAtaCheck(usdcMint, user2, initUsdcBalc, "User2 USDC");
+	setAtaCheck(usdcMint, user3, initUsdcBalc, "User3 USDC");
+	setAtaCheck(usdcMint, hacker, initUsdcBalc, "Hacker USDC");
 });
 
 test("InitConfig", () => {
@@ -202,7 +208,7 @@ test("Deposit Lgc Tokens", () => {
 	signerKp = user1Kp;
 	mint = usdcMint;
 	decimals = 6;
-	amt = bigintAmt(370, decimals);
+	amt = as6zBn(370);
 
 	signer = signerKp.publicKey;
 	const fromAta = getAta(mint, signer);
@@ -219,15 +225,15 @@ test("Deposit Lgc Tokens", () => {
 		decimals,
 		amt,
 	);
-	ataBalcCheck(toAta, bigintAmt(370, 6));
-	ataBalcCheck(fromAta, bigintAmt(630, 6));
+	ataBalcCk(toAta, as6zBn(370), "vault1");
+	ataBalcCk(fromAta, as6zBn(630), "user1 ");
 });
 test("Withdraw Lgc Tokens", () => {
 	ll("\n------== Withdraw Lgc Tokens");
 	signerKp = user1Kp;
 	mint = usdcMint;
 	decimals = 6;
-	amt = bigintAmt(120, decimals);
+	amt = as6zBn(120);
 
 	signer = signerKp.publicKey;
 	const toAta = getAta(mint, signer);
@@ -235,8 +241,8 @@ test("Withdraw Lgc Tokens", () => {
 	const fromAta = getAta(mint, vaultOut.pda);
 
 	lgcWithdraw(signerKp, fromAta, toAta, vaultOut.pda, mint, decimals, amt);
-	ataBalcCheck(toAta, bigintAmt(250, 6));
-	ataBalcCheck(fromAta, bigintAmt(750, 6));
+	ataBalcCk(fromAta, as6zBn(250), "vault1");
+	ataBalcCk(toAta, as6zBn(750), "user1 ");
 });
 
 test("Pay Lgc Tokens", () => {
@@ -244,15 +250,40 @@ test("Pay Lgc Tokens", () => {
 	signerKp = user1Kp;
 	mint = usdcMint;
 	decimals = 6;
-	amt = bigintAmt(120, decimals);
+	amt = as6zBn(326);
 
 	signer = signerKp.publicKey;
 	const fromAta = getAta(mint, signer);
 	const toAta = getAta(mint, vaultO);
-	//init configPDA, fix test3
+
 	lgcPay(signerKp, fromAta, toAta, vaultO, mint, configPDA, decimals, amt);
-	ataBalcCheck(toAta, bigintAmt(250, 6));
-	ataBalcCheck(fromAta, bigintAmt(750, 6));
+	ataBalcCk(toAta, amt, "vaultO");
+	ataBalcCk(fromAta, as6zBn(424), "user1 ");
+});
+test("Redeem Lgc Tokens", () => {
+	ll("\n------== Redeem Lgc Tokens");
+	signerKp = user1Kp;
+	mint = usdcMint;
+	decimals = 6;
+	amt = as6zBn(37);
+
+	signer = signerKp.publicKey;
+	const toAta = getAta(mint, signer);
+	const vaultOut = findPdaV1(owner, "vault", "Vault");
+	const fromAta = getAta(mint, vaultOut.pda);
+
+	lgcRedeem(
+		signerKp,
+		fromAta,
+		toAta,
+		vaultOut.pda,
+		configPDA,
+		mint,
+		decimals,
+		amt,
+	);
+	ataBalcCk(fromAta, as6zBn(289), "vaultO");
+	ataBalcCk(toAta, as6zBn(461), "user1 ");
 });
 
 test.skip("copy accounts from devnet", async () => {

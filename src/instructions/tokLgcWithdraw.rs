@@ -18,11 +18,12 @@ pub struct TokLgcWithdraw<'a> {
   pub user: &'a AccountInfo, //signer
   pub from_ata: &'a AccountInfo,
   pub to_ata: &'a AccountInfo,
-  pub from_wallet: &'a AccountInfo,
+  pub vault: &'a AccountInfo,
   pub mint: &'a AccountInfo,
   pub token_program: &'a AccountInfo,
   pub system_program: &'a AccountInfo,
   pub atoken_program: &'a AccountInfo,
+  pub vault_bump: u8,
   pub decimals: u8,
   pub amount: u64,
 }
@@ -34,21 +35,17 @@ impl<'a> TokLgcWithdraw<'a> {
       user,
       from_ata,
       to_ata,
-      from_wallet,
+      vault,
       mint,
       token_program,
       system_program,
       atoken_program: _,
+      vault_bump,
       decimals,
       amount,
     } = self;
     log!("TokLgcWithdraw process()");
-    rent_exempt_mint(mint)?;
-    check_decimals(mint, decimals)?;
-    check_mint0a(mint, token_program)?;
 
-    //TODO: check from_ata fund > amount: or ProgramError::InsufficientFunds
-    log!("TokLgcWithdraw 2");
     if to_ata.data_is_empty() {
       log!("Make to_ata");
       pinocchio_associated_token_account::instructions::Create {
@@ -69,14 +66,10 @@ impl<'a> TokLgcWithdraw<'a> {
     rent_exempt_tokacct(to_ata)?;
     log!("ToATA is found/verified");
 
-    let (expected_vault_pda, bump) = derive_pda1(user, VAULT_SEED)?;
-    if from_wallet.key() != &expected_vault_pda {
-      return Ee::VaultPDA.e();
-    }
     let signer_seeds = [
       Seed::from(VAULT_SEED),
       Seed::from(user.key().as_ref()),
-      Seed::from(core::slice::from_ref(&bump)),
+      Seed::from(core::slice::from_ref(&vault_bump)),
     ];
     let signer = Signer::from(&signer_seeds);
 
@@ -85,7 +78,7 @@ impl<'a> TokLgcWithdraw<'a> {
       from: from_ata,
       mint,
       to: to_ata,
-      authority: from_wallet,
+      authority: vault,
       amount,
       decimals,
     }
@@ -107,7 +100,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcWithdraw<'a> {
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-    let [user, from_ata, to_ata, from_wallet, mint, token_program, system_program, atoken_program] =
+    let [user, from_ata, to_ata, vault, mint, token_program, system_program, atoken_program] =
       accounts
     else {
       return Err(ProgramError::NotEnoughAccountKeys);
@@ -117,7 +110,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcWithdraw<'a> {
     check_sysprog(system_program)?;
     //check_pda(config_pda)?;
     writable(from_ata)?;
-    check_ata(from_ata, from_wallet, mint)?;
+    check_ata(from_ata, vault, mint)?;
 
     //1+8: u8 takes 1, u64 takes 8 bytes
     data_len(data, 9)?;
@@ -129,15 +122,26 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcWithdraw<'a> {
     none_zero_u64(amount)?;
     ata_balc(from_ata, amount)?;
 
+    let (expected_vault, vault_bump) = derive_pda1(user.key(), VAULT_SEED)?;
+    if vault.key() != &expected_vault {
+      return Err(Ee::VaultPDA.into());
+    }
+
+    log!("TokLgcWithdraw try_from 12");
+    rent_exempt_mint(mint)?;
+    check_decimals(mint, decimals)?;
+    check_mint0a(mint, token_program)?;
+
     Ok(Self {
       user,
       from_ata,
       to_ata,
-      from_wallet,
+      vault,
       mint,
       token_program,
       system_program,
       atoken_program,
+      vault_bump,
       decimals,
       amount,
     })

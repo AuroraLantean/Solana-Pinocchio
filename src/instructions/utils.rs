@@ -844,11 +844,11 @@ pub fn sol_balc(from: &AccountInfo, amount: u64) -> Result<(), ProgramError> {
   Ok(())
 }
 //----------------== Derive Functions
-pub fn derive_pda1(user: &AccountInfo, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
+pub fn derive_pda1(user: &Pubkey, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
   log!("derive_pda1");
   //find_program_address(&[b"vault", user.key().as_ref()], &crate::ID)
   // let (pda, _bump) =
-  try_find_program_address(&[bstr, user.key().as_ref()], &crate::ID)
+  try_find_program_address(&[bstr, user.as_ref()], &crate::ID)
     .ok_or_else(|| ProgramError::InvalidSeeds)
 }
 /*let pda = pubkey::create_program_address(

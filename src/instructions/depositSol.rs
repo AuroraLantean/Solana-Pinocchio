@@ -83,7 +83,7 @@ fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramRe
   log!("ensure_deposit_accounts");
   // Create when empty and fund rent-exempt.
   if vault.lamports() == 0 {
-    let (expected_vault_pda, bump) = derive_pda1(user, VAULT_SEED)?;
+    let (expected_vault_pda, bump) = derive_pda1(user.key(), VAULT_SEED)?;
     if vault.key() != &expected_vault_pda {
       return Ee::VaultPDA.e();
     }

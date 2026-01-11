@@ -7,8 +7,8 @@ import {
 	acctExists,
 	configBump,
 	configPDA,
-	initBalc,
 	initConfig,
+	initSolBalc,
 	setMint,
 	svm,
 	updateConfig,
@@ -38,7 +38,7 @@ import {
 
 const adminBalc = svm.getBalance(admin);
 ll("admin SOL:", adminBalc);
-expect(adminBalc).toStrictEqual(initBalc);
+expect(adminBalc).toStrictEqual(initSolBalc);
 
 let signerKp: Keypair;
 let _authorityKp: Keypair;

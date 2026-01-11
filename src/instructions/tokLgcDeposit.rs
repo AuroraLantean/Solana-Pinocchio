@@ -49,7 +49,7 @@ impl<'a> TokLgcDeposit<'a> {
 
     if to_wallet.lamports() == 0 {
       log!("TokLgcDeposit 6: make to_wallet");
-      let (expected_vault_pda, bump) = derive_pda1(user, VAULT_SEED)?;
+      let (expected_vault_pda, bump) = derive_pda1(user.key(), VAULT_SEED)?;
       if to_wallet.key() != &expected_vault_pda {
         return Ee::VaultPDA.e();
       }

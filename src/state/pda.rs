@@ -21,6 +21,7 @@ pub struct Config {
   updated_at: [u8; 4],    // 4 for u32
   is_authorized: bool,    // 1
   status: u8,             // 1
+  vault_bump: u8,         // 1
   bump: u8,               // 1
 } // padding: [u8; 6] since the struct size needs to be aligned to 32 bytes.
 
@@ -59,6 +60,9 @@ impl Config {
   }
   pub fn is_authorized(&self) -> bool {
     self.is_authorized
+  }
+  pub fn vault_bump(&self) -> u8 {
+    self.vault_bump
   }
   pub fn bump(&self) -> u8 {
     self.bump
@@ -160,6 +164,9 @@ impl Config {
   }
   pub fn set_updated_at(&mut self, amt: u32) {
     self.updated_at = amt.to_le_bytes();
+  }
+  pub fn set_vault_bump(&mut self, amt: u8) {
+    self.vault_bump = amt;
   }
   pub fn set_bump(&mut self, amt: u8) {
     self.bump = amt;

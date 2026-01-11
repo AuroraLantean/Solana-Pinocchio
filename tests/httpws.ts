@@ -111,7 +111,7 @@ const ACCOUNT_DISCRIMINATOR_SIZE = 8; // same as Anchor/Rust
 const U64_SIZE = 8; // u64 is 8 bytes
 const VAULT_SIZE = ACCOUNT_DISCRIMINATOR_SIZE + U64_SIZE; // 16
 
-const pda_bump = await findPdaV2(ownerAddr, "vault", "Vault");
+const pda_bump = await findPdaV2(ownerAddr, "vault", "VaultO");
 export const vaultO = pda_bump.pda;
 ll(`✅ - Vault PDA: ${vaultO}`);
 const pda_bump1 = await findPdaV2(user1Addr, "vault", "Vault1");

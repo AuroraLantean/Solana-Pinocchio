@@ -9,6 +9,7 @@ import {
 	ownerKp,
 	readConfigData,
 	sendTxn,
+	vaultO,
 	vaultProgAddr,
 } from "./httpws";
 import {
@@ -16,8 +17,12 @@ import {
 	as9zBn,
 	getTime,
 	ll,
+	pyusdMint,
 	strToU8Array,
 	u8ArrayToStr,
+	usdcMint,
+	usdgMint,
+	usdtMint,
 } from "./utils";
 
 //describe("Vault Program", () => {});
@@ -38,6 +43,11 @@ test("InitConfig", async () => {
 	const methodIx = vault.getInitConfigInstruction({
 		signer: adminKp,
 		configPda: configPDA,
+		mint0: usdcMint,
+		mint1: usdtMint,
+		mint2: pyusdMint,
+		mint3: usdgMint,
+		vault: vaultO,
 		progOwner: ownerKp.address,
 		progAdmin: adminKp.address,
 		systemProgram: SYSTEM_PROGRAM_ADDRESS,

@@ -26,6 +26,7 @@ pub struct InitConfig<'a> {
   pub fee: u64,
   pub is_authorized: bool,
   pub status: u8,
+  pub vault_bump: u8,
   pub str_u8array: [u8; 32],
 }
 impl<'a> InitConfig<'a> {
@@ -43,6 +44,7 @@ impl<'a> InitConfig<'a> {
       fee,
       is_authorized,
       status,
+      vault_bump,
       str_u8array,
     } = self;
     log!("InitConfig process()");
@@ -50,7 +52,7 @@ impl<'a> InitConfig<'a> {
     let space = Config::LEN as u64;
 
     log!("InitConfig 4. space: {}", space);
-    let (expected_config_pda, bump) = derive_pda1(prog_owner, CONFIG_SEED)?;
+    let (expected_config_pda, bump) = derive_pda1(prog_owner.key(), CONFIG_SEED)?;
 
     log!("InitConfig 5");
     if expected_config_pda != *config_pda.key() {
@@ -89,6 +91,7 @@ impl<'a> InitConfig<'a> {
     config.set_updated_at(time);
     config.set_is_authorized(is_authorized);
     config.set_status(status);
+    config.set_vault_bump(vault_bump);
     config.set_bump(bump);
     Ok(())
   }
@@ -116,7 +119,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
     rent_exempt_mint22(mint2)?;
     rent_exempt_mint22(mint3)?;
 
-    let (vault_expected, _bump) = derive_pda1(prog_owner, VAULT_SEED)?;
+    let (vault_expected, vault_bump) = derive_pda1(prog_owner.key(), VAULT_SEED)?;
     if vault.key() != &vault_expected {
       return Err(Ee::VaultPDA.into());
     }
@@ -140,6 +143,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
       fee,
       is_authorized,
       status,
+      vault_bump,
       str_u8array,
     })
   }

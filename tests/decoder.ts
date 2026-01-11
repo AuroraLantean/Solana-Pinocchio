@@ -244,7 +244,7 @@ export const MintLayout = struct<RawMint>([
 	u32("freezeAuthorityOption"),
 	publicKey("freezeAuthority"),
 ]);
-
+// Token-2022 preserves the first 82 bytes of the original SPL mint account and the first 165 bytes of a token account; TODO: Mint2022 layout: https://rareskills.io/post/token-2022
 //Set account via knowing its layout
 export interface RawTokenAcct2022 {
 	mint: PublicKey;

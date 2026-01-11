@@ -41,15 +41,15 @@ import {
 const ll = console.log;
 ll("\n------== litesvm-utils");
 export let svm = new LiteSVM();
-export const initBalc = BigInt(LAMPORTS_PER_SOL) * BigInt(10);
+export const initSolBalc = BigInt(LAMPORTS_PER_SOL) * BigInt(10);
 ll("initialize accounts by airdropping SOLs");
-svm.airdrop(owner, initBalc);
-svm.airdrop(admin, initBalc);
-svm.airdrop(user1, initBalc);
-svm.airdrop(user2, initBalc);
-svm.airdrop(user3, initBalc);
-svm.airdrop(hacker, initBalc);
-svm.airdrop(dgcAuthority, initBalc);
+svm.airdrop(owner, initSolBalc);
+svm.airdrop(admin, initSolBalc);
+svm.airdrop(user1, initSolBalc);
+svm.airdrop(user2, initSolBalc);
+svm.airdrop(user3, initSolBalc);
+svm.airdrop(hacker, initSolBalc);
+svm.airdrop(dgcAuthority, initSolBalc);
 
 export const getRawAccount = (address: PublicKey) => {
 	const rawAccount = svm.getAccount(address);
@@ -475,6 +475,44 @@ export const lgcPay = (
 	const sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
+export const lgcRedeem = (
+	userSigner: Keypair,
+	fromAta: PublicKey,
+	toAta: PublicKey,
+	vault: PublicKey,
+	configPDA: PublicKey,
+	mint: PublicKey,
+	decimals: number,
+	amount: bigint,
+	tokenProg = TOKEN_PROGRAM_ID,
+	atokenProg = ATokenGPvbd,
+) => {
+	const disc = 8;
+	const argData = [decimals, ...bigintToBytes(amount)];
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: userSigner.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: fromAta, isSigner: false, isWritable: true },
+			{ pubkey: toAta, isSigner: false, isWritable: true },
+			{ pubkey: vault, isSigner: false, isWritable: false },
+			{ pubkey: configPDA, isSigner: false, isWritable: false },
+			{ pubkey: mint, isSigner: false, isWritable: false },
+			{ pubkey: tokenProg, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
+			{ pubkey: atokenProg, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(userSigner);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
 //-------------==
 //When you want to make Mint without the Mint Keypair. E.g. UsdtMintKp;
 //https://solana.com/docs/tokens/basics/create-mint
@@ -636,9 +674,14 @@ export const ataBalc = (ata: PublicKey) => {
 	const decoded = AccountLayout.decode(rawAcctData);
 	return decoded.amount;
 };
-export const ataBalcCheck = (ata: PublicKey, _expectedAmount: bigint) => {
+export const ataBalcCk = (
+	ata: PublicKey,
+	expectedAmount: bigint,
+	name: string,
+) => {
 	const amount = ataBalc(ata);
-	expect(amount).toStrictEqual(amount);
+	ll(name, "token:", amount);
+	expect(amount).toStrictEqual(expectedAmount);
 };
 export const setAtaCheck = (
 	mint: PublicKey,

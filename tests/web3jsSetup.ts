@@ -27,16 +27,17 @@ ll("vaultProgAddr:", vaultProgAddr.toBase58());
 export const SYSTEM_PROGRAM = new PublicKey("11111111111111111111111111111111");
 export const usdcMint = new PublicKey(
 	"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-);
+); //decimals = 6
 export const usdtMint = new PublicKey(
 	"Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
-);
+); //decimals = 6
 export const pyusdMint = new PublicKey(
 	"2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo",
-); //token2022... https://docs.paxos.com/guides/stablecoin/pyusd/mainnet
+); //token2022, decimals = 6... https://docs.paxos.com/guides/stablecoin/pyusd/mainnet
 export const usdgMint = new PublicKey(
 	"2u1tszSeqZ3qBWF3uNGPFc8TzMk2tdiwknnRMWGWjGWH",
-); //token2022... https://docs.paxos.com/guides/stablecoin/usdg/mainnet
+); //token2022, decimals = 6... https://docs.paxos.com/guides/stablecoin/usdg/mainnet
 export const ATokenGPvbd = new PublicKey(
 	"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
+export const decUsdx = 6;
