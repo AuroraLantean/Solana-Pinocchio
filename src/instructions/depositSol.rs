@@ -1,5 +1,4 @@
 use core::convert::TryFrom;
-use core::mem::size_of;
 use pinocchio::{
   account_info::AccountInfo,
   instruction::{Seed, Signer},
@@ -13,7 +12,7 @@ use pinocchio_system::instructions::Transfer as SystemTransfer;
 use crate::{
   check_sysprog,
   instructions::{check_pda, check_signer, derive_pda1, parse_u64},
-  none_zero_u64, sol_balc, Ee, ACCOUNT_DISCRIMINATOR_SIZE, VAULT_SEED,
+  none_zero_u64, sol_balc, Ee, VAULT_SEED, VAULT_SIZE,
 };
 
 // Deposit SOL to program PDA
@@ -95,7 +94,6 @@ fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramRe
     let signer = Signer::from(&signer_seeds);
 
     // Make the account rent-exempt.
-    const VAULT_SIZE: usize = ACCOUNT_DISCRIMINATOR_SIZE + size_of::<u64>();
     let needed_lamports = Rent::get()?.minimum_balance(VAULT_SIZE);
     log!("needed_lamports: {}", needed_lamports);
     log!("VAULT_SIZE: {}", VAULT_SIZE);

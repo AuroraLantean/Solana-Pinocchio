@@ -67,9 +67,8 @@ impl<'a> TokLgcRedeem<'a> {
     }
     writable(to_ata)?;
     rent_exempt_tokacct(to_ata)?;
-    log!("TokLgcRedeem 6 ToATA is found/verified");
+    log!("ToATA is found/verified");
 
-    log!("TokLgcRedeem 7b");
     let signer_seeds = [
       Seed::from(VAULT_SEED),
       Seed::from(prog_owner.as_ref()),

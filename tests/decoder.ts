@@ -38,6 +38,7 @@ export type ConfigAcct = {
 	updatedAt: number;
 	isAuthorized: boolean;
 	status: Status;
+	vaultBump: number;
 	bump: number;
 };
 export enum Status {
@@ -71,6 +72,7 @@ export const configAcctDecoder: FixedSizeDecoder<ConfigAcct> = getStructDecoder(
 		["isAuthorized", getBooleanDecoder()],
 		["status", getEnumDecoder(Status)],
 		//https://github.com/anza-xyz/kit/tree/main/packages/codecs-data-structures#enum-codec
+		["vaultBump", getU8Decoder()],
 		["bump", getU8Decoder()],
 		//["padding", getArrayDecoder(getU64Decoder(), { size: 3 })],
 	],

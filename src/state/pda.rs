@@ -3,6 +3,17 @@ use pinocchio::{
 };
 
 use crate::{none_zero_u64, Ee};
+
+//TODO: WHY 8?
+//Vault to hold SOL and control Tokens.
+pub const ACCOUNT_DISCRIMINATOR_SIZE: usize = 8;
+pub const VAULT_SIZE: usize = ACCOUNT_DISCRIMINATOR_SIZE + size_of::<u64>();
+
+/// Seeds to generate PDA signers
+pub const VAULT_SEED: &[u8] = b"vault";
+pub const CONFIG_SEED: &[u8] = b"config";
+pub const ESCROW_SEED: &[u8] = b"escrow";
+
 //TODO: Bytemuck is a great library that makes it easy to read and write byte arrays as structs.
 #[derive(Clone, Copy, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
@@ -205,17 +216,17 @@ impl From<u8> for Status {
 #[derive(Clone, Copy, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
 pub struct Escrow {
-  pub maker: Pubkey,      //32
-  pub mint_maker: Pubkey, //32
-  pub mint_taker: Pubkey, //32
-  pub amount: [u8; 8],    //8
-  pub bump: u8,           //1
+  pub user_x: Pubkey,  //32
+  pub mint_x: Pubkey,  //32
+  pub mint_y: Pubkey,  //32
+  pub amount: [u8; 8], //8
+  pub bump: u8,        //1
 }
 impl Escrow {
   pub const LEN: usize = core::mem::size_of::<Escrow>();
   //pub const LEN: usize = 32 + 32 + 32 + 8 + 1;
 
-  pub fn load(pda: &AccountInfo) -> Result<&mut Self, ProgramError> {
+  pub fn from_account_info(pda: &AccountInfo) -> Result<&mut Self, ProgramError> {
     if pda.data_len() != Escrow::LEN {
       return Err(Ee::EscrowDataLengh.into());
     }

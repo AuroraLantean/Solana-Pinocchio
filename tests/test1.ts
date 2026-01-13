@@ -205,7 +205,10 @@ describe("Vault Program", () => {
 		const balcTok = await getTokBalc(vaultAta1, "vault1 ATA");
 		expect(balcTok.amountUi).toBe("0");
 	});
-
+	test("InitConfig", () => {
+		ll("\n------== InitConfig");
+		//TODO
+	});
 	//------------------==
 	test("Lgc User1 deposits tokens", async () => {
 		ll("\n------== Lgc User1 Deposits Tokens");

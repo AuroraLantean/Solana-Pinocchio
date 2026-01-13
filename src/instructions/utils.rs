@@ -104,12 +104,12 @@ pub enum Ee {
   InputDataLen,
   #[error("Xyz041")]
   Xyz041,
-  #[error("Xyz042")]
-  Xyz042,
-  #[error("ByteForStatus")]
-  ByteForStatus,
   #[error("ByteForBool")]
   ByteForBool,
+  #[error("ByteForStatus")]
+  ByteForStatus,
+  #[error("Xyz044")]
+  Xyz044,
   #[error("Xyz045")]
   Xyz045,
   #[error("Xyz046")]
@@ -306,9 +306,9 @@ impl TryFrom<u32> for Ee {
       39 => Ok(Ee::Xyz039),
       40 => Ok(Ee::InputDataLen),
       41 => Ok(Ee::Xyz041),
-      42 => Ok(Ee::Xyz042),
+      42 => Ok(Ee::ByteForBool),
       43 => Ok(Ee::ByteForStatus),
-      44 => Ok(Ee::ByteForBool),
+      44 => Ok(Ee::Xyz044),
       45 => Ok(Ee::Xyz045),
       46 => Ok(Ee::Xyz046),
       47 => Ok(Ee::Xyz047),
@@ -425,9 +425,9 @@ impl ToStr for Ee {
 
       Ee::InputDataLen => "InputDataLen",
       Ee::Xyz041 => "Xyz041",
-      Ee::Xyz042 => "Xyz042",
-      Ee::ByteForStatus => "ByteForStatus",
       Ee::ByteForBool => "ByteForBool",
+      Ee::ByteForStatus => "ByteForStatus",
+      Ee::Xyz044 => "Xyz044",
       Ee::Xyz045 => "Xyz045",
       Ee::Xyz046 => "Xyz046",
       Ee::Xyz047 => "Xyz047",
@@ -646,7 +646,41 @@ pub fn check_ata_x1(
   }
   Ok(())
 }
-//----------------== Other Accounts
+pub fn check_ata_escrow(
+  ata: &AccountInfo,
+  owner: &AccountInfo,
+  mint: &AccountInfo,
+) -> Result<(), ProgramError> {
+  // if !owner.is_owned_by(&crate::ID) {
+  //   return Ee::ToWalletForeignPDA.e();
+  // } ... escrow as owner may not exist yet
+  if ata
+    .data_len()
+    .ne(&pinocchio_token::state::TokenAccount::LEN)
+  {
+    return Ee::AtaDataLen.e();
+  }
+  let ata_info = pinocchio_token::state::TokenAccount::from_account_info(ata)?;
+  if !ata_info.owner().eq(owner.key()) {
+    return Ee::AtaOrOwner.e();
+  }
+  if !ata_info.mint().eq(mint.key()) {
+    return Ee::AtaOrMint.e();
+  }
+  Ok(())
+}
+//----------------== PDAs and Other Accounts
+pub fn derive_pda1(user: &Pubkey, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
+  log!("derive_pda1");
+  //find_program_address(&[b"vault", user.key().as_ref()], &crate::ID)
+  // let (pda, _bump) =
+  try_find_program_address(&[bstr, user.as_ref()], &crate::ID)
+    .ok_or_else(|| ProgramError::InvalidSeeds)
+}
+/*let pda = pubkey::create_program_address(
+    &[PDA_SEED, &[self.datas.bump as u8]],
+    &crate::ID,
+) */
 pub fn check_pda(account: &AccountInfo) -> Result<(), ProgramError> {
   if account.lamports() == 0 {
     return Ee::PdaNoLamport.e();
@@ -843,18 +877,6 @@ pub fn sol_balc(from: &AccountInfo, amount: u64) -> Result<(), ProgramError> {
   }
   Ok(())
 }
-//----------------== Derive Functions
-pub fn derive_pda1(user: &Pubkey, bstr: &[u8]) -> Result<(Pubkey, u8), ProgramError> {
-  log!("derive_pda1");
-  //find_program_address(&[b"vault", user.key().as_ref()], &crate::ID)
-  // let (pda, _bump) =
-  try_find_program_address(&[bstr, user.as_ref()], &crate::ID)
-    .ok_or_else(|| ProgramError::InvalidSeeds)
-}
-/*let pda = pubkey::create_program_address(
-    &[PDA_SEED, &[self.datas.bump as u8]],
-    &crate::ID,
-) */
 
 //----------------== Token 2022 Interface
 const TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET: usize = 165;

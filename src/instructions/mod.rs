@@ -221,8 +221,8 @@ pub enum ProgramIx {
   /// 15 Escrow Token Make Offer
   #[account(0, signer, writable, name = "user_x", desc = "User X")]
   #[account(1, writable, name = "user_x_ata", desc = "User X ATA")]
-  #[account(2, writable, name = "vault_ata", desc = "Vault ATA")]
-  #[account(3, writable, name = "vault", desc = "Vault as To Wallet")]
+  #[account(2, writable, name = "escrow_ata", desc = "Escrow ATA")]
+  #[account(3, writable, name = "escrow", desc = "Escrow as To Wallet")]
   #[account(4, name = "mint_x", desc = "Mint X")]
   #[account(5, name = "mint_y", desc = "Mint Y")]
   #[account(6, writable, name = "config_pda", desc = "Config PDA")]
@@ -239,11 +239,3 @@ pub enum ProgramIx {
   //---------------== User PDA
   //---------------== Action PDA
 } //update here and lib.rs for new functions
-
-//---------------== Constant Values
-/// Seeds to generate PDA signers
-pub const VAULT_SEED: &[u8] = b"vault";
-pub const CONFIG_SEED: &[u8] = b"config";
-pub const ESCROW_SEED: &[u8] = b"escrow";
-
-pub const ACCOUNT_DISCRIMINATOR_SIZE: usize = 8;

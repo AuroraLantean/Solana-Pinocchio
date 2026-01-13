@@ -12,8 +12,7 @@ use pinocchio_system::instructions::CreateAccount;
 use crate::{
   ata_balc, check_ata, check_atoken_gpvbd, check_decimals, check_mint0a, check_pda, check_sysprog,
   data_len, derive_pda1, executable, instructions::check_signer, none_zero_u64, parse_u64,
-  rent_exempt_mint, rent_exempt_tokacct, writable, Config, Ee, ACCOUNT_DISCRIMINATOR_SIZE,
-  VAULT_SEED,
+  rent_exempt_mint, rent_exempt_tokacct, writable, Config, Ee, VAULT_SEED, VAULT_SIZE,
 };
 
 /// TokLgc: Users to Deposit Tokens
@@ -60,7 +59,6 @@ impl<'a> TokLgcDeposit<'a> {
       ];
       let signer = Signer::from(&signer_seeds);
       // Make the account rent-exempt.
-      const VAULT_SIZE: usize = ACCOUNT_DISCRIMINATOR_SIZE + size_of::<u64>();
       let needed_lamports = Rent::get()?.minimum_balance(VAULT_SIZE);
 
       CreateAccount {
@@ -96,7 +94,6 @@ impl<'a> TokLgcDeposit<'a> {
     rent_exempt_tokacct(to_ata)?;
     log!("ToATA is found/verified");
 
-    log!("Transfer Tokens");
     pinocchio_token::instructions::TransferChecked {
       from: from_ata,
       mint,

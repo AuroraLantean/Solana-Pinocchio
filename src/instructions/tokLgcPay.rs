@@ -60,9 +60,8 @@ impl<'a> TokLgcPay<'a> {
     }
     writable(vault_ata)?;
     rent_exempt_tokacct(vault_ata)?;
-    log!("ToATA is found/verified");
+    log!("Vault ATA is found/verified");
 
-    log!("Transfer Tokens");
     pinocchio_token::instructions::TransferChecked {
       from: user_ata,
       mint,
