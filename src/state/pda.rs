@@ -132,32 +132,32 @@ impl Config {
     &*(bytes.as_ptr() as *const &Config)
   }
   //----------== Setters
-  pub fn set_mint0(&mut self, mint0: Pubkey) {
-    self.mint0 = mint0;
+  pub fn set_mint0(&mut self, mint0: &Pubkey) {
+    self.mint0 = *mint0;
   }
-  pub fn set_mint1(&mut self, mint1: Pubkey) {
-    self.mint1 = mint1;
+  pub fn set_mint1(&mut self, mint1: &Pubkey) {
+    self.mint1 = *mint1;
   }
-  pub fn set_mint2(&mut self, mint2: Pubkey) {
-    self.mint2 = mint2;
+  pub fn set_mint2(&mut self, mint2: &Pubkey) {
+    self.mint2 = *mint2;
   }
-  pub fn set_mint3(&mut self, mint3: Pubkey) {
-    self.mint3 = mint3;
+  pub fn set_mint3(&mut self, mint3: &Pubkey) {
+    self.mint3 = *mint3;
   }
-  pub fn set_mints(&mut self, mints: [Pubkey; 4]) {
-    self.mint0 = mints[0];
-    self.mint1 = mints[1];
-    self.mint2 = mints[2];
-    self.mint3 = mints[3];
+  pub fn set_mints(&mut self, mints: [&Pubkey; 4]) {
+    self.mint0 = *mints[0];
+    self.mint1 = *mints[1];
+    self.mint2 = *mints[2];
+    self.mint3 = *mints[3];
   }
-  pub fn set_vault(&mut self, vault: Pubkey) {
-    self.vault = vault;
+  pub fn set_vault(&mut self, vault: &Pubkey) {
+    self.vault = *vault;
   }
-  pub fn set_prog_owner(&mut self, prog_owner: Pubkey) {
-    self.prog_owner = prog_owner;
+  pub fn set_prog_owner(&mut self, prog_owner: &Pubkey) {
+    self.prog_owner = *prog_owner;
   }
-  pub fn set_admin(&mut self, admin: Pubkey) {
-    self.admin = admin;
+  pub fn set_admin(&mut self, admin: &Pubkey) {
+    self.admin = *admin;
   }
   pub fn set_str_u8array(&mut self, str_u8array: [u8; 32]) {
     self.str_u8array = str_u8array;
@@ -216,28 +216,76 @@ impl From<u8> for Status {
 #[derive(Clone, Copy, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
 pub struct Escrow {
-  pub user_x: Pubkey,  //32
-  pub mint_x: Pubkey,  //32
-  pub mint_y: Pubkey,  //32
-  pub amount: [u8; 8], //8
-  pub bump: u8,        //1
+  user_x: Pubkey,    //32
+  mint_x: Pubkey,    //32
+  mint_y: Pubkey,    //32
+  amount_x: [u8; 8], //8
+  amount_y: [u8; 8], //8
+  bump: u8,          //1
 }
 impl Escrow {
   pub const LEN: usize = core::mem::size_of::<Escrow>();
   //pub const LEN: usize = 32 + 32 + 32 + 8 + 1;
-
-  pub fn from_account_info(pda: &AccountInfo) -> Result<&mut Self, ProgramError> {
-    if pda.data_len() != Escrow::LEN {
-      return Err(Ee::EscrowDataLengh.into());
+  pub fn user_x(&self) -> &Pubkey {
+    &self.user_x
+  }
+  pub fn mint_x(&self) -> &Pubkey {
+    &self.mint_x
+  }
+  pub fn mint_y(&self) -> &Pubkey {
+    &self.mint_y
+  }
+  pub fn amount_x(&self) -> u64 {
+    u64::from_le_bytes(self.amount_x)
+  }
+  pub fn amount_y(&self) -> u64 {
+    u64::from_le_bytes(self.amount_y)
+  }
+  pub fn bump(&self) -> u8 {
+    self.bump
+  }
+  pub fn set_user_x(&mut self, user_x: &Pubkey) {
+    self.user_x = *user_x;
+  }
+  pub fn set_mint_x(&mut self, mint_x: &Pubkey) {
+    self.mint_x = *mint_x;
+  }
+  pub fn set_mint_y(&mut self, mint_y: &Pubkey) {
+    self.mint_y = *mint_y;
+  }
+  pub fn set_amount_x(&mut self, amt: u64) -> ProgramResult {
+    none_zero_u64(amt)?;
+    self.amount_x = amt.to_le_bytes();
+    Ok(())
+  }
+  pub fn set_amount_y(&mut self, amt: u64) -> ProgramResult {
+    none_zero_u64(amt)?;
+    self.amount_y = amt.to_le_bytes();
+    Ok(())
+  }
+  pub fn set_bump(&mut self, amt: u8) {
+    self.bump = amt;
+  }
+  pub fn check(pda: &AccountInfo) -> Result<(), ProgramError> {
+    if pda.data_len() != Self::LEN {
+      return Ee::EscrowDataLengh.e();
     }
-    //assert_eq!(pda.data_len(), Escrow::LEN);
     if pda.owner() != &crate::ID {
-      return Err(Ee::ForeignPDA.into());
+      return Ee::ForeignPDA.e();
     }
-    //assert_eq!(pda.owner(), &crate::ID);
+    Ok(())
+  }
+  pub fn from_account_info(pda: &AccountInfo) -> Result<&mut Self, ProgramError> {
+    Self::check(pda)?;
     unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }
   }
-  pub fn load_unchecked(pda: &AccountInfo) -> Result<&mut Self, ProgramError> {
-    unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }
+  pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &Self {
+    &*(bytes.as_ptr() as *const &&Escrow)
+  }
+  #[inline]
+  pub unsafe fn from_account_info_unchecked(pda: &AccountInfo) -> Result<&Self, ProgramError> {
+    Self::check(pda)?;
+    Ok(Self::from_bytes_unchecked(pda.borrow_data_unchecked()))
+    //unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }
   }
 }

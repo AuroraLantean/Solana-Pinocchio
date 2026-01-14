@@ -18,10 +18,10 @@ use crate::{
 pub struct InitConfig<'a> {
   pub signer: &'a AccountInfo,
   pub config_pda: &'a AccountInfo,
-  pub prog_owner: &'a AccountInfo,
-  pub prog_admin: &'a AccountInfo,
-  pub mints: [Pubkey; 4],
-  pub vault: Pubkey,
+  pub prog_owner: &'a Pubkey,
+  pub prog_admin: &'a Pubkey,
+  pub mints: [&'a Pubkey; 4],
+  pub vault: &'a Pubkey,
   pub system_program: &'a AccountInfo,
   pub fee: u64,
   pub is_authorized: bool,
@@ -52,7 +52,7 @@ impl<'a> InitConfig<'a> {
     let space = Config::LEN as u64;
 
     log!("InitConfig 4. space: {}", space);
-    let (expected_config_pda, bump) = derive_pda1(prog_owner.key(), CONFIG_SEED)?;
+    let (expected_config_pda, bump) = derive_pda1(prog_owner, CONFIG_SEED)?;
 
     log!("InitConfig 5");
     if expected_config_pda != *config_pda.key() {
@@ -62,7 +62,7 @@ impl<'a> InitConfig<'a> {
     log!("InitConfig 6");
     let seeds = [
       Seed::from(CONFIG_SEED),
-      Seed::from(prog_owner.key().as_ref()),
+      Seed::from(prog_owner.as_ref()),
       Seed::from(core::slice::from_ref(&bump)),
     ];
     let seed_signer = [Signer::from(&seeds)];
@@ -84,8 +84,8 @@ impl<'a> InitConfig<'a> {
     let config = Config::from_account_info(&config_pda)?;
     config.set_mints(mints);
     config.set_vault(vault);
-    config.set_prog_owner(*prog_owner.key());
-    config.set_admin(*prog_admin.key());
+    config.set_prog_owner(prog_owner);
+    config.set_admin(prog_admin);
     config.set_str_u8array(str_u8array);
     config.set_fee(fee)?;
     config.set_updated_at(time);
@@ -135,10 +135,10 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
     Ok(Self {
       signer,
       config_pda,
-      prog_owner,
-      prog_admin,
-      mints: [*mint0.key(), *mint1.key(), *mint2.key(), *mint3.key()],
-      vault: *vault.key(),
+      prog_owner: prog_owner.key(),
+      prog_admin: prog_admin.key(),
+      mints: [mint0.key(), mint1.key(), mint2.key(), mint3.key()],
+      vault: vault.key(),
       system_program,
       fee,
       is_authorized,

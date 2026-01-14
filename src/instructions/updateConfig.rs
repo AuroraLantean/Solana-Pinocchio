@@ -1,5 +1,7 @@
 use core::convert::TryFrom;
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
+use pinocchio::{
+  account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
+};
 use pinocchio_log::log;
 
 use crate::{
@@ -11,8 +13,8 @@ use crate::{
 pub struct UpdateConfig<'a> {
   pub signer: &'a AccountInfo,
   pub config_pda: &'a AccountInfo,
-  pub account1: &'a AccountInfo,
-  pub account2: &'a AccountInfo,
+  pub account1: &'a Pubkey,
+  pub account2: &'a Pubkey,
   pub bools: [bool; 4],
   pub u8s: [u8; 4],
   pub u32s: [u32; 4],
@@ -58,7 +60,7 @@ impl<'a> UpdateConfig<'a> {
     self.config.set_status(self.u8s[1]);
     self.config.set_str_u8array(self.str_u8array);
 
-    self.config.set_admin(*self.account1.key());
+    self.config.set_admin(&self.account1);
     //self.add_tokens()?;
     Ok(())
   }
@@ -70,12 +72,12 @@ impl<'a> UpdateConfig<'a> {
   }
   pub fn update_admin(self) -> ProgramResult {
     self.only_owner()?;
-    self.config.set_admin(*self.account1.key());
+    self.config.set_admin(self.account1);
     Ok(())
   }
   pub fn update_prog_owner(self) -> ProgramResult {
     self.only_owner()?;
-    self.config.set_prog_owner(*self.account1.key());
+    self.config.set_prog_owner(self.account1);
     Ok(())
   }
 }
@@ -152,8 +154,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     Ok(Self {
       signer,
       config_pda,
-      account1,
-      account2,
+      account1: account1.key(),
+      account2: account2.key(),
       u8s,
       bools,
       u32s,

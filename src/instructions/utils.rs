@@ -102,8 +102,8 @@ pub enum Ee {
   //Inputs
   #[error("InputDataLen")]
   InputDataLen,
-  #[error("Xyz041")]
-  Xyz041,
+  #[error("InputDataBump")]
+  InputDataBump,
   #[error("ByteForBool")]
   ByteForBool,
   #[error("ByteForStatus")]
@@ -305,7 +305,7 @@ impl TryFrom<u32> for Ee {
       38 => Ok(Ee::Xyz038),
       39 => Ok(Ee::Xyz039),
       40 => Ok(Ee::InputDataLen),
-      41 => Ok(Ee::Xyz041),
+      41 => Ok(Ee::InputDataBump),
       42 => Ok(Ee::ByteForBool),
       43 => Ok(Ee::ByteForStatus),
       44 => Ok(Ee::Xyz044),
@@ -424,7 +424,7 @@ impl ToStr for Ee {
       Ee::Xyz039 => "Xyz039",
 
       Ee::InputDataLen => "InputDataLen",
-      Ee::Xyz041 => "Xyz041",
+      Ee::InputDataBump => "InputDataBump",
       Ee::ByteForBool => "ByteForBool",
       Ee::ByteForStatus => "ByteForStatus",
       Ee::Xyz044 => "Xyz044",

@@ -1,6 +1,9 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  account_info::AccountInfo, program_error::ProgramError, pubkey::checked_create_program_address,
+  account_info::AccountInfo,
+  program_error::ProgramError,
+  pubkey::checked_create_program_address,
+  sysvars::{rent::Rent, Sysvar},
   ProgramResult,
 };
 use pinocchio_log::log;
@@ -26,6 +29,7 @@ pub struct EscrowTokMake<'a> {
   pub decimal_y: u8,
   pub amount_x: u64,
   pub amount_y: u64,
+  pub bump: u8,
 }
 impl<'a> EscrowTokMake<'a> {
   pub const DISCRIMINATOR: &'a u8 = &15;
@@ -42,9 +46,10 @@ impl<'a> EscrowTokMake<'a> {
       system_program,
       atoken_program: _,
       decimal_x,
-      decimal_y,
+      decimal_y: _,
       amount_x,
       amount_y,
+      bump,
     } = self;
     log!("EscrowTokMake process()");
 
@@ -68,10 +73,11 @@ impl<'a> EscrowTokMake<'a> {
     rent_exempt_tokacct(escrow_ata)?;
     log!("Vault ATA is found/verified");
 
-    if unsafe { escrow.owner() } == &crate::ID {
+    if escrow.lamports() > 0 {
+      //escrow.owner() != &crate::ID
       return Err(ProgramError::AccountAlreadyInitialized);
     } else {
-      log!("Make Escrow Account");
+      log!("Make Escrow PDA");
       pinocchio_system::instructions::CreateAccount {
         from: user_x,
         to: escrow,
@@ -83,12 +89,13 @@ impl<'a> EscrowTokMake<'a> {
     }
 
     // Populate Escrow Account
-    let escrow_account = Escrow::from_account_info(&escrow);
-    escrow_account.user_x = *user_x.key();
-    escrow_account.mint_x = *mint_x.key();
-    escrow_account.mint_y = *mint_y.key();
-    escrow_account.amount = unsafe { *(data.as_ptr().add(1) as *const u64) };
-    escrow_account.bump = unsafe { *data.as_ptr() };
+    let escrow: &mut Escrow = Escrow::from_account_info(&escrow)?;
+    escrow.set_user_x(user_x.key());
+    escrow.set_mint_x(mint_x.key());
+    escrow.set_mint_y(mint_y.key());
+    escrow.set_amount_x(amount_x)?;
+    escrow.set_amount_y(amount_y)?; // unsafe { *(data.as_ptr().add(1) as *const u64) };
+    escrow.set_bump(bump); // unsafe { *data.as_ptr() };
 
     pinocchio_token::instructions::TransferChecked {
       from: user_x_ata,
@@ -145,7 +152,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
 
     log!("EscrowTokMake try_from 9");
     config_pda.can_borrow_mut_data()?;
-    let config: &mut Config = Config::from_account_info(&config_pda)?;
+    let _config: &mut Config = Config::from_account_info(&config_pda)?;
 
     log!("EscrowTokMake try_from 14");
     rent_exempt_mint(mint_x)?;
@@ -161,13 +168,16 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
     check_mint0a(mint_y, token_program)?; // Not needed since CPI since deposit will fail if not owned by token program
 
     log!("EscrowTokMake try_from 20");
-    let bump = unsafe { *(data.as_ptr() as *const u8) }.to_le_bytes(); //TODO
+    let bump = unsafe { *(data.as_ptr() as *const u8) }.to_le_bytes();
     let seed = [ESCROW_SEED, user_x.key().as_slice(), bump.as_ref()];
     let seeds = &seed[..];
     let expected_escrow = checked_create_program_address(seeds, &crate::ID)?;
     if &expected_escrow != escrow.key() {
       return Err(Ee::EscrowPDA.into());
     };
+    if bump.len() != 1 {
+      return Err(Ee::InputDataBump.into());
+    }
     /*let seeds = &[User::SEED_PREFIX, self.accounts.payer.key().as_ref()];
     let (t_account, bump) = find_program_address(
         seeds, &crate::ID);
@@ -187,6 +197,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
       decimal_y,
       amount_x,
       amount_y,
+      bump: bump[0],
     })
   }
 }
