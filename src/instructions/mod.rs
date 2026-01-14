@@ -234,6 +234,7 @@ pub enum ProgramIx {
     amount_x: u64,
     decimal_y: u8,
     amount_y: u64,
+    id: u64,
   },
   //---------------== Admin PDA
   //---------------== User PDA

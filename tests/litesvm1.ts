@@ -10,6 +10,7 @@ import {
 	configPDA,
 	depositSol,
 	findPdaV1,
+	findPdaV2,
 	getAta,
 	initConfig,
 	initSolBalc,
@@ -20,7 +21,8 @@ import {
 	lgcPay,
 	lgcRedeem,
 	lgcWithdraw,
-	type PdaV1Out,
+	makeTokEscrow,
+	type PdaOut,
 	sendSol,
 	setAtaCheck,
 	setMint,
@@ -56,16 +58,24 @@ let mintKp: Keypair;
 let mintAuthorityKp: Keypair;
 let signer: PublicKey;
 let mint: PublicKey;
+let mintX: PublicKey;
+let mintY: PublicKey;
 let mintAuthority: PublicKey;
 let ata: PublicKey;
 let fromAta: PublicKey;
 let toAta: PublicKey;
-let vaultOut: PdaV1Out;
+let vaultOut: PdaOut;
+let escrowOut: PdaOut;
 let decimals = 9;
 let amount: bigint;
 let amtDeposit: bigint;
 let amtWithdraw: bigint;
 let amt: bigint;
+let decimalsX: number;
+let decimalsY: number;
+let amountX: bigint;
+let amountY: bigint;
+let id: bigint;
 let balcBf: bigint | null;
 let balcAf: bigint | null;
 const vaultRent = 1002240n; //from Rust
@@ -288,6 +298,41 @@ test("Redeem Lgc Tokens", () => {
 	);
 	ataBalCk(fromAta, as6zBn(289), "vaultO");
 	ataBalCk(toAta, as6zBn(461), "user1 ");
+});
+
+test("Make Token Escrow", () => {
+	ll("\n------== Make Token Escrow");
+	signerKp = user1Kp;
+	mintX = usdcMint;
+	mintY = usdtMint;
+	decimalsX = 6;
+	decimalsY = 6;
+	amountX = as6zBn(326);
+	amountY = as6zBn(299);
+	id = BigInt(0);
+
+	signer = signerKp.publicKey;
+	escrowOut = findPdaV2(signer, id, "Escrow1-id00");
+	fromAta = getAta(mintX, signer);
+	toAta = getAta(mintX, escrowOut.pda);
+
+	makeTokEscrow(
+		signerKp,
+		fromAta,
+		toAta,
+		escrowOut.pda,
+		mintX,
+		mintY,
+		configPDA,
+		decimalsX,
+		amountX,
+		decimalsY,
+		amountY,
+		id,
+	);
+	//TODO: make decoder
+	//ataBalCk(toAta, amt, "vaultO");
+	//ataBalCk(fromAta, as6zBn(424), "user1 ");
 });
 
 test.skip("copy accounts from devnet", async () => {

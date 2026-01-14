@@ -56,7 +56,7 @@ export const getRawAccount = (address: PublicKey) => {
 	return rawAccount;
 };
 
-export type PdaV1Out = {
+export type PdaOut = {
 	pda: PublicKey;
 	bump: number;
 };
@@ -65,7 +65,7 @@ export const findPdaV1 = (
 	seedStr: string,
 	pdaName: string,
 	progAddr = vaultProgAddr,
-): PdaV1Out => {
+): PdaOut => {
 	const [pda, bump] = PublicKey.findProgramAddressSync(
 		[Buffer.from(seedStr), userAddr.toBuffer()],
 		progAddr,
@@ -85,6 +85,24 @@ export const vaultOBump = vaultOOut.bump;
 export const vault1 = vaultOut1.pda;
 export const vault2 = vaultOut2.pda;
 export const vault3 = vaultOut3.pda;
+
+export const findPdaV2 = (
+	userAddr: PublicKey,
+	id: bigint,
+	pdaName: string,
+	progAddr = vaultProgAddr,
+): PdaOut => {
+	const [pda, bump] = PublicKey.findProgramAddressSync(
+		[
+			Buffer.from("escrow"),
+			userAddr.toBuffer(),
+			Buffer.copyBytesFrom(bigintToBytes(id)),
+		],
+		progAddr,
+	);
+	ll(`${pdaName} pda: ${pda.toBase58()}, bump: ${bump}`);
+	return { pda, bump };
+};
 
 //Or just send some SOL
 export const makeAccount = (
@@ -502,6 +520,55 @@ export const lgcRedeem = (
 			{ pubkey: vault, isSigner: false, isWritable: false },
 			{ pubkey: configPDA, isSigner: false, isWritable: false },
 			{ pubkey: mint, isSigner: false, isWritable: false },
+			{ pubkey: tokenProg, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
+			{ pubkey: atokenProg, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(userSigner);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
+export const makeTokEscrow = (
+	userSigner: Keypair,
+	fromAta: PublicKey,
+	toAta: PublicKey,
+	escrowPDA: PublicKey,
+	mintX: PublicKey,
+	mintY: PublicKey,
+	configPDA: PublicKey,
+	decimalsX: number,
+	amountX: bigint,
+	decimalsY: number,
+	amountY: bigint,
+	id: bigint,
+	tokenProg = TOKEN_PROGRAM_ID,
+	atokenProg = ATokenGPvbd,
+) => {
+	const disc = 15;
+	const argData = [
+		decimalsX,
+		...bigintToBytes(amountX),
+		decimalsY,
+		...bigintToBytes(amountY),
+		...bigintToBytes(id),
+	];
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: userSigner.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: fromAta, isSigner: false, isWritable: true },
+			{ pubkey: toAta, isSigner: false, isWritable: true },
+			{ pubkey: escrowPDA, isSigner: false, isWritable: true },
+			{ pubkey: mintX, isSigner: false, isWritable: false },
+			{ pubkey: mintY, isSigner: false, isWritable: false },
+			{ pubkey: configPDA, isSigner: false, isWritable: true },
 			{ pubkey: tokenProg, isSigner: false, isWritable: false },
 			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
 			{ pubkey: atokenProg, isSigner: false, isWritable: false },

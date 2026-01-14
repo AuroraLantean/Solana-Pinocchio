@@ -2,7 +2,7 @@ use pinocchio::{
   account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
 };
 
-use crate::{none_zero_u32, none_zero_u64, Ee};
+use crate::{none_zero_u64, Ee};
 
 //Vault to hold SOL and control Tokens, and has no struct to be declared
 pub const VAULT_SEED: &[u8] = b"vault";
@@ -217,7 +217,7 @@ pub struct Escrow {
   mint_x: Pubkey,    //32
   mint_y: Pubkey,    //32
   amount_y: [u8; 8], //8 the wanted amount
-  time: [u8; 4],     //4
+  id: [u8; 8],       //8
   bump: u8,          //1
 }
 impl Escrow {
@@ -235,8 +235,8 @@ impl Escrow {
   pub fn mint_y(&self) -> &Pubkey {
     &self.mint_y
   }
-  pub fn time(&self) -> u32 {
-    u32::from_le_bytes(self.time)
+  pub fn id(&self) -> u64 {
+    u64::from_le_bytes(self.id)
   }
   pub fn amount_y(&self) -> u64 {
     u64::from_le_bytes(self.amount_y)
@@ -253,9 +253,8 @@ impl Escrow {
   pub fn set_mint_y(&mut self, mint_y: &Pubkey) {
     self.mint_y = *mint_y;
   }
-  pub fn set_time(&mut self, amt: u32) -> ProgramResult {
-    none_zero_u32(amt)?;
-    self.time = amt.to_le_bytes();
+  pub fn set_id(&mut self, amt: u64) -> ProgramResult {
+    self.id = amt.to_le_bytes();
     Ok(())
   }
   pub fn set_amount_y(&mut self, amt: u64) -> ProgramResult {
