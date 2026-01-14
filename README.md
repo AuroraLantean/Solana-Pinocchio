@@ -168,3 +168,4 @@ bun test ./tests/test1.ts
 - Get Token Account: <https://solana.com/developers/cookbook/tokens/get-token-account>
 - Account Deserialization by QuickNode: <https://www.quicknode.com/guides/solana-development/tooling/web3-2/account-deserialization>
 - Solana Kit decoder with fixed size codec: <https://github.com/anza-xyz/kit/tree/main/packages/codecs-core#fixed-size-and-variable-size-codecs>
+- Escrow + LiteSVM by QuickNode: <https://www.quicknode.com/guides/solana-development/tooling/litesvm>

@@ -11,7 +11,7 @@ use pinocchio_log::log;
 
 use crate::{
   check_sysprog, data_len, derive_pda1, get_time, instructions::check_signer, not_initialized,
-  parse_u64, rent_exempt_mint22, to32bytes, u8_to_bool, Config, Ee, CONFIG_SEED, VAULT_SEED,
+  parse_u64, rent_exempt_mint22, to32bytes, u8_to_bool, Config, Ee, VAULT_SEED,
 };
 
 /// Init Config PDA
@@ -52,7 +52,7 @@ impl<'a> InitConfig<'a> {
     let space = Config::LEN as u64;
 
     log!("InitConfig 4. space: {}", space);
-    let (expected_config_pda, bump) = derive_pda1(prog_owner, CONFIG_SEED)?;
+    let (expected_config_pda, bump) = derive_pda1(prog_owner, Config::SEED)?;
 
     log!("InitConfig 5");
     if expected_config_pda != *config_pda.key() {
@@ -61,7 +61,7 @@ impl<'a> InitConfig<'a> {
 
     log!("InitConfig 6");
     let seeds = [
-      Seed::from(CONFIG_SEED),
+      Seed::from(Config::SEED),
       Seed::from(prog_owner.as_ref()),
       Seed::from(core::slice::from_ref(&bump)),
     ];

@@ -42,8 +42,8 @@ pub enum Ee {
   SystemProgram,
   #[error("MintNotAccepted")]
   MintNotAccepted,
-  #[error("Xyz013")]
-  Xyz013,
+  #[error("MintsAreTheSame")]
+  MintsAreTheSame,
   #[error("Xyz014")]
   Xyz014,
   #[error("Xyz015")]
@@ -116,10 +116,10 @@ pub enum Ee {
   Xyz046,
   #[error("Xyz047")]
   Xyz047,
-  #[error("Xyz048")]
-  Xyz048,
-  #[error("Xyz049")]
-  Xyz049,
+  #[error("EscrowIsForeign")]
+  EscrowIsForeign,
+  #[error("ConfigIsForeign")]
+  ConfigIsForeign,
   //PDA
   #[error("PdaNoLamport")]
   PdaNoLamport,
@@ -277,7 +277,7 @@ impl TryFrom<u32> for Ee {
       10 => Ok(Ee::AtokenGPvbd),
       11 => Ok(Ee::SystemProgram),
       12 => Ok(Ee::MintNotAccepted),
-      13 => Ok(Ee::Xyz013),
+      13 => Ok(Ee::MintsAreTheSame),
       14 => Ok(Ee::Xyz014),
       15 => Ok(Ee::Xyz015),
       16 => Ok(Ee::Xyz016),
@@ -312,8 +312,8 @@ impl TryFrom<u32> for Ee {
       45 => Ok(Ee::Xyz045),
       46 => Ok(Ee::Xyz046),
       47 => Ok(Ee::Xyz047),
-      48 => Ok(Ee::Xyz048),
-      49 => Ok(Ee::Xyz049),
+      48 => Ok(Ee::EscrowIsForeign),
+      49 => Ok(Ee::ConfigIsForeign),
       50 => Ok(Ee::PdaNoLamport),
       51 => Ok(Ee::ForeignPDA),
       52 => Ok(Ee::ConfigPDA),
@@ -394,7 +394,7 @@ impl ToStr for Ee {
       Ee::AtokenGPvbd => "AtokenGPvbd",
       Ee::SystemProgram => "SystemProgram",
       Ee::MintNotAccepted => "MintNotAccepted",
-      Ee::Xyz013 => "Xyz013",
+      Ee::MintsAreTheSame => "MintsAreTheSame",
       Ee::Xyz014 => "Xyz014",
       Ee::Xyz015 => "Xyz015",
       Ee::Xyz016 => "Xyz016",
@@ -431,8 +431,8 @@ impl ToStr for Ee {
       Ee::Xyz045 => "Xyz045",
       Ee::Xyz046 => "Xyz046",
       Ee::Xyz047 => "Xyz047",
-      Ee::Xyz048 => "Xyz048",
-      Ee::Xyz049 => "Xyz049",
+      Ee::EscrowIsForeign => "EscrowIsForeign",
+      Ee::ConfigIsForeign => "ConfigIsForeign",
 
       Ee::PdaNoLamport => "PdaNoLamport",
       Ee::ForeignPDA => "ForeignPDA",
@@ -506,6 +506,12 @@ impl ToStr for Ee {
 pub fn check_signer(account: &AccountInfo) -> Result<(), ProgramError> {
   if !account.is_signer() {
     return Err(ProgramError::MissingRequiredSignature);
+  }
+  Ok(())
+}
+pub fn check_mint_xy(mint_x: &AccountInfo, mint_y: &AccountInfo) -> Result<(), ProgramError> {
+  if mint_x.key() == mint_y.key() {
+    return Ee::MintsAreTheSame.e();
   }
   Ok(())
 }

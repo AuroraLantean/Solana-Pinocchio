@@ -2,17 +2,12 @@ use pinocchio::{
   account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
 };
 
-use crate::{none_zero_u64, Ee};
+use crate::{none_zero_u32, none_zero_u64, Ee};
 
-//TODO: WHY 8?
-//Vault to hold SOL and control Tokens.
-pub const ACCOUNT_DISCRIMINATOR_SIZE: usize = 8;
-pub const VAULT_SIZE: usize = ACCOUNT_DISCRIMINATOR_SIZE + size_of::<u64>();
-
-/// Seeds to generate PDA signers
+//Vault to hold SOL and control Tokens, and has no struct to be declared
 pub const VAULT_SEED: &[u8] = b"vault";
-pub const CONFIG_SEED: &[u8] = b"config";
-pub const ESCROW_SEED: &[u8] = b"escrow";
+pub const ACCOUNT_DISCRIMINATOR_SIZE: usize = 8;
+pub const VAULT_SIZE: usize = ACCOUNT_DISCRIMINATOR_SIZE + size_of::<u64>(); //SOL amount
 
 //TODO: Bytemuck is a great library that makes it easy to read and write byte arrays as structs.
 #[derive(Clone, Copy, Debug)]
@@ -38,6 +33,7 @@ pub struct Config {
 
 impl Config {
   pub const LEN: usize = core::mem::size_of::<Self>();
+  pub const SEED: &[u8] = b"config";
   //Getters or Accessors: Safe Direct value copy, no reference created
   pub fn mint0(&self) -> &Pubkey {
     &self.mint0
@@ -103,7 +99,7 @@ impl Config {
       return Ee::ConfigDataLengh.e();
     }
     if pda.owner() != &crate::ID {
-      return Ee::ForeignPDA.e();
+      return Ee::ConfigIsForeign.e();
     }
     // CHECK alignment for the most restrictive field (u64 in this case)... Alignment requirement checking can be removed ONLY IF you know all numbers are using u8 arrays
     /*if (pda.borrow_mut_data_unchecked().as_ptr() as usize) % core::mem::align_of::<Self>() != 0 { return Err();  }*/
@@ -212,22 +208,26 @@ impl From<u8> for Status {
     }
   }
 } //Status::Uninitialized as u8
-  //------------==
+
+//------------==
 #[derive(Clone, Copy, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
 pub struct Escrow {
-  user_x: Pubkey,    //32
+  maker_x: Pubkey,   //32
   mint_x: Pubkey,    //32
   mint_y: Pubkey,    //32
-  amount_x: [u8; 8], //8
-  amount_y: [u8; 8], //8
+  amount_y: [u8; 8], //8 the wanted amount
+  time: [u8; 4],     //4
   bump: u8,          //1
 }
 impl Escrow {
   pub const LEN: usize = core::mem::size_of::<Escrow>();
-  //pub const LEN: usize = 32 + 32 + 32 + 8 + 1;
-  pub fn user_x(&self) -> &Pubkey {
-    &self.user_x
+  //pub const LEN: usize = 32 + 32 + 32 + 8 +8+ 1;
+
+  pub const SEED: &[u8] = b"escrow";
+
+  pub fn maker_x(&self) -> &Pubkey {
+    &self.maker_x
   }
   pub fn mint_x(&self) -> &Pubkey {
     &self.mint_x
@@ -235,8 +235,8 @@ impl Escrow {
   pub fn mint_y(&self) -> &Pubkey {
     &self.mint_y
   }
-  pub fn amount_x(&self) -> u64 {
-    u64::from_le_bytes(self.amount_x)
+  pub fn time(&self) -> u32 {
+    u32::from_le_bytes(self.time)
   }
   pub fn amount_y(&self) -> u64 {
     u64::from_le_bytes(self.amount_y)
@@ -244,8 +244,8 @@ impl Escrow {
   pub fn bump(&self) -> u8 {
     self.bump
   }
-  pub fn set_user_x(&mut self, user_x: &Pubkey) {
-    self.user_x = *user_x;
+  pub fn set_maker_x(&mut self, maker_x: &Pubkey) {
+    self.maker_x = *maker_x;
   }
   pub fn set_mint_x(&mut self, mint_x: &Pubkey) {
     self.mint_x = *mint_x;
@@ -253,9 +253,9 @@ impl Escrow {
   pub fn set_mint_y(&mut self, mint_y: &Pubkey) {
     self.mint_y = *mint_y;
   }
-  pub fn set_amount_x(&mut self, amt: u64) -> ProgramResult {
-    none_zero_u64(amt)?;
-    self.amount_x = amt.to_le_bytes();
+  pub fn set_time(&mut self, amt: u32) -> ProgramResult {
+    none_zero_u32(amt)?;
+    self.time = amt.to_le_bytes();
     Ok(())
   }
   pub fn set_amount_y(&mut self, amt: u64) -> ProgramResult {
@@ -271,7 +271,7 @@ impl Escrow {
       return Ee::EscrowDataLengh.e();
     }
     if pda.owner() != &crate::ID {
-      return Ee::ForeignPDA.e();
+      return Ee::EscrowIsForeign.e();
     }
     Ok(())
   }
