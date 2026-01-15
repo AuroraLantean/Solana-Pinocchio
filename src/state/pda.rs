@@ -128,17 +128,17 @@ impl Config {
     &*(bytes.as_ptr() as *const &Config)
   }
   //----------== Setters
-  pub fn set_mint0(&mut self, mint0: &Pubkey) {
-    self.mint0 = *mint0;
+  pub fn set_mint0(&mut self, pkey: &Pubkey) {
+    self.mint0 = *pkey;
   }
-  pub fn set_mint1(&mut self, mint1: &Pubkey) {
-    self.mint1 = *mint1;
+  pub fn set_mint1(&mut self, pkey: &Pubkey) {
+    self.mint1 = *pkey;
   }
-  pub fn set_mint2(&mut self, mint2: &Pubkey) {
-    self.mint2 = *mint2;
+  pub fn set_mint2(&mut self, pkey: &Pubkey) {
+    self.mint2 = *pkey;
   }
-  pub fn set_mint3(&mut self, mint3: &Pubkey) {
-    self.mint3 = *mint3;
+  pub fn set_mint3(&mut self, pkey: &Pubkey) {
+    self.mint3 = *pkey;
   }
   pub fn set_mints(&mut self, mints: [&Pubkey; 4]) {
     self.mint0 = *mints[0];
@@ -146,14 +146,14 @@ impl Config {
     self.mint2 = *mints[2];
     self.mint3 = *mints[3];
   }
-  pub fn set_vault(&mut self, vault: &Pubkey) {
-    self.vault = *vault;
+  pub fn set_vault(&mut self, pkey: &Pubkey) {
+    self.vault = *pkey;
   }
-  pub fn set_prog_owner(&mut self, prog_owner: &Pubkey) {
-    self.prog_owner = *prog_owner;
+  pub fn set_prog_owner(&mut self, pkey: &Pubkey) {
+    self.prog_owner = *pkey;
   }
-  pub fn set_admin(&mut self, admin: &Pubkey) {
-    self.admin = *admin;
+  pub fn set_admin(&mut self, pkey: &Pubkey) {
+    self.admin = *pkey;
   }
   pub fn set_str_u8array(&mut self, str_u8array: [u8; 32]) {
     self.str_u8array = str_u8array;
@@ -213,12 +213,12 @@ impl From<u8> for Status {
 #[derive(Clone, Copy, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
 pub struct Escrow {
-  maker0: Pubkey,   //32
-  mint0: Pubkey,    //32
-  mint1: Pubkey,    //32
-  amount1: [u8; 8], //8 the wanted amount
-  id: [u8; 8],      //8
-  bump: u8,         //1
+  maker: Pubkey,     //32
+  mint_x: Pubkey,    //32
+  mint_y: Pubkey,    //32
+  amount_y: [u8; 8], //8 the wanted amount
+  id: [u8; 8],       //8
+  bump: u8,          //1
 }
 impl Escrow {
   pub const LEN: usize = core::mem::size_of::<Escrow>();
@@ -226,40 +226,40 @@ impl Escrow {
 
   pub const SEED: &[u8] = b"escrow";
 
-  pub fn maker0(&self) -> &Pubkey {
-    &self.maker0
+  pub fn maker(&self) -> &Pubkey {
+    &self.maker
   }
-  pub fn mint0(&self) -> &Pubkey {
-    &self.mint0
+  pub fn mint_x(&self) -> &Pubkey {
+    &self.mint_x
   }
-  pub fn mint1(&self) -> &Pubkey {
-    &self.mint1
+  pub fn mint_y(&self) -> &Pubkey {
+    &self.mint_y
   }
   pub fn id(&self) -> u64 {
     u64::from_le_bytes(self.id)
   }
-  pub fn amount1(&self) -> u64 {
-    u64::from_le_bytes(self.amount1)
+  pub fn amount_y(&self) -> u64 {
+    u64::from_le_bytes(self.amount_y)
   }
   pub fn bump(&self) -> u8 {
     self.bump
   }
-  pub fn set_maker0(&mut self, maker0: &Pubkey) {
-    self.maker0 = *maker0;
+  pub fn set_maker(&mut self, pkey: &Pubkey) {
+    self.maker = *pkey;
   }
-  pub fn set_mint0(&mut self, mint0: &Pubkey) {
-    self.mint0 = *mint0;
+  pub fn set_mint_x(&mut self, pkey: &Pubkey) {
+    self.mint_x = *pkey;
   }
-  pub fn set_mint1(&mut self, mint1: &Pubkey) {
-    self.mint1 = *mint1;
+  pub fn set_mint_y(&mut self, pkey: &Pubkey) {
+    self.mint_y = *pkey;
   }
   pub fn set_id(&mut self, amt: u64) -> ProgramResult {
     self.id = amt.to_le_bytes();
     Ok(())
   }
-  pub fn set_amount1(&mut self, amt: u64) -> ProgramResult {
+  pub fn set_amount_y(&mut self, amt: u64) -> ProgramResult {
     none_zero_u64(amt)?;
-    self.amount1 = amt.to_le_bytes();
+    self.amount_y = amt.to_le_bytes();
     Ok(())
   }
   pub fn set_bump(&mut self, amt: u8) {

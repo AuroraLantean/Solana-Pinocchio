@@ -98,9 +98,9 @@ test("InitConfig", () => {
 		signerKp,
 	);
 
-	const configPDAraw = svm.getAccount(configPDA);
-	expect(configPDAraw).not.toBeNull();
-	const rawAccountData = configPDAraw?.data;
+	const pdaRaw = svm.getAccount(configPDA);
+	expect(pdaRaw).not.toBeNull();
+	const rawAccountData = pdaRaw?.data;
 	ll("rawAccountData:", rawAccountData);
 
 	const decoded = solanaKitDecodeDev(rawAccountData);
@@ -166,9 +166,9 @@ test("updateConfig + time travel", () => {
 		signerKp,
 	);
 
-	const configPDAraw = svm.getAccount(configPDA);
-	expect(configPDAraw).not.toBeNull();
-	const rawAccountData = configPDAraw?.data;
+	const pdaRaw = svm.getAccount(configPDA);
+	expect(pdaRaw).not.toBeNull();
+	const rawAccountData = pdaRaw?.data;
 	ll("rawAccountData:", rawAccountData);
 
 	const decoded = solanaKitDecodeDev(rawAccountData);

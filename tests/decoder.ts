@@ -144,7 +144,65 @@ export type ConfigAcctDev = {
 	status: Status;
 	bump: number;
 };
-
+//---------------== EscrowPDA
+//converted from Rust code. XyzAcct, xyzAcctDecoder, DecodedXyzAcct should all match in field order and types!
+export type EscrowAcct = {
+	maker: Address;
+	mintX: Address;
+	mintY: Address;
+	amountY: bigint;
+	id: bigint;
+	bump: number;
+};
+export const escrowAcctDecoder: FixedSizeDecoder<EscrowAcct> = getStructDecoder(
+	[
+		["maker", getAddressDecoder()],
+		["mintX", getAddressDecoder()],
+		["mintY", getAddressDecoder()],
+		["amountY", getU64Decoder()],
+		["id", getU64Decoder()],
+		["bump", getU8Decoder()],
+	],
+);
+export const solanaKitDecodeEscrow = (
+	bytes: ReadonlyUint8Array | Uint8Array<ArrayBufferLike>,
+	isVerbose = false,
+) => {
+	const decoded = escrowAcctDecoder.decode(bytes);
+	if (isVerbose) {
+		ll("maker :", decoded.maker);
+		ll("mintX  :", decoded.mintX);
+		ll("mintY  :", decoded.mintY);
+		ll("amountY:", decoded.amountY);
+		ll("id:", decoded.id);
+		ll("bump:", decoded.bump);
+	}
+	return decoded;
+};
+// This below is only used for testing as it is outputing PublicKey, not Address
+export const solanaKitDecodeEscrowDev = (
+	bytes: ReadonlyUint8Array | Uint8Array<ArrayBufferLike> | undefined,
+) => {
+	if (!bytes) throw new Error("bytes invalid");
+	const decoded = solanaKitDecodeEscrow(bytes, true);
+	const decodedV1: EscrowAcctDev = {
+		maker: new PublicKey(decoded.maker.toString()),
+		mintX: new PublicKey(decoded.mintX.toString()),
+		mintY: new PublicKey(decoded.mintY.toString()),
+		amountY: decoded.amountY,
+		id: decoded.id,
+		bump: decoded.bump,
+	};
+	return decodedV1;
+};
+export type EscrowAcctDev = {
+	maker: PublicKey;
+	mintX: PublicKey;
+	mintY: PublicKey;
+	amountY: bigint;
+	id: bigint;
+	bump: number;
+};
 //---------------==
 export type DecodedAccount = {
 	executable: boolean;

@@ -2,7 +2,7 @@
 import { expect, test } from "bun:test";
 //Tutorial: <https://litesvm.github.io/litesvm/tutorial.html>
 import { Connection, type Keypair, type PublicKey } from "@solana/web3.js";
-import { Status } from "./decoder";
+import { Status, solanaKitDecodeEscrowDev } from "./decoder";
 import {
 	acctExists,
 	acctIsNull,
@@ -330,6 +330,18 @@ test("Make Token Escrow", () => {
 		amountY,
 		id,
 	);
+	const pdaRaw = svm.getAccount(escrowOut.pda);
+	expect(pdaRaw).not.toBeNull();
+	const rawAccountData = pdaRaw?.data;
+	ll("rawAccountData:", rawAccountData);
+
+	const decoded = solanaKitDecodeEscrowDev(rawAccountData);
+	expect(decoded.maker).toEqual(signer);
+	expect(decoded.mintX).toEqual(mintX);
+	expect(decoded.mintY).toEqual(mintY);
+	expect(decoded.amountY).toEqual(amountY);
+	expect(decoded.id).toEqual(id);
+	expect(decoded.bump).toEqual(escrowOut.bump);
 	//ataBalCk(toAta, amt, "vaultO");
 	//ataBalCk(fromAta, as6zBn(424), "user1 ");
 });
