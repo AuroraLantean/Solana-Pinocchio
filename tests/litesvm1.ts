@@ -9,8 +9,8 @@ import {
 	ataBalCk,
 	configPDA,
 	depositSol,
+	findEscrow,
 	findPdaV1,
-	findPdaV2,
 	getAta,
 	initConfig,
 	initSolBalc,
@@ -226,7 +226,7 @@ test("Deposit Lgc Tokens", () => {
 
 	signer = signerKp.publicKey;
 	fromAta = getAta(mint, signer);
-	vaultOut = findPdaV1(signer, "vault", "signerVault");
+	vaultOut = findPdaV1(signer, "signerVault");
 	toAta = getAta(mint, vaultOut.pda);
 
 	lgcDeposit(
@@ -251,7 +251,7 @@ test("Withdraw Lgc Tokens", () => {
 
 	signer = signerKp.publicKey;
 	toAta = getAta(mint, signer);
-	vaultOut = findPdaV1(signer, "vault", "signerVault");
+	vaultOut = findPdaV1(signer, "signerVault");
 	fromAta = getAta(mint, vaultOut.pda);
 
 	lgcWithdraw(signerKp, fromAta, toAta, vaultOut.pda, mint, decimals, amt);
@@ -283,7 +283,7 @@ test("Redeem Lgc Tokens", () => {
 
 	signer = signerKp.publicKey;
 	toAta = getAta(mint, signer);
-	vaultOut = findPdaV1(owner, "vault", "Vault");
+	vaultOut = findPdaV1(owner, "Vault");
 	fromAta = getAta(mint, vaultOut.pda);
 
 	lgcRedeem(
@@ -312,7 +312,7 @@ test("Make Token Escrow", () => {
 	id = BigInt(0);
 
 	signer = signerKp.publicKey;
-	escrowOut = findPdaV2(signer, id, "Escrow1-id00");
+	escrowOut = findEscrow(id);
 	fromAta = getAta(mintX, signer);
 	toAta = getAta(mintX, escrowOut.pda);
 
@@ -336,14 +336,14 @@ test("Make Token Escrow", () => {
 	ll("rawAccountData:", rawAccountData);
 
 	const decoded = solanaKitDecodeEscrowDev(rawAccountData);
-	expect(decoded.maker).toEqual(signer);
+	//expect(decoded.maker).toEqual(signer);
 	expect(decoded.mintX).toEqual(mintX);
 	expect(decoded.mintY).toEqual(mintY);
 	expect(decoded.amountY).toEqual(amountY);
 	expect(decoded.id).toEqual(id);
 	expect(decoded.bump).toEqual(escrowOut.bump);
-	//ataBalCk(toAta, amt, "vaultO");
-	//ataBalCk(fromAta, as6zBn(424), "user1 ");
+	ataBalCk(toAta, amountX, "Escrow");
+	ataBalCk(fromAta, as6zBn(135), "user1 ");
 });
 
 test.skip("copy accounts from devnet", async () => {

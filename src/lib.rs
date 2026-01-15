@@ -14,6 +14,8 @@ pub mod instructions;
 pub use instructions::*;
 pub mod state;
 pub use state::*;
+
+use crate::instructions::escrowTokTake::EscrowTokTake;
 #[cfg(test)]
 mod litesvm1;
 #[cfg(test)]
@@ -52,7 +54,7 @@ fn process_instruction(
     UpdateConfig::DISCRIMINATOR => UpdateConfig::try_from((data, accounts))?.process(),
     CloseConfigPda::DISCRIMINATOR => CloseConfigPda::try_from((data, accounts))?.process(),
     EscrowTokMake::DISCRIMINATOR => EscrowTokMake::try_from((data, accounts))?.process(),
-    //EscrowTokTake::DISCRIMINATOR => EscrowTokTake::try_from((data, accounts))?.process(),
+    EscrowTokTake::DISCRIMINATOR => EscrowTokTake::try_from((data, accounts))?.process(),
     //EscrowTokRefund::DISCRIMINATOR => EscrowTokRefund::try_from((data, accounts))?.process(),
     _ => Err(Ee::MethodDiscriminator.into()),
   } //file names start with a lower case + Camel cases, but struct names start with Upper case + Camel cases!

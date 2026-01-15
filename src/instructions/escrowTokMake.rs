@@ -18,9 +18,9 @@ use crate::{
 /// Make Escrow Token Offer
 pub struct EscrowTokMake<'a> {
   pub maker: &'a AccountInfo, //signer
-  pub maker_ata: &'a AccountInfo,
-  pub escrow_ata: &'a AccountInfo, //as to_ata
-  pub escrow: &'a AccountInfo,     //PDA as to_wallet
+  pub maker_ata_x: &'a AccountInfo,
+  pub escrow_ata_x: &'a AccountInfo, //as to_ata
+  pub escrow_pda: &'a AccountInfo,   //as to_wallet
   pub mint_x: &'a AccountInfo,
   pub mint_y: &'a AccountInfo,
   pub token_program: &'a AccountInfo,
@@ -38,9 +38,9 @@ impl<'a> EscrowTokMake<'a> {
   pub fn process(self) -> ProgramResult {
     let EscrowTokMake {
       maker,
-      maker_ata,
-      escrow_ata,
-      escrow,
+      maker_ata_x,
+      escrow_ata_x,
+      escrow_pda,
       mint_x,
       mint_y,
       token_program,
@@ -56,53 +56,53 @@ impl<'a> EscrowTokMake<'a> {
 
     /*let bump = unsafe { *(data.as_ptr() as *const u8) }.to_le_bytes();
     if bump.len() != 1 { return Err(..);  };   bump.as_ref()*/
-    let seed = [Escrow::SEED, maker.key().as_slice(), &id.to_le_bytes()];
+    let seed = [Escrow::SEED, &id.to_le_bytes()]; //maker.key().as_slice(),
     let seeds = &seed[..];
 
     let (expected_escrow, bump) = find_program_address(seeds, &crate::ID); //TODO: may incur unknown cost
-    if expected_escrow.ne(escrow.key()) {
+    if expected_escrow.ne(escrow_pda.key()) {
       return Ee::EscrowPDA.e();
     }
     //let expected_escrow = checked_create_program_address(seeds, &crate::ID)?;
     log!("EscrowTokMake EscrowPDA verified");
 
-    if escrow.lamports() > 0 {
-      //escrow.owner() != &crate::ID
+    if escrow_pda.lamports() > 0 {
+      //escrow_pda.owner() != &crate::ID
       return Err(ProgramError::AccountAlreadyInitialized);
     } else {
       log!("Make Escrow PDA 1");
       let lamports = Rent::get()?.minimum_balance(Escrow::LEN);
 
       log!("Make Escrow PDA 2");
-      let id_seed = &id.to_le_bytes();
+      let id_bytes = &id.to_le_bytes();
       //let seed = [Escrow::SEED, maker.key().as_slice(), &id.to_le_bytes()];
       //let seeds = &seed[..];
-      let seeds: [Seed<'_>; 4] = [
+      let seeds: [Seed<'_>; 3] = [
         Seed::from(Escrow::SEED),
-        Seed::from(maker.key().as_ref()),
-        Seed::from(id_seed),
+        Seed::from(id_bytes),
         Seed::from(core::slice::from_ref(&bump)),
-      ];
-      let seed_signer = [Signer::from(&seeds)];
+      ]; //Seed::from(maker.key().as_ref()),
+
+      let seed_signer = Signer::from(&seeds);
       log!("Make Escrow PDA 3");
 
       pinocchio_system::instructions::CreateAccount {
         from: maker,
-        to: escrow,
+        to: escrow_pda,
         lamports,
         space: Escrow::LEN as u64,
         owner: &crate::ID,
       }
-      .invoke_signed(&seed_signer)?;
+      .invoke_signed(&[seed_signer])?;
     }
 
     log!("Escrow is made");
-    if escrow_ata.data_is_empty() {
-      log!("Make escrow_ata");
+    if escrow_ata_x.data_is_empty() {
+      log!("Make escrow_ata_x");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: maker,
-        account: escrow_ata,
-        wallet: escrow,
+        account: escrow_ata_x,
+        wallet: escrow_pda,
         mint: mint_x,
         system_program,
         token_program,
@@ -110,33 +110,33 @@ impl<'a> EscrowTokMake<'a> {
       .invoke()?;
       //Please upgrade to SPL Token 2022 for immutable owner support
     } else {
-      log!("escrow_ata has data");
-      check_ata_escrow(escrow_ata, escrow, mint_x)?;
+      log!("escrow_ata_x has data");
+      check_ata_escrow(escrow_ata_x, escrow_pda, mint_x)?;
     }
-    writable(escrow_ata)?;
-    rent_exempt_tokacct(escrow_ata)?;
+    writable(escrow_ata_x)?;
+    rent_exempt_tokacct(escrow_ata_x)?;
     log!("Vault ATA is found/verified");
 
-    log!("Transfer token_x from maker_ata");
+    log!("Transfer token_x from maker_ata_x");
     pinocchio_token::instructions::TransferChecked {
-      from: maker_ata,
+      from: maker_ata_x,
       mint: mint_x,
-      to: escrow_ata,
+      to: escrow_ata_x,
       authority: maker,
       amount: amount_x, // *(data.as_ptr().add(1 + 8) as *const u64)
       decimals: dec_x,
     }
     .invoke()?;
     /*  pinocchio_token::instructions::Transfer {
-        from: escrow,
-        to: escrow_ata,
-        authority: escrow,
+        from: escrow_pda,
+        to: escrow_ata_x,
+        authority: escrow_pda,
         amount: vault_account.amount(),
     }.invoke_signed(&[seeds.clone()])?; */
 
     log!("Fill Escrow PDA AFTER payment");
-    let escrow: &mut Escrow = Escrow::from_account_info(&escrow)?;
-    escrow.set_maker(maker.key());
+    let escrow: &mut Escrow = Escrow::from_account_info(&escrow_pda)?;
+    //escrow.set_maker(maker.key());
     escrow.set_mint_x(mint_x.key());
     escrow.set_mint_y(mint_y.key());
     escrow.set_id(id)?;
@@ -154,7 +154,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
-    let [maker, maker_ata, escrow_ata, escrow, mint_x, mint_y, config_pda, token_program, system_program, atoken_program] =
+    let [maker, maker_ata_x, escrow_ata_x, escrow_pda, mint_x, mint_y, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
       return Err(ProgramError::NotEnoughAccountKeys);
@@ -164,9 +164,9 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
     check_sysprog(system_program)?;
     check_atoken_gpvbd(atoken_program)?;
 
-    writable(maker_ata)?;
-    check_ata(maker_ata, maker, mint_x)?;
-    writable(escrow)?;
+    writable(maker_ata_x)?;
+    check_ata(maker_ata_x, maker, mint_x)?;
+    writable(escrow_pda)?;
     log!("EscrowTokMake try_from 5");
 
     //2x u8 takes 2 + 2x u64 takes 16 bytes
@@ -175,7 +175,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
     let amount_x = parse_u64(&data[1..9])?;
     log!("dec_x: {}, amount_x: {}", dec_x, amount_x);
     none_zero_u64(amount_x)?;
-    ata_balc(maker_ata, amount_x)?;
+    ata_balc(maker_ata_x, amount_x)?;
 
     let dec_y = data[9];
     let amount_y = parse_u64(&data[10..18])?;
@@ -202,9 +202,9 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
 
     Ok(Self {
       maker,
-      maker_ata,
-      escrow_ata,
-      escrow,
+      maker_ata_x,
+      escrow_ata_x,
+      escrow_pda,
       mint_x,
       mint_y,
       token_program,

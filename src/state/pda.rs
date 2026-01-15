@@ -213,10 +213,11 @@ impl From<u8> for Status {
 #[derive(Clone, Copy, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
 pub struct Escrow {
-  maker: Pubkey,     //32
+  //maker: Pubkey,     //32
+  //taker: Pubkey,     //32
   mint_x: Pubkey,    //32
   mint_y: Pubkey,    //32
-  amount_y: [u8; 8], //8 the wanted amount
+  amount_y: [u8; 8], //8 the wanted amount to maker. The ratio is this / This PDA ATA amount
   id: [u8; 8],       //8
   bump: u8,          //1
 }
@@ -226,9 +227,9 @@ impl Escrow {
 
   pub const SEED: &[u8] = b"escrow";
 
-  pub fn maker(&self) -> &Pubkey {
+  /*pub fn maker(&self) -> &Pubkey {
     &self.maker
-  }
+  }*/
   pub fn mint_x(&self) -> &Pubkey {
     &self.mint_x
   }
@@ -244,9 +245,9 @@ impl Escrow {
   pub fn bump(&self) -> u8 {
     self.bump
   }
-  pub fn set_maker(&mut self, pkey: &Pubkey) {
+  /*pub fn set_maker(&mut self, pkey: &Pubkey) {
     self.maker = *pkey;
-  }
+  }*/
   pub fn set_mint_x(&mut self, pkey: &Pubkey) {
     self.mint_x = *pkey;
   }

@@ -65,7 +65,7 @@ impl<'a> InitConfig<'a> {
       Seed::from(prog_owner.as_ref()),
       Seed::from(core::slice::from_ref(&bump)),
     ];
-    let seed_signer = [Signer::from(&seeds)];
+    let seed_signer = Signer::from(&seeds);
 
     log!("InitConfig 7");
     pinocchio_system::instructions::CreateAccount {
@@ -75,7 +75,7 @@ impl<'a> InitConfig<'a> {
       space,
       owner: &crate::ID,
     }
-    .invoke_signed(&seed_signer)?;
+    .invoke_signed(&[seed_signer])?;
 
     log!("InitConfig after initialization");
     let time = get_time()?;

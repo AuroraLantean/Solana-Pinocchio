@@ -75,7 +75,7 @@ impl<'a> TokLgcRedeem<'a> {
       Seed::from(core::slice::from_ref(&vault_bump)),
     ];
     log!("TokLgcRedeem 7c");
-    let signer = Signer::from(&signer_seeds);
+    let seed_signer = Signer::from(&signer_seeds);
 
     log!("TokLgcRedeem 8 Transfer Tokens");
     pinocchio_token::instructions::TransferChecked {
@@ -86,13 +86,7 @@ impl<'a> TokLgcRedeem<'a> {
       amount,
       decimals,
     }
-    .invoke_signed(&[signer])?;
-    /*  pinocchio_token::instructions::Transfer {
-        from: vault,
-        to: to_ata,
-        authority: escrow,
-        amount: vault_account.amount(),
-    }.invoke_signed(&[seeds.clone()])?; */
+    .invoke_signed(&[seed_signer])?;
     Ok(())
   }
 }

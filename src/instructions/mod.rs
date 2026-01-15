@@ -88,7 +88,7 @@ pub enum ProgramIx {
   #[account(3, writable, name = "ata", desc = "ATA Token Account")]
   #[account(4, name = "token_program", desc = "Token Program")]
   #[account(5, name = "system_program", desc = "System Program")]
-  #[account(6, name = "atoken_program", desc = "AToken Program")]
+  #[account(6, name = "atoken_program", desc = "Associated Token Program")]
   TokenLgcInitATA {},
 
   /// 4 TokLgc Mint Token
@@ -98,7 +98,7 @@ pub enum ProgramIx {
   #[account(3, writable, name = "ata", desc = "ATA Token Account")]
   #[account(4, name = "token_program", desc = "Token Program")]
   #[account(5, name = "system_program", desc = "System Program")]
-  #[account(6, name = "atoken_program", desc = "AToken Program")]
+  #[account(6, name = "atoken_program", desc = "Associated Token Program")]
   TokLgcMintToken { decimals: u8, amount: u64 },
 
   /// 5 TokLgc Deposit Tokens
@@ -110,7 +110,7 @@ pub enum ProgramIx {
   #[account(5, writable, name = "config_pda", desc = "config_pda")]
   #[account(6, name = "token_program", desc = "Token Program")]
   #[account(7, name = "system_program", desc = "System Program")]
-  #[account(8, name = "atoken_program", desc = "AToken Program")]
+  #[account(8, name = "atoken_program", desc = "Associated Token Program")]
   TokLgcDeposit { decimals: u8, amount: u64 },
 
   /// 6 TokLgc Withdraw Token
@@ -121,7 +121,7 @@ pub enum ProgramIx {
   #[account(4, name = "mint", desc = "Mint")]
   #[account(5, name = "token_program", desc = "Token Program")]
   #[account(6, name = "system_program", desc = "System Program")]
-  #[account(7, name = "atoken_program", desc = "AToken Program")]
+  #[account(7, name = "atoken_program", desc = "Associated Token Program")]
   TokLgcWithdraw { decimals: u8, amount: u64 },
 
   /// 7 TokLgc User Pays Tokens to VaultPDA
@@ -133,7 +133,7 @@ pub enum ProgramIx {
   #[account(5, writable, name = "config_pda", desc = "config_pda")]
   #[account(6, name = "token_program", desc = "Token Program")]
   #[account(7, name = "system_program", desc = "System Program")]
-  #[account(8, name = "atoken_program", desc = "AToken Program")]
+  #[account(8, name = "atoken_program", desc = "Associated Token Program")]
   TokLgcPay { decimals: u8, amount: u64 },
 
   /// 8 TokLgc Redeem Tokens
@@ -145,7 +145,7 @@ pub enum ProgramIx {
   #[account(5, name = "mint", desc = "Mint")]
   #[account(6, name = "token_program", desc = "Token Program")]
   #[account(7, name = "system_program", desc = "System Program")]
-  #[account(8, name = "atoken_program", desc = "AToken Program")]
+  #[account(8, name = "atoken_program", desc = "Associated Token Program")]
   TokLgcRedeem { decimals: u8, amount: u64 },
 
   //---------== Token2022
@@ -170,7 +170,7 @@ pub enum ProgramIx {
   #[account(3, writable, name = "ata", desc = "ATA Token Account")]
   #[account(4, name = "token_program", desc = "Token Program")]
   #[account(5, name = "system_program", desc = "System Program")]
-  #[account(6, name = "atoken_program", desc = "AToken Program")]
+  #[account(6, name = "atoken_program", desc = "Associated Token Program")]
   Token2022InitATA {},
 
   /// 11 Token2022 Mint Token
@@ -180,7 +180,7 @@ pub enum ProgramIx {
   #[account(3, writable, name = "ata", desc = "ATA Token Account")]
   #[account(4, name = "token_program", desc = "Token Program")]
   #[account(5, name = "system_program", desc = "System Program")]
-  #[account(6, name = "atoken_program", desc = "AToken Program")]
+  #[account(6, name = "atoken_program", desc = "Associated Token Program")]
   Tok22MintToken { decimals: u8, amount: u64 },
 
   //---------------== Config PDA
@@ -219,17 +219,37 @@ pub enum ProgramIx {
 
   //---------------== Escrow PDA
   /// 15 Escrow Token Make Offer
-  #[account(0, signer, writable, name = "user_x", desc = "User X")]
-  #[account(1, writable, name = "user_x_ata", desc = "User X ATA")]
-  #[account(2, writable, name = "escrow_ata", desc = "Escrow ATA")]
-  #[account(3, writable, name = "escrow", desc = "Escrow as To Wallet")]
+  #[account(0, signer, writable, name = "maker", desc = "Maker X")]
+  #[account(1, writable, name = "maker_ata_x", desc = "Maker ATA X")]
+  #[account(2, writable, name = "escrow_ata_x", desc = "Escrow ATA X")]
+  #[account(3, writable, name = "escrow_pda", desc = "EscrowPDA as To Wallet")]
   #[account(4, name = "mint_x", desc = "Mint X")]
   #[account(5, name = "mint_y", desc = "Mint Y")]
   #[account(6, writable, name = "config_pda", desc = "Config PDA")]
   #[account(7, name = "token_program", desc = "Token Program")]
   #[account(8, name = "system_program", desc = "System Program")]
-  #[account(9, name = "atoken_program", desc = "AToken Program")]
+  #[account(9, name = "atoken_program", desc = "Associated Token Program")]
   EscrowTokMake {
+    decimal_x: u8,
+    amount_x: u64,
+    decimal_y: u8,
+    amount_y: u64,
+    id: u64,
+  },
+  /// 16 Escrow Token Take Offer
+  #[account(0, signer, writable, name = "taker", desc = "Taker")]
+  #[account(1, writable, name = "taker_ata_x", desc = "Taker ATA X")]
+  #[account(2, writable, name = "taker_ata_y", desc = "Taker ATA Y")]
+  #[account(3, writable, name = "escrow_ata_x", desc = "Escrow ATA X")]
+  #[account(4, writable, name = "escrow_ata_y", desc = "Escrow ATA Y")]
+  #[account(5, writable, name = "escrow_pda", desc = "EscrowPDA as To Wallet")]
+  #[account(6, name = "mint_x", desc = "Mint X")]
+  #[account(7, name = "mint_y", desc = "Mint Y")]
+  #[account(8, writable, name = "config_pda", desc = "Config PDA")]
+  #[account(9, name = "token_program", desc = "Token Program")]
+  #[account(10, name = "system_program", desc = "System Program")]
+  #[account(11, name = "atoken_program", desc = "Associated Token Program")]
+  EscrowTokTake {
     decimal_x: u8,
     amount_x: u64,
     decimal_y: u8,

@@ -62,8 +62,8 @@ export type PdaOut = {
 };
 export const findPdaV1 = (
 	userAddr: PublicKey,
-	seedStr: string,
 	pdaName: string,
+	seedStr = "vault",
 	progAddr = vaultProgAddr,
 ): PdaOut => {
 	const [pda, bump] = PublicKey.findProgramAddressSync(
@@ -73,11 +73,11 @@ export const findPdaV1 = (
 	ll(`${pdaName} pda: ${pda.toBase58()}, bump: ${bump}`);
 	return { pda, bump };
 };
-export const configOut = findPdaV1(owner, "config", "ConfigPDA");
-export const vaultOOut = findPdaV1(owner, "vault", "VaultO ");
-export const vaultOut1 = findPdaV1(user1, "vault", "Vault1");
-export const vaultOut2 = findPdaV1(user2, "vault", "Vault2");
-export const vaultOut3 = findPdaV1(user3, "vault", "Vault3");
+export const configOut = findPdaV1(owner, "ConfigPDA", "config");
+export const vaultOOut = findPdaV1(owner, "VaultO ");
+export const vaultOut1 = findPdaV1(user1, "Vault1");
+export const vaultOut2 = findPdaV1(user2, "Vault2");
+export const vaultOut3 = findPdaV1(user3, "Vault3");
 export const configPDA = configOut.pda;
 export const configBump = configOut.bump;
 export const vaultO = vaultOOut.pda;
@@ -86,21 +86,12 @@ export const vault1 = vaultOut1.pda;
 export const vault2 = vaultOut2.pda;
 export const vault3 = vaultOut3.pda;
 
-export const findPdaV2 = (
-	userAddr: PublicKey,
-	id: bigint,
-	pdaName: string,
-	progAddr = vaultProgAddr,
-): PdaOut => {
+export const findEscrow = (id: bigint, progAddr = vaultProgAddr): PdaOut => {
 	const [pda, bump] = PublicKey.findProgramAddressSync(
-		[
-			Buffer.from("escrow"),
-			userAddr.toBuffer(),
-			Buffer.copyBytesFrom(bigintToBytes(id)),
-		],
+		[Buffer.from("escrow"), Buffer.copyBytesFrom(bigintToBytes(id))],
 		progAddr,
-	);
-	ll(`${pdaName} pda: ${pda.toBase58()}, bump: ${bump}`);
+	); //userAddr.toBuffer(), to hide maker
+	ll(`Escrow ${id}: ${pda.toBase58()}, bump: ${bump}`);
 	return { pda, bump };
 };
 

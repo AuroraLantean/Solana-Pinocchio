@@ -57,7 +57,7 @@ impl<'a> TokLgcDeposit<'a> {
         Seed::from(user.key().as_ref()),
         Seed::from(core::slice::from_ref(&bump)),
       ];
-      let signer = Signer::from(&signer_seeds);
+      let seed_signer = Signer::from(&signer_seeds);
       // Make the account rent-exempt.
       let needed_lamports = Rent::get()?.minimum_balance(VAULT_SIZE);
 
@@ -68,7 +68,7 @@ impl<'a> TokLgcDeposit<'a> {
         space: VAULT_SIZE as u64,
         owner: &crate::ID,
       }
-      .invoke_signed(&[signer])?;
+      .invoke_signed(&[seed_signer])?;
       log!("TokLgcDeposit 6b");
     }
     check_pda(to_wallet)?;
@@ -103,12 +103,6 @@ impl<'a> TokLgcDeposit<'a> {
       decimals,
     }
     .invoke()?;
-    /*  pinocchio_token::instructions::Transfer {
-        from: vault,
-        to: to_ata,
-        authority: escrow,
-        amount: vault_account.amount(),
-    }.invoke_signed(&[seeds.clone()])?; */
     Ok(())
   }
 }

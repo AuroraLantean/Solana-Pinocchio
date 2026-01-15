@@ -71,7 +71,7 @@ impl<'a> TokLgcWithdraw<'a> {
       Seed::from(user.key().as_ref()),
       Seed::from(core::slice::from_ref(&vault_bump)),
     ];
-    let signer = Signer::from(&signer_seeds);
+    let seed_signer = Signer::from(&signer_seeds);
 
     log!("Transfer Tokens");
     pinocchio_token::instructions::TransferChecked {
@@ -82,13 +82,7 @@ impl<'a> TokLgcWithdraw<'a> {
       amount,
       decimals,
     }
-    .invoke_signed(&[signer])?;
-    /*  pinocchio_token::instructions::Transfer {
-        from: vault,
-        to: to_ata,
-        authority: escrow,
-        amount: vault_account.amount(),
-    }.invoke_signed(&[seeds.clone()])?; */
+    .invoke_signed(&[seed_signer])?;
     Ok(())
   }
 }

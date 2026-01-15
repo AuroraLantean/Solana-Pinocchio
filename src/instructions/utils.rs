@@ -44,10 +44,10 @@ pub enum Ee {
   MintNotAccepted,
   #[error("MintsAreTheSame")]
   MintsAreTheSame,
-  #[error("Xyz014")]
-  Xyz014,
-  #[error("Xyz015")]
-  Xyz015,
+  #[error("Mint_X_Invalid")]
+  Mint_X_Invalid,
+  #[error("Mint_Y_Invalid")]
+  Mint_Y_Invalid,
   #[error("Xyz016")]
   Xyz016,
   #[error("Xyz017")]
@@ -278,8 +278,8 @@ impl TryFrom<u32> for Ee {
       11 => Ok(Ee::SystemProgram),
       12 => Ok(Ee::MintNotAccepted),
       13 => Ok(Ee::MintsAreTheSame),
-      14 => Ok(Ee::Xyz014),
-      15 => Ok(Ee::Xyz015),
+      14 => Ok(Ee::Mint_X_Invalid),
+      15 => Ok(Ee::Mint_Y_Invalid),
       16 => Ok(Ee::Xyz016),
       17 => Ok(Ee::Xyz017),
       18 => Ok(Ee::Xyz018),
@@ -395,8 +395,8 @@ impl ToStr for Ee {
       Ee::SystemProgram => "SystemProgram",
       Ee::MintNotAccepted => "MintNotAccepted",
       Ee::MintsAreTheSame => "MintsAreTheSame",
-      Ee::Xyz014 => "Xyz014",
-      Ee::Xyz015 => "Xyz015",
+      Ee::Mint_X_Invalid => "Mint_X_Invalid",
+      Ee::Mint_Y_Invalid => "Mint_Y_Invalid",
       Ee::Xyz016 => "Xyz016",
       Ee::Xyz017 => "Xyz017",
       Ee::Xyz018 => "Xyz018",

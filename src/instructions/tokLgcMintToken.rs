@@ -118,16 +118,9 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcMintToken<'a> {
           amount,
       }.invoke()?;
 
-//----------==
-  pinocchio_token::instructions::Transfer {
-      from: vault,
-      to: taker_ata_x,
-      authority: escrow,
-      amount: vault_account.amount(),
-  }.invoke_signed(&[seeds.clone()])?;
-
+//TODO: Close Account
   pinocchio_token::instructions::CloseAccount {
       account: vault,
       destination: maker,
       authority: escrow,
-  }.invoke_signed(&[seeds])?;  */
+  }.invoke_signed(&[seed_signer])?;  */
