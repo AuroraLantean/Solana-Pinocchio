@@ -37,6 +37,7 @@ import {
 	admin,
 	adminKp,
 	dgcAuthorityKp,
+	dragonCoin,
 	dragonCoinKp,
 	hacker,
 	hackerKp,
@@ -57,6 +58,7 @@ let signerKp: Keypair;
 let mintKp: Keypair;
 let mintAuthorityKp: Keypair;
 let signer: PublicKey;
+let user: PublicKey;
 let mint: PublicKey;
 let mintX: PublicKey;
 let mintY: PublicKey;
@@ -71,8 +73,8 @@ let amount: bigint;
 let amtDeposit: bigint;
 let amtWithdraw: bigint;
 let amt: bigint;
-let decimalsX: number;
-let decimalsY: number;
+let decimalX: number;
+let decimalY: number;
 let amountX: bigint;
 let amountY: bigint;
 let id: bigint;
@@ -80,7 +82,7 @@ let balcBf: bigint | null;
 let balcAf: bigint | null;
 const vaultRent = 1002240n; //from Rust
 const decDgc = 9;
-const initDgcBalc = bigintAmt(1000, decDgc);
+const initDgcBalc = bigintAmt(3000, decDgc);
 const initUsdcBalc = bigintAmt(1000, 6);
 
 balcBf = svm.getBalance(admin);
@@ -147,6 +149,7 @@ test("Make DragonCoin Mint, ATA, Tokens", () => {
 	mintAuthorityKp = dgcAuthorityKp;
 	decimals = decDgc;
 	amt = initDgcBalc;
+
 	signer = signerKp.publicKey;
 	mint = mintKp.publicKey;
 	mintAuthority = mintAuthorityKp.publicKey;
@@ -157,18 +160,20 @@ test("Make DragonCoin Mint, ATA, Tokens", () => {
 	lgcInitMint(signerKp, mintKp, mintAuthority, mintAuthority, decimals);
 	acctExists(mint);
 
-	ata = getAta(mint, signer);
-	lgcInitAta(signerKp, signer, mint, ata);
+	user = admin;
+	ata = getAta(mint, user);
+	lgcInitAta(signerKp, user, mint, ata);
 	acctExists(ata);
-	lgcMintToken(mintAuthorityKp, signer, mint, ata, decimals, amt);
-	ataBalCk(ata, amt, "admin", 9);
+	lgcMintToken(mintAuthorityKp, user, mint, ata, decimals, amt);
+	ataBalCk(ata, amt, "admin", decDgc);
 	ll("can mint to admin with ATA");
 
-	ata = getAta(mint, user1);
+	user = user2;
+	ata = getAta(mint, user);
 	acctIsNull(ata);
-	lgcMintToken(mintAuthorityKp, user1, mint, ata, decimals, amt);
-	ataBalCk(ata, amt, "user1", 9);
-	ll("can mint to user1 without ATA");
+	lgcMintToken(mintAuthorityKp, user, mint, ata, decimals, amt);
+	ataBalCk(ata, amt, "user2", decDgc);
+	ll("can mint to user2 without ATA");
 	//TODO: transfer set minted tokens
 });
 
@@ -304,11 +309,11 @@ test("Make Token Escrow", () => {
 	ll("\n------== Make Token Escrow");
 	signerKp = user1Kp;
 	mintX = usdcMint;
-	mintY = usdtMint;
-	decimalsX = 6;
-	decimalsY = 6;
-	amountX = as6zBn(326);
-	amountY = as6zBn(299);
+	mintY = dragonCoin;
+	decimalX = 6;
+	decimalY = decDgc;
+	amountX = bigintAmt(326, decimalX);
+	amountY = bigintAmt(2100, decimalY);
 	id = BigInt(0);
 
 	signer = signerKp.publicKey;
@@ -320,13 +325,13 @@ test("Make Token Escrow", () => {
 		signerKp,
 		fromAta,
 		toAta,
-		escrowOut.pda,
 		mintX,
 		mintY,
+		escrowOut.pda,
 		configPDA,
-		decimalsX,
+		decimalX,
 		amountX,
-		decimalsY,
+		decimalY,
 		amountY,
 		id,
 	);

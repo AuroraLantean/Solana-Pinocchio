@@ -217,7 +217,7 @@ pub struct Escrow {
   //taker: Pubkey,     //32
   mint_x: Pubkey,    //32
   mint_y: Pubkey,    //32
-  amount_y: [u8; 8], //8 the wanted amount to maker. The ratio is this / This PDA ATA amount
+  amount_y: [u8; 8], //8 the wanted amount to maker. The token_y price in mint_x = this Escrow PDA ATA_X amount / amount_y
   id: [u8; 8],       //8
   bump: u8,          //1
 }

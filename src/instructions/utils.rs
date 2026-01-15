@@ -114,8 +114,8 @@ pub enum Ee {
   Xyz045,
   #[error("Xyz046")]
   Xyz046,
-  #[error("Xyz047")]
-  Xyz047,
+  #[error("EscrowExists")]
+  EscrowExists,
   #[error("EscrowIsForeign")]
   EscrowIsForeign,
   #[error("ConfigIsForeign")]
@@ -311,7 +311,7 @@ impl TryFrom<u32> for Ee {
       44 => Ok(Ee::Xyz044),
       45 => Ok(Ee::Xyz045),
       46 => Ok(Ee::Xyz046),
-      47 => Ok(Ee::Xyz047),
+      47 => Ok(Ee::EscrowExists),
       48 => Ok(Ee::EscrowIsForeign),
       49 => Ok(Ee::ConfigIsForeign),
       50 => Ok(Ee::PdaNoLamport),
@@ -430,7 +430,7 @@ impl ToStr for Ee {
       Ee::Xyz044 => "Xyz044",
       Ee::Xyz045 => "Xyz045",
       Ee::Xyz046 => "Xyz046",
-      Ee::Xyz047 => "Xyz047",
+      Ee::EscrowExists => "EscrowExists",
       Ee::EscrowIsForeign => "EscrowIsForeign",
       Ee::ConfigIsForeign => "ConfigIsForeign",
 

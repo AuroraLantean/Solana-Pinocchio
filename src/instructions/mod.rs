@@ -6,6 +6,8 @@ pub mod depositSol;
 #[allow(non_snake_case)]
 pub mod escrowTokMake;
 #[allow(non_snake_case)]
+pub mod escrowTokTake;
+#[allow(non_snake_case)]
 pub mod initConfig;
 #[allow(non_snake_case)]
 pub mod tok22InitATA;
@@ -222,9 +224,9 @@ pub enum ProgramIx {
   #[account(0, signer, writable, name = "maker", desc = "Maker X")]
   #[account(1, writable, name = "maker_ata_x", desc = "Maker ATA X")]
   #[account(2, writable, name = "escrow_ata_x", desc = "Escrow ATA X")]
-  #[account(3, writable, name = "escrow_pda", desc = "EscrowPDA as To Wallet")]
-  #[account(4, name = "mint_x", desc = "Mint X")]
-  #[account(5, name = "mint_y", desc = "Mint Y")]
+  #[account(3, name = "mint_x", desc = "Mint X")]
+  #[account(4, name = "mint_y", desc = "Mint Y")]
+  #[account(5, writable, name = "escrow_pda", desc = "Escrow PDA as ToWallet")]
   #[account(6, writable, name = "config_pda", desc = "Config PDA")]
   #[account(7, name = "token_program", desc = "Token Program")]
   #[account(8, name = "system_program", desc = "System Program")]
@@ -242,9 +244,9 @@ pub enum ProgramIx {
   #[account(2, writable, name = "taker_ata_y", desc = "Taker ATA Y")]
   #[account(3, writable, name = "escrow_ata_x", desc = "Escrow ATA X")]
   #[account(4, writable, name = "escrow_ata_y", desc = "Escrow ATA Y")]
-  #[account(5, writable, name = "escrow_pda", desc = "EscrowPDA as To Wallet")]
-  #[account(6, name = "mint_x", desc = "Mint X")]
-  #[account(7, name = "mint_y", desc = "Mint Y")]
+  #[account(5, name = "mint_x", desc = "Mint X")]
+  #[account(6, name = "mint_y", desc = "Mint Y")]
+  #[account(7, writable, name = "escrow_pda", desc = "Escrow PDA")]
   #[account(8, writable, name = "config_pda", desc = "Config PDA")]
   #[account(9, name = "token_program", desc = "Token Program")]
   #[account(10, name = "system_program", desc = "System Program")]
