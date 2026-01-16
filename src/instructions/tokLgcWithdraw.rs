@@ -141,8 +141,3 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcWithdraw<'a> {
     })
   }
 }
-/*  pinocchio_token::instructions::CloseAccount {
-    account: vault,
-    destination: maker,
-    authority: escrow,
-}.invoke_signed(&[seeds])?;  */

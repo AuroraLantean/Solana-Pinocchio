@@ -44,12 +44,12 @@ pub enum Ee {
   MintNotAccepted,
   #[error("MintsAreTheSame")]
   MintsAreTheSame,
-  #[error("Mint_X_Invalid")]
-  Mint_X_Invalid,
-  #[error("Mint_Y_Invalid")]
-  Mint_Y_Invalid,
-  #[error("Xyz016")]
-  Xyz016,
+  #[error("EscrowMintX")]
+  EscrowMintX,
+  #[error("EscrowMintY")]
+  EscrowMintY,
+  #[error("EscrowId")]
+  EscrowId,
   #[error("Xyz017")]
   Xyz017,
   #[error("Xyz018")]
@@ -108,12 +108,12 @@ pub enum Ee {
   ByteForBool,
   #[error("ByteForStatus")]
   ByteForStatus,
-  #[error("Xyz044")]
-  Xyz044,
+  #[error("InputAmount")]
+  InputAmount,
   #[error("Xyz045")]
   Xyz045,
-  #[error("Xyz046")]
-  Xyz046,
+  #[error("EscrowDataEmpty")]
+  EscrowDataEmpty,
   #[error("EscrowExists")]
   EscrowExists,
   #[error("EscrowIsForeign")]
@@ -278,9 +278,9 @@ impl TryFrom<u32> for Ee {
       11 => Ok(Ee::SystemProgram),
       12 => Ok(Ee::MintNotAccepted),
       13 => Ok(Ee::MintsAreTheSame),
-      14 => Ok(Ee::Mint_X_Invalid),
-      15 => Ok(Ee::Mint_Y_Invalid),
-      16 => Ok(Ee::Xyz016),
+      14 => Ok(Ee::EscrowMintX),
+      15 => Ok(Ee::EscrowMintY),
+      16 => Ok(Ee::EscrowId),
       17 => Ok(Ee::Xyz017),
       18 => Ok(Ee::Xyz018),
       19 => Ok(Ee::Xyz019),
@@ -308,9 +308,9 @@ impl TryFrom<u32> for Ee {
       41 => Ok(Ee::InputDataBump),
       42 => Ok(Ee::ByteForBool),
       43 => Ok(Ee::ByteForStatus),
-      44 => Ok(Ee::Xyz044),
+      44 => Ok(Ee::InputAmount),
       45 => Ok(Ee::Xyz045),
-      46 => Ok(Ee::Xyz046),
+      46 => Ok(Ee::EscrowDataEmpty),
       47 => Ok(Ee::EscrowExists),
       48 => Ok(Ee::EscrowIsForeign),
       49 => Ok(Ee::ConfigIsForeign),
@@ -395,9 +395,9 @@ impl ToStr for Ee {
       Ee::SystemProgram => "SystemProgram",
       Ee::MintNotAccepted => "MintNotAccepted",
       Ee::MintsAreTheSame => "MintsAreTheSame",
-      Ee::Mint_X_Invalid => "Mint_X_Invalid",
-      Ee::Mint_Y_Invalid => "Mint_Y_Invalid",
-      Ee::Xyz016 => "Xyz016",
+      Ee::EscrowMintX => "EscrowMintX",
+      Ee::EscrowMintY => "EscrowMintY",
+      Ee::EscrowId => "EscrowId",
       Ee::Xyz017 => "Xyz017",
       Ee::Xyz018 => "Xyz018",
       Ee::Xyz019 => "Xyz019",
@@ -427,9 +427,9 @@ impl ToStr for Ee {
       Ee::InputDataBump => "InputDataBump",
       Ee::ByteForBool => "ByteForBool",
       Ee::ByteForStatus => "ByteForStatus",
-      Ee::Xyz044 => "Xyz044",
+      Ee::InputAmount => "InputAmount",
       Ee::Xyz045 => "Xyz045",
-      Ee::Xyz046 => "Xyz046",
+      Ee::EscrowDataEmpty => "EscrowDataEmpty",
       Ee::EscrowExists => "EscrowExists",
       Ee::EscrowIsForeign => "EscrowIsForeign",
       Ee::ConfigIsForeign => "ConfigIsForeign",

@@ -12,7 +12,6 @@ use crate::{
 pub struct TokLgcPay<'a> {
   pub user: &'a AccountInfo, //signer
   pub user_ata: &'a AccountInfo,
-  //pub config_pda: &'a AccountInfo,
   pub vault_ata: &'a AccountInfo,
   pub vault: &'a AccountInfo,
   pub mint: &'a AccountInfo,

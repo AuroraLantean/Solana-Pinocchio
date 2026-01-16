@@ -147,7 +147,7 @@ export type ConfigAcctDev = {
 //---------------== EscrowPDA
 //converted from Rust code. XyzAcct, xyzAcctDecoder, DecodedXyzAcct should all match in field order and types!
 export type EscrowAcct = {
-	//maker: Address;
+	maker: Address;
 	//taker: Address;
 	mintX: Address;
 	mintY: Address;
@@ -157,7 +157,7 @@ export type EscrowAcct = {
 };
 export const escrowAcctDecoder: FixedSizeDecoder<EscrowAcct> = getStructDecoder(
 	[
-		//["maker", getAddressDecoder()],
+		["maker", getAddressDecoder()],
 		["mintX", getAddressDecoder()],
 		["mintY", getAddressDecoder()],
 		["amountY", getU64Decoder()],
@@ -171,7 +171,7 @@ export const solanaKitDecodeEscrow = (
 ) => {
 	const decoded = escrowAcctDecoder.decode(bytes);
 	if (isVerbose) {
-		//ll("maker :", decoded.maker);
+		ll("maker :", decoded.maker);
 		ll("mintX  :", decoded.mintX);
 		ll("mintY  :", decoded.mintY);
 		ll("amountY:", decoded.amountY);
@@ -187,7 +187,7 @@ export const solanaKitDecodeEscrowDev = (
 	if (!bytes) throw new Error("bytes invalid");
 	const decoded = solanaKitDecodeEscrow(bytes, true);
 	const decodedV1: EscrowAcctDev = {
-		//maker: new PublicKey(decoded.maker.toString()),
+		maker: new PublicKey(decoded.maker.toString()),
 		mintX: new PublicKey(decoded.mintX.toString()),
 		mintY: new PublicKey(decoded.mintY.toString()),
 		amountY: decoded.amountY,
@@ -197,7 +197,7 @@ export const solanaKitDecodeEscrowDev = (
 	return decodedV1;
 };
 export type EscrowAcctDev = {
-	//maker: PublicKey;
+	maker: PublicKey;
 	mintX: PublicKey;
 	mintY: PublicKey;
 	amountY: bigint;

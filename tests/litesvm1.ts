@@ -317,7 +317,7 @@ test("Make Token Escrow", () => {
 	id = BigInt(0);
 
 	signer = signerKp.publicKey;
-	escrowOut = findEscrow(id);
+	escrowOut = findEscrow(signer, id);
 	fromAta = getAta(mintX, signer);
 	toAta = getAta(mintX, escrowOut.pda);
 

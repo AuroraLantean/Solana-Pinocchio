@@ -86,11 +86,19 @@ export const vault1 = vaultOut1.pda;
 export const vault2 = vaultOut2.pda;
 export const vault3 = vaultOut3.pda;
 
-export const findEscrow = (id: bigint, progAddr = vaultProgAddr): PdaOut => {
+export const findEscrow = (
+	maker: PublicKey,
+	id: bigint,
+	progAddr = vaultProgAddr,
+): PdaOut => {
 	const [pda, bump] = PublicKey.findProgramAddressSync(
-		[Buffer.from("escrow"), Buffer.copyBytesFrom(bigintToBytes(id))],
+		[
+			Buffer.from("escrow"),
+			maker.toBuffer(),
+			Buffer.copyBytesFrom(bigintToBytes(id)),
+		],
 		progAddr,
-	); //userAddr.toBuffer(), to hide maker
+	);
 	ll(`Escrow ${id}: ${pda.toBase58()}, bump: ${bump}`);
 	return { pda, bump };
 };

@@ -27,11 +27,11 @@ pub struct EscrowTokMake<'a> {
   pub token_program: &'a AccountInfo,
   pub system_program: &'a AccountInfo,
   pub atoken_program: &'a AccountInfo,
-  pub decimal_x: u8,
-  pub decimal_y: u8,
   pub amount_x: u64,
   pub amount_y: u64,
   pub id: u64,
+  pub decimal_x: u8,
+  pub decimal_y: u8,
 }
 impl<'a> EscrowTokMake<'a> {
   pub const DISCRIMINATOR: &'a u8 = &15;
@@ -61,7 +61,7 @@ impl<'a> EscrowTokMake<'a> {
 
     /*let bump = unsafe { *(data.as_ptr() as *const u8) }.to_le_bytes();
     if bump.len() != 1 { return Err(..);  };   bump.as_ref()*/
-    let seed = [Escrow::SEED, &id.to_le_bytes()]; //maker.key().as_slice(),
+    let seed = [Escrow::SEED, maker.key().as_slice(), &id.to_le_bytes()];
     let seeds = &seed[..];
 
     let (expected_escrow, bump) = find_program_address(seeds, &crate::ID); //TODO: may incur unknown cost
@@ -79,11 +79,12 @@ impl<'a> EscrowTokMake<'a> {
       let id_bytes = &id.to_le_bytes();
       //let seed = [Escrow::SEED, maker.key().as_slice(), &id.to_le_bytes()];
       //let seeds = &seed[..];
-      let seeds: [Seed<'_>; 3] = [
+      let seeds = [
         Seed::from(Escrow::SEED),
+        Seed::from(maker.key().as_ref()),
         Seed::from(id_bytes),
         Seed::from(core::slice::from_ref(&bump)),
-      ]; //Seed::from(maker.key().as_ref()),
+      ];
 
       let seed_signer = Signer::from(&seeds);
 
@@ -132,7 +133,7 @@ impl<'a> EscrowTokMake<'a> {
     log!("tokens sent from maker_ata_x");
 
     let escrow: &mut Escrow = Escrow::from_account_info(&escrow_pda)?;
-    //escrow.set_maker(maker.key());
+    escrow.set_maker(maker.key());
     escrow.set_mint_x(mint_x.key());
     escrow.set_mint_y(mint_y.key());
     escrow.set_id(id)?;
@@ -159,10 +160,12 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
     executable(token_program)?;
     check_sysprog(system_program)?;
     check_atoken_gpvbd(atoken_program)?;
+    log!("EscrowTokMake try_from 4");
 
     writable(maker_ata_x)?;
     check_ata(maker_ata_x, maker, mint_x)?;
     writable(escrow_pda)?;
+    writable(config_pda)?;
     log!("EscrowTokMake try_from 5");
 
     //2x u8 takes 2 + 2x u64 takes 16 bytes
@@ -203,11 +206,11 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
       token_program,
       system_program,
       atoken_program,
-      decimal_x,
-      decimal_y,
       amount_x,
       amount_y,
       id,
+      decimal_x,
+      decimal_y,
     })
   }
 }

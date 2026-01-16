@@ -110,17 +110,3 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcMintToken<'a> {
     })
   }
 }
-/*Transfer mint_x from user ata to vault
-      pinocchio_token::instructions::Transfer {
-          from: maker_ata,
-          to: vault,
-          authority: maker,
-          amount,
-      }.invoke()?;
-
-//TODO: Close Account
-  pinocchio_token::instructions::CloseAccount {
-      account: vault,
-      destination: maker,
-      authority: escrow,
-  }.invoke_signed(&[seed_signer])?;  */
