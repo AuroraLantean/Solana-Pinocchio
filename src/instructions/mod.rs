@@ -8,6 +8,8 @@ pub mod escrowTokMake;
 #[allow(non_snake_case)]
 pub mod escrowTokTake;
 #[allow(non_snake_case)]
+pub mod escrowTokWithdraw;
+#[allow(non_snake_case)]
 pub mod initConfig;
 #[allow(non_snake_case)]
 pub mod tok22InitATA;
@@ -254,6 +256,24 @@ pub enum ProgramIx {
   EscrowTokTake {
     decimal_x: u8,
     amount_x: u64,
+    decimal_y: u8,
+    amount_y: u64,
+    id: u64,
+  },
+  /// 17 Maker Withdraws Token Y (and X?)
+  #[account(0, signer, writable, name = "maker", desc = "Maker")]
+  #[account(1, writable, name = "Maker_ata_x", desc = "Maker ATA X")]
+  #[account(2, writable, name = "maker_ata_y", desc = "Maker ATA Y")]
+  #[account(3, writable, name = "escrow_ata_x", desc = "Escrow ATA X")]
+  #[account(4, writable, name = "escrow_ata_y", desc = "Escrow ATA Y")]
+  #[account(5, name = "mint_x", desc = "Mint X")]
+  #[account(6, name = "mint_y", desc = "Mint Y")]
+  #[account(7, writable, name = "escrow_pda", desc = "Escrow PDA")]
+  #[account(8, writable, name = "config_pda", desc = "Config PDA")]
+  #[account(9, name = "token_program", desc = "Token Program")]
+  #[account(10, name = "system_program", desc = "System Program")]
+  #[account(11, name = "atoken_program", desc = "Associated Token Program")]
+  EscrowTokWithdraw {
     decimal_y: u8,
     amount_y: u64,
     id: u64,

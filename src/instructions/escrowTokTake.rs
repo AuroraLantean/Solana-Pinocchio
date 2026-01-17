@@ -211,9 +211,10 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokTake<'a> {
     none_zero_u64(amount_x)?;
 
     let escrow_ata_x_info = TokenAccount::from_account_info(escrow_ata_x)?;
-    if escrow_ata_x_info.amount() != amount_x {
+    if escrow_ata_x_info.amount() < amount_x {
       return Err(Ee::EscrowAmtOfTokenX.into());
     } //ata_balc(escrow_ata_x, amount_x)?;
+      //TODO: unknown token received by Escrow
 
     let decimal_y = data[9];
     let amount_y = parse_u64(&data[10..18])?;

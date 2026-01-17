@@ -84,6 +84,7 @@ let amount: bigint;
 let amtDeposit: bigint;
 let amtWithdraw: bigint;
 let amt: bigint;
+let prevBalcX: bigint;
 let decimalX: number;
 let decimalY: number;
 let amountX: bigint;
@@ -332,7 +333,7 @@ test("Make Token Escrow", () => {
 	escrowU1_1 = escrowOut.pda;
 	escrowAtaX = getAta(mintX, escrowU1_1);
 	makerAtaX = getAta(mintX, signer);
-
+	prevBalcX = ataBalc(makerAtaX, "makerAtaX");
 	makeTokEscrow(
 		signerKp,
 		makerAtaX,
@@ -363,7 +364,7 @@ test("Make Token Escrow", () => {
 	expect(decoded.decimalY).toEqual(decimalY);
 	expect(decoded.bump).toEqual(escrowOut.bump);
 	ataBalCk(escrowAtaX, amountX, "Escrow");
-	ataBalCk(makerAtaX, as6zBn(135), "user1 ");
+	ataBalCk(makerAtaX, prevBalcX - amountX, "user1 ");
 });
 test("Take Token Escrow", () => {
 	ll("\n------== Take Token Escrow");
@@ -383,7 +384,7 @@ test("Take Token Escrow", () => {
 
 	takerAtaY = getAta(mintY, signer);
 	escrowAtaY = getAta(mintY, escrowU1_1);
-	const balcTakerX = ataBalc(takerAtaX, "takerAtaX");
+	prevBalcX = ataBalc(takerAtaX, "takerAtaX");
 	takeTokEscrow(
 		signerKp,
 		takerAtaX,
@@ -408,10 +409,10 @@ test("Take Token Escrow", () => {
 	const _decoded = solanaKitDecodeEscrowDev(rawAccountData);
 	ataBalCk(escrowAtaX, zero, "Escrow X");
 	ataBalCk(escrowAtaY, amountY, "Escrow Y");
-	ataBalCk(takerAtaX, balcTakerX + amountX, "Taker X");
+	ataBalCk(takerAtaX, prevBalcX + amountX, "Taker X");
 });
-test("Take Token Escrow", () => {
-	ll("\n------== Take Token Escrow");
+test("Maker Withdraws Token Y", () => {
+	ll("\n------== Maker Withdraws Token Y");
 	//ataBalCk(escrowAtaY, zero, "Escrow");
 	_makerAtaY = getAta(mintY, user1);
 	//ataBalCk(makerAtaY, amountY, "Escrow");

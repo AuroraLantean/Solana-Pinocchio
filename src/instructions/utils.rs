@@ -54,8 +54,8 @@ pub enum Ee {
   EscrowAmtOfTokenX,
   #[error("TakerInsufficientTokenY")]
   TakerInsufficientTokenY,
-  #[error("Xyz019")]
-  Xyz019,
+  #[error("EscrowAmtOfTokenY")]
+  EscrowAmtOfTokenY,
   //Bytes for Numerical
   #[error("ZeroU128")]
   ZeroU128,
@@ -283,7 +283,7 @@ impl TryFrom<u32> for Ee {
       16 => Ok(Ee::EscrowId),
       17 => Ok(Ee::EscrowAmtOfTokenX),
       18 => Ok(Ee::TakerInsufficientTokenY),
-      19 => Ok(Ee::Xyz019),
+      19 => Ok(Ee::EscrowAmtOfTokenY),
       20 => Ok(Ee::ZeroU128),
       21 => Ok(Ee::ZeroU64),
       22 => Ok(Ee::ZeroU32),
@@ -400,7 +400,7 @@ impl ToStr for Ee {
       Ee::EscrowId => "EscrowId",
       Ee::EscrowAmtOfTokenX => "EscrowAmtOfTokenX",
       Ee::TakerInsufficientTokenY => "TakerInsufficientTokenY",
-      Ee::Xyz019 => "Xyz019",
+      Ee::EscrowAmtOfTokenY => "EscrowAmtOfTokenY",
 
       Ee::ZeroU128 => "ZeroU128",
       Ee::ZeroU64 => "ZeroU64",
