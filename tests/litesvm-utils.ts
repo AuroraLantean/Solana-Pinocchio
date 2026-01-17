@@ -30,6 +30,7 @@ import {
 	checkDecimals,
 	statusToByte,
 	strToU8Fixed,
+	zero,
 } from "./utils";
 import {
 	ATokenGPvbd,
@@ -663,6 +664,47 @@ export const takeTokEscrow = (
 	const sendRes = svm.sendTransaction(tx);
 	checkSuccess(simRes, sendRes, vaultProgAddr);
 };
+export const withdrawTokEscrow = (
+	userSigner: Keypair,
+	makerAtaX: PublicKey,
+	makerAtaY: PublicKey,
+	escrowAtaX: PublicKey,
+	escrowAtaY: PublicKey,
+	mintX: PublicKey,
+	mintY: PublicKey,
+	escrowPDA: PublicKey,
+	configPDA: PublicKey,
+	tokenProg = TOKEN_PROGRAM_ID,
+	atokenProg = ATokenGPvbd,
+) => {
+	const disc = 17;
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: userSigner.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: makerAtaX, isSigner: false, isWritable: true },
+			{ pubkey: makerAtaY, isSigner: false, isWritable: true },
+			{ pubkey: escrowAtaX, isSigner: false, isWritable: true },
+			{ pubkey: escrowAtaY, isSigner: false, isWritable: true },
+			{ pubkey: mintX, isSigner: false, isWritable: false },
+			{ pubkey: mintY, isSigner: false, isWritable: false },
+			{ pubkey: escrowPDA, isSigner: false, isWritable: true },
+			{ pubkey: configPDA, isSigner: false, isWritable: true },
+			{ pubkey: tokenProg, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
+			{ pubkey: atokenProg, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc]),
+	});
+	const tx = new Transaction();
+	tx.recentBlockhash = blockhash;
+	tx.add(ix); //tx.add(...ixs);
+	tx.sign(userSigner);
+	const simRes = svm.simulateTransaction(tx);
+	const sendRes = svm.sendTransaction(tx);
+	checkSuccess(simRes, sendRes, vaultProgAddr);
+};
 //-------------==
 //When you want to make Mint without the Mint Keypair. E.g. UsdtMintKp;
 //https://solana.com/docs/tokens/basics/create-mint
@@ -823,7 +865,10 @@ export const ataBalc = (
 	isVerbose = true,
 ) => {
 	const raw = svm.getAccount(ata);
-	if (!raw) throw new Error("Ata is null");
+	if (!raw) {
+		ll(name, ": ata is null");
+		return zero;
+	}
 	const rawAcctData = raw?.data;
 	const decoded = AccountLayout.decode(rawAcctData);
 	if (isVerbose) ll(name, ":", decoded.amount);

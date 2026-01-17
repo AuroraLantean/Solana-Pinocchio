@@ -262,7 +262,7 @@ pub enum ProgramIx {
   },
   /// 17 Maker Withdraws Token Y (and X?)
   #[account(0, signer, writable, name = "maker", desc = "Maker")]
-  #[account(1, writable, name = "Maker_ata_x", desc = "Maker ATA X")]
+  #[account(1, writable, name = "maker_ata_x", desc = "Maker ATA X")]
   #[account(2, writable, name = "maker_ata_y", desc = "Maker ATA Y")]
   #[account(3, writable, name = "escrow_ata_x", desc = "Escrow ATA X")]
   #[account(4, writable, name = "escrow_ata_y", desc = "Escrow ATA Y")]
@@ -273,11 +273,7 @@ pub enum ProgramIx {
   #[account(9, name = "token_program", desc = "Token Program")]
   #[account(10, name = "system_program", desc = "System Program")]
   #[account(11, name = "atoken_program", desc = "Associated Token Program")]
-  EscrowTokWithdraw {
-    decimal_y: u8,
-    amount_y: u64,
-    id: u64,
-  },
+  EscrowTokWithdraw {},
   //---------------== Admin PDA
   //---------------== User PDA
   //---------------== Action PDA

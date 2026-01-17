@@ -33,6 +33,7 @@ import {
 	vaultAta1,
 	vaultO,
 	withdrawSol,
+	withdrawTokEscrow,
 } from "./litesvm-utils";
 import { as6zBn, as9zBn, bigintAmt, ll, zero } from "./utils";
 import {
@@ -69,8 +70,9 @@ let mintAuthority: PublicKey;
 let ata: PublicKey;
 let fromAta: PublicKey;
 let toAta: PublicKey;
+let escrowPDA: PublicKey;
 let makerAtaX: PublicKey;
-let _makerAtaY: PublicKey;
+let makerAtaY: PublicKey;
 let takerAtaX: PublicKey;
 let takerAtaY: PublicKey;
 let escrowAtaX: PublicKey;
@@ -85,6 +87,7 @@ let amtDeposit: bigint;
 let amtWithdraw: bigint;
 let amt: bigint;
 let prevBalcX: bigint;
+let prevBalcY: bigint;
 let decimalX: number;
 let decimalY: number;
 let amountX: bigint;
@@ -327,11 +330,12 @@ test("Make Token Escrow", () => {
 	amountX = bigintAmt(326, decimalX);
 	amountY = bigintAmt(2100, decimalY);
 	id = BigInt(1);
-
 	signer = signerKp.publicKey;
 	escrowOut = findEscrow(signer, id);
 	escrowU1_1 = escrowOut.pda;
-	escrowAtaX = getAta(mintX, escrowU1_1);
+	escrowPDA = escrowU1_1;
+
+	escrowAtaX = getAta(mintX, escrowPDA);
 	makerAtaX = getAta(mintX, signer);
 	prevBalcX = ataBalc(makerAtaX, "makerAtaX");
 	makeTokEscrow(
@@ -340,7 +344,7 @@ test("Make Token Escrow", () => {
 		escrowAtaX,
 		mintX,
 		mintY,
-		escrowU1_1,
+		escrowPDA,
 		configPDA,
 		decimalX,
 		amountX,
@@ -348,7 +352,7 @@ test("Make Token Escrow", () => {
 		amountY,
 		id,
 	);
-	const pdaRaw = svm.getAccount(escrowU1_1);
+	const pdaRaw = svm.getAccount(escrowPDA);
 	expect(pdaRaw).not.toBeNull();
 	const rawAccountData = pdaRaw?.data;
 	ll("rawAccountData:", rawAccountData);
@@ -377,13 +381,14 @@ test("Take Token Escrow", () => {
 	amountX = bigintAmt(326, decimalX);
 	amountY = bigintAmt(2100, decimalY);
 	id = BigInt(1);
+	escrowPDA = escrowU1_1;
 
 	signer = signerKp.publicKey;
 	takerAtaX = getAta(mintX, signer);
-	escrowAtaX = getAta(mintX, escrowU1_1);
+	escrowAtaX = getAta(mintX, escrowPDA);
 
 	takerAtaY = getAta(mintY, signer);
-	escrowAtaY = getAta(mintY, escrowU1_1);
+	escrowAtaY = getAta(mintY, escrowPDA);
 	prevBalcX = ataBalc(takerAtaX, "takerAtaX");
 	takeTokEscrow(
 		signerKp,
@@ -393,7 +398,7 @@ test("Take Token Escrow", () => {
 		escrowAtaY,
 		mintX,
 		mintY,
-		escrowU1_1,
+		escrowPDA,
 		configPDA,
 		decimalX,
 		amountX,
@@ -401,7 +406,7 @@ test("Take Token Escrow", () => {
 		amountY,
 		id,
 	);
-	const pdaRaw = svm.getAccount(escrowU1_1);
+	const pdaRaw = svm.getAccount(escrowPDA);
 	expect(pdaRaw).not.toBeNull();
 	const rawAccountData = pdaRaw?.data;
 	ll("rawAccountData:", rawAccountData);
@@ -411,11 +416,37 @@ test("Take Token Escrow", () => {
 	ataBalCk(escrowAtaY, amountY, "Escrow Y");
 	ataBalCk(takerAtaX, prevBalcX + amountX, "Taker X");
 });
-test("Maker Withdraws Token Y", () => {
-	ll("\n------== Maker Withdraws Token Y");
-	//ataBalCk(escrowAtaY, zero, "Escrow");
-	_makerAtaY = getAta(mintY, user1);
-	//ataBalCk(makerAtaY, amountY, "Escrow");
+test("Withdraw TokenY on Escrow", () => {
+	ll("\n------== Withdraw TokenY on Escrow");
+	signerKp = user1Kp;
+	//args below should be taken from EscrowPDA
+	mintX = usdcMint;
+	mintY = dragonCoin;
+	escrowPDA = escrowU1_1;
+
+	signer = signerKp.publicKey;
+	makerAtaX = getAta(mintX, signer);
+	escrowAtaX = getAta(mintX, escrowPDA);
+	makerAtaY = getAta(mintY, signer);
+	escrowAtaY = getAta(mintY, escrowPDA);
+	prevBalcX = ataBalc(makerAtaX, "makerAtaX");
+	prevBalcY = ataBalc(makerAtaY, "makerAtaY");
+
+	withdrawTokEscrow(
+		signerKp,
+		makerAtaX,
+		makerAtaY,
+		escrowAtaX,
+		escrowAtaY,
+		mintX,
+		mintY,
+		escrowPDA,
+		configPDA,
+	);
+	ataBalCk(escrowAtaX, zero, "Escrow X");
+	ataBalCk(escrowAtaY, zero, "Escrow Y");
+	ataBalCk(makerAtaX, prevBalcX, "user1 X");
+	ataBalCk(makerAtaY, prevBalcY + amountY, "user1 Y");
 });
 
 test.skip("copy accounts from devnet", async () => {

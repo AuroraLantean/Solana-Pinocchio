@@ -10,8 +10,8 @@ use pinocchio_token::state::TokenAccount;
 
 use crate::{
   check_ata, check_atoken_gpvbd, check_decimals, check_mint0a, check_sysprog, data_len, executable,
-  instructions::check_signer, none_zero_u64, parse_u64, rent_exempt_mint, rent_exempt_tokacct,
-  writable, Config, Ee, Escrow,
+  instructions::check_signer, none_zero_u64, rent_exempt_mint, rent_exempt_tokacct, writable,
+  Config, Ee, Escrow,
 };
 //TODO: add Token2022 interface
 /// Make Withdraw Escrow Token Y
@@ -28,7 +28,6 @@ pub struct EscrowTokWithdraw<'a> {
   pub token_program: &'a AccountInfo,
   pub system_program: &'a AccountInfo,
   pub atoken_program: &'a AccountInfo,
-  pub id: u64,
 }
 impl<'a> EscrowTokWithdraw<'a> {
   pub const DISCRIMINATOR: &'a u8 = &17;
@@ -47,7 +46,6 @@ impl<'a> EscrowTokWithdraw<'a> {
       token_program,
       system_program,
       atoken_program: _,
-      id,
     } = self;
     log!("---------== process()");
     config_pda.can_borrow_mut_data()?;
@@ -57,6 +55,7 @@ impl<'a> EscrowTokWithdraw<'a> {
     let escrow: &mut Escrow = Escrow::from_account_info(&escrow_pda)?;
 
     log!("Check args against EscrowPDA fields");
+    let id = escrow.id();
     let bump = escrow.bump();
     if maker.key().ne(escrow.maker()) {
       return Ee::OnlyMaker.e();
@@ -81,6 +80,7 @@ impl<'a> EscrowTokWithdraw<'a> {
     if escrow_ata_y_info.amount() < amount_y {
       return Ee::EscrowAmtOfTokenY.e();
     } //ata_balc(escrow_ata_y, amount_y)?;
+    drop(escrow_ata_y_info);
 
     log!("Check Maker ATA Y");
     if maker_ata_y.data_is_empty() {
@@ -113,6 +113,8 @@ impl<'a> EscrowTokWithdraw<'a> {
     let seed_signer = Signer::from(&signer_seeds);
 
     log!("Transfer Token Y to Maker ATA Y");
+    //escrow_pda.can_borrow_mut_data()?;
+    //escrow_ata_y.can_borrow_mut_data()?;
     pinocchio_token::instructions::TransferChecked {
       from: escrow_ata_y,
       mint: mint_y,
@@ -126,6 +128,7 @@ impl<'a> EscrowTokWithdraw<'a> {
     log!("Check Unknown token in Escrow ATA X");
     let escrow_ata_x_info = TokenAccount::from_account_info(escrow_ata_x)?;
     let unknown_amt_x = escrow_ata_x_info.amount();
+    drop(escrow_ata_x_info);
     if unknown_amt_x > 0 {
       log!("Found unknown token in Escrow ATA X");
       if maker_ata_x.data_is_empty() {
@@ -162,6 +165,8 @@ impl<'a> EscrowTokWithdraw<'a> {
     }
 
     log!("Close Escrow ATA Y");
+    //escrow_ata_y.can_borrow_mut_data()?;
+    //escrow_pda.can_borrow_mut_data()?;
     pinocchio_token::instructions::CloseAccount {
       account: escrow_ata_y,
       authority: escrow_pda,
@@ -170,6 +175,8 @@ impl<'a> EscrowTokWithdraw<'a> {
     .invoke_signed(&[seed_signer.clone()])?;
 
     log!("Close Escrow ATA X");
+    //escrow_pda.can_borrow_mut_data()?;
+    //escrow_ata_x.can_borrow_mut_data()?;
     pinocchio_token::instructions::CloseAccount {
       account: escrow_ata_x,
       authority: escrow_pda,
@@ -213,12 +220,12 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokWithdraw<'a> {
     check_atoken_gpvbd(atoken_program)?;
     log!("EscrowTokWithdraw try_from 1");
 
-    writable(maker_ata_y)?;
-    check_ata(maker_ata_y, maker, mint_y)?;
-    log!("EscrowTokWithdraw try_from 2");
-
     writable(escrow_ata_x)?;
     check_ata(escrow_ata_x, escrow_pda, mint_x)?;
+
+    log!("EscrowTokWithdraw try_from 2");
+    writable(escrow_ata_y)?;
+    check_ata(escrow_ata_y, escrow_pda, mint_y)?;
     log!("EscrowTokWithdraw try_from 3");
 
     writable(escrow_pda)?;
@@ -229,12 +236,9 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokWithdraw<'a> {
     log!("EscrowTokWithdraw try_from 5");
 
     //2x u8 takes 2 + 2x u64 takes 16 bytes
-    data_len(data, 8)?;
-    let id = parse_u64(&data[0..8])?;
-    log!("id: {}", id);
+    data_len(data, 0)?;
 
     log!("EscrowTokWithdraw try_from 5");
-    //check_escrow_mints(mint_x, mint_y)?;
     rent_exempt_mint(mint_x)?;
     rent_exempt_mint(mint_y)?;
     //TODO: fee is part of exchange amount
@@ -256,7 +260,6 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokWithdraw<'a> {
       token_program,
       system_program,
       atoken_program,
-      id,
     })
   }
 }
