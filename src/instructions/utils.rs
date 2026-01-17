@@ -26,8 +26,8 @@ pub enum Ee {
   OnlyAdmin,
   #[error("OnlyUser")]
   OnlyUser,
-  #[error("Xyz005")]
-  Xyz005,
+  #[error("OnlyMaker")]
+  OnlyMaker,
   #[error("Xyz006")]
   Xyz006,
   #[error("NotWritable")]
@@ -269,7 +269,7 @@ impl TryFrom<u32> for Ee {
       2 => Ok(Ee::OnlyProgOwner),
       3 => Ok(Ee::OnlyAdmin),
       4 => Ok(Ee::OnlyUser),
-      5 => Ok(Ee::Xyz005),
+      5 => Ok(Ee::OnlyMaker),
       6 => Ok(Ee::Xyz006),
       7 => Ok(Ee::NotWritable),
       8 => Ok(Ee::NotExecutable),
@@ -385,7 +385,7 @@ impl ToStr for Ee {
       Ee::OnlyProgOwner => "OnlyProgOwner",
       Ee::OnlyAdmin => "OnlyAdmin",
       Ee::OnlyUser => "OnlyUser",
-      Ee::Xyz005 => "Xyz005",
+      Ee::OnlyMaker => "OnlyMaker",
       Ee::Xyz006 => "Xyz006",
 
       Ee::NotWritable => "NotWritable",
