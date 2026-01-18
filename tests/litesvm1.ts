@@ -95,14 +95,13 @@ let decimalY: number;
 let amountX: bigint;
 let amountY: bigint;
 let id: bigint;
-let balcBf: bigint | null;
 let balcAf: bigint | null;
 const vaultRent = 1002240n; //from Rust
 const decDgc = 9;
 const initDgcBalc = bigintAmt(9000, decDgc);
 const initUsdcBalc = bigintAmt(1000, 6);
 
-balcBf = svm.getBalance(admin);
+const balcBf = svm.getBalance(admin);
 ll("admin SOL:", balcBf);
 expect(balcBf).toStrictEqual(initSolBalc);
 

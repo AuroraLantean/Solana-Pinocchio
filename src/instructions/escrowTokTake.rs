@@ -155,17 +155,6 @@ impl<'a> EscrowTokTake<'a> {
       decimals: decimal_x,
     }
     .invoke_signed(&[seed_signer])?;
-
-    /*TODO
-    log!("Maker withdraws Token Y");
-
-    log!("Close Escrow and its X ATA and Y ATA");
-    pinocchio_token::instructions::CloseAccount {
-      account: escrow_ata_x,
-      authority: escrow_pda,
-      destination: maker
-    }
-    .invoke_signed(&[seed_signer])?;*/
     Ok(())
   }
 }
@@ -201,7 +190,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokTake<'a> {
     if escrow_pda.data_is_empty() {
       return Err(Ee::EscrowDataEmpty.into());
     }
-    log!("EscrowTokTake try_from 5");
+    log!("EscrowTokTake try_from 4");
 
     //2x u8 takes 2 + 2x u64 takes 16 bytes
     data_len(data, 26)?;
@@ -212,7 +201,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokTake<'a> {
 
     let escrow_ata_x_info = TokenAccount::from_account_info(escrow_ata_x)?;
     if escrow_ata_x_info.amount() < amount_x {
-      return Err(Ee::EscrowAmtOfTokenX.into());
+      return Err(Ee::EscrowInsuffTokenX.into());
     } //ata_balc(escrow_ata_x, amount_x)?;
       //TODO: unknown token received by Escrow
 
@@ -222,7 +211,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokTake<'a> {
     none_zero_u64(amount_y)?;
     let taker_ata_y_info = TokenAccount::from_account_info(taker_ata_y)?;
     if taker_ata_y_info.amount() < amount_y {
-      return Err(Ee::TakerInsufficientTokenY.into());
+      return Err(Ee::TakerInsuffTokenY.into());
     } //ata_balc(taker_ata_y, amount_y)?;
 
     let id = parse_u64(&data[18..26])?;

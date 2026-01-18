@@ -78,7 +78,7 @@ impl<'a> EscrowTokWithdraw<'a> {
 
     let escrow_ata_y_info = TokenAccount::from_account_info(escrow_ata_y)?;
     if escrow_ata_y_info.amount() < amount_y {
-      return Ee::EscrowAmtOfTokenY.e();
+      return Ee::EscrowInsuffTokenY.e();
     } //ata_balc(escrow_ata_y, amount_y)?;
     drop(escrow_ata_y_info);
 
@@ -208,6 +208,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokWithdraw<'a> {
     log!("EscrowTokWithdraw try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
+    data_len(data, 0)?;
 
     let [maker, maker_ata_x, maker_ata_y, escrow_ata_x, escrow_ata_y, mint_x, mint_y, escrow_pda, config_pda, token_program, system_program, atoken_program] =
       accounts
@@ -233,11 +234,6 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokWithdraw<'a> {
     if escrow_pda.data_is_empty() {
       return Err(Ee::EscrowDataEmpty.into());
     }
-    log!("EscrowTokWithdraw try_from 5");
-
-    //2x u8 takes 2 + 2x u64 takes 16 bytes
-    data_len(data, 0)?;
-
     log!("EscrowTokWithdraw try_from 5");
     rent_exempt_mint(mint_x)?;
     rent_exempt_mint(mint_y)?;

@@ -162,13 +162,13 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
     executable(token_program)?;
     check_sysprog(system_program)?;
     check_atoken_gpvbd(atoken_program)?;
-    log!("EscrowTokMake try_from 4");
+    log!("EscrowTokMake try_from 3");
 
     writable(maker_ata_x)?;
     check_ata(maker_ata_x, maker, mint_x)?;
     writable(escrow_pda)?;
     writable(config_pda)?;
-    log!("EscrowTokMake try_from 5");
+    log!("EscrowTokMake try_from 4");
 
     //2x u8 takes 2 + 2x u64 takes 16 bytes
     data_len(data, 26)?;

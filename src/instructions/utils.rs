@@ -50,12 +50,12 @@ pub enum Ee {
   EscrowMintY,
   #[error("EscrowId")]
   EscrowId,
-  #[error("EscrowAmtOfTokenX")]
-  EscrowAmtOfTokenX,
-  #[error("TakerInsufficientTokenY")]
-  TakerInsufficientTokenY,
-  #[error("EscrowAmtOfTokenY")]
-  EscrowAmtOfTokenY,
+  #[error("Xyz017")]
+  Xyz017,
+  #[error("Xyz018")]
+  Xyz018,
+  #[error("Xyz019")]
+  Xyz019,
   //Bytes for Numerical
   #[error("ZeroU128")]
   ZeroU128,
@@ -175,14 +175,14 @@ pub enum Ee {
   Xyz074,
   #[error("Xyz075")]
   Xyz075,
-  #[error("Xyz076")]
-  Xyz076,
-  #[error("Xyz077")]
-  Xyz077,
-  #[error("Xyz078")]
-  Xyz078,
-  #[error("Xyz079")]
-  Xyz079,
+  #[error("EscrowInsuffTokenY")]
+  EscrowInsuffTokenY,
+  #[error("EscrowInsuffTokenX")]
+  EscrowInsuffTokenX,
+  #[error("MakerToWithdrawTokenY")]
+  MakerToWithdrawTokenY,
+  #[error("TakerInsuffTokenY")]
+  TakerInsuffTokenY,
   //ATA
   #[error("AtaDataLen")]
   AtaDataLen,
@@ -281,9 +281,9 @@ impl TryFrom<u32> for Ee {
       14 => Ok(Ee::EscrowMintX),
       15 => Ok(Ee::EscrowMintY),
       16 => Ok(Ee::EscrowId),
-      17 => Ok(Ee::EscrowAmtOfTokenX),
-      18 => Ok(Ee::TakerInsufficientTokenY),
-      19 => Ok(Ee::EscrowAmtOfTokenY),
+      17 => Ok(Ee::Xyz017),
+      18 => Ok(Ee::Xyz018),
+      19 => Ok(Ee::Xyz019),
       20 => Ok(Ee::ZeroU128),
       21 => Ok(Ee::ZeroU64),
       22 => Ok(Ee::ZeroU32),
@@ -340,10 +340,10 @@ impl TryFrom<u32> for Ee {
       73 => Ok(Ee::MintOrTokenProgram),
       74 => Ok(Ee::Xyz074),
       75 => Ok(Ee::Xyz075),
-      76 => Ok(Ee::Xyz076),
-      77 => Ok(Ee::Xyz077),
-      78 => Ok(Ee::Xyz078),
-      79 => Ok(Ee::Xyz079),
+      76 => Ok(Ee::EscrowInsuffTokenY),
+      77 => Ok(Ee::EscrowInsuffTokenX),
+      78 => Ok(Ee::MakerToWithdrawTokenY),
+      79 => Ok(Ee::TakerInsuffTokenY),
       80 => Ok(Ee::AtaDataLen),
       81 => Ok(Ee::Ata22DataLen),
       82 => Ok(Ee::AtaOrOwner),
@@ -398,9 +398,9 @@ impl ToStr for Ee {
       Ee::EscrowMintX => "EscrowMintX",
       Ee::EscrowMintY => "EscrowMintY",
       Ee::EscrowId => "EscrowId",
-      Ee::EscrowAmtOfTokenX => "EscrowAmtOfTokenX",
-      Ee::TakerInsufficientTokenY => "TakerInsufficientTokenY",
-      Ee::EscrowAmtOfTokenY => "EscrowAmtOfTokenY",
+      Ee::Xyz017 => "Xyz017",
+      Ee::Xyz018 => "Xyz018",
+      Ee::Xyz019 => "Xyz019",
 
       Ee::ZeroU128 => "ZeroU128",
       Ee::ZeroU64 => "ZeroU64",
@@ -462,10 +462,10 @@ impl ToStr for Ee {
       Ee::MintOrTokenProgram => "MintOrTokenProgram",
       Ee::Xyz074 => "Xyz074",
       Ee::Xyz075 => "Xyz075",
-      Ee::Xyz076 => "Xyz076",
-      Ee::Xyz077 => "Xyz077",
-      Ee::Xyz078 => "Xyz078",
-      Ee::Xyz079 => "Xyz079",
+      Ee::EscrowInsuffTokenY => "EscrowInsuffTokenY",
+      Ee::EscrowInsuffTokenX => "EscrowInsuffTokenX",
+      Ee::MakerToWithdrawTokenY => "MakerToWithdrawTokenY",
+      Ee::TakerInsuffTokenY => "TakerInsuffTokenY",
 
       Ee::AtaDataLen => "AtaDataLen",
       Ee::Ata22DataLen => "Ata22DataLen",
