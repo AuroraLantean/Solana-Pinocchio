@@ -302,7 +302,8 @@ pub enum ProgramIx {
   /// 19 Resize Config PDA
   #[account(0, signer, writable, name = "authority", desc = "Authority")]
   #[account(1, writable, name = "config_pda", desc = "PDA")]
-  #[account(2, name = "system_program", desc = "System Program")]
+  #[account(2, name = "first_prog_owner", desc = "First Program Owner")]
+  #[account(3, name = "system_program", desc = "System Program")]
   ConfigResize { new_size: u64 },
   //---------------== Admin PDA
   //---------------== User PDA

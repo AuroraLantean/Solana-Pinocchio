@@ -223,6 +223,29 @@ export const updateConfig = (
 	});
 	sendTxns(svm, blockhash, [ix], [signer]);
 };
+export const configResize = (
+	signer: Keypair,
+	configPDA: PublicKey,
+	firstProgOwner: PublicKey,
+	newSize: bigint,
+) => {
+	const disc = 19;
+	ll("configPDA:", configPDA.toBase58());
+	ll("newSize:", newSize);
+	const argData = [...bigintToBytes(newSize, 64)];
+	const blockhash = svm.latestBlockhash();
+	const ix = new TransactionInstruction({
+		keys: [
+			{ pubkey: signer.publicKey, isSigner: true, isWritable: true },
+			{ pubkey: configPDA, isSigner: false, isWritable: true },
+			{ pubkey: firstProgOwner, isSigner: false, isWritable: false },
+			{ pubkey: SYSTEM_PROGRAM, isSigner: false, isWritable: false },
+		],
+		programId: vaultProgAddr,
+		data: Buffer.from([disc, ...argData]),
+	});
+	sendTxns(svm, blockhash, [ix], [signer]);
+};
 export const closeConfig = (
 	signer: Keypair,
 	configPDA: PublicKey,
@@ -244,6 +267,7 @@ export const closeConfig = (
 	});
 	sendTxns(svm, blockhash, [ix], [signer]);
 };
+
 export const depositSol = (
 	vaultPdaX: PublicKey,
 	amount: bigint,

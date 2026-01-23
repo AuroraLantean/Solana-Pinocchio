@@ -8,6 +8,7 @@ import {
 	closeConfig,
 	configBump,
 	configPDA,
+	configResize,
 	initConfig,
 	initSolBalc,
 	setMint,
@@ -35,6 +36,7 @@ import {
 	usdtMint,
 	user1,
 	user1Kp,
+	vaultProgAddr,
 } from "./web3jsSetup";
 
 const adminBalc = svm.getBalance(admin);
@@ -47,10 +49,12 @@ let _authority: PublicKey;
 let mints: PublicKey[];
 let _vault: PublicKey;
 let progOwner: PublicKey;
+let firstProgOwner: PublicKey;
 let progAdmin: PublicKey;
 let dest: PublicKey;
 let tokenAmount: bigint;
 let fee: bigint;
+let newSize: bigint;
 let isAuthorized = false;
 let status: Status;
 let str: string;
@@ -104,6 +108,7 @@ test("InitConfig", () => {
 	expect(pdaRaw).not.toBeNull();
 	const rawAccountData = pdaRaw?.data;
 	ll("rawAccountData:", rawAccountData);
+	expect(pdaRaw?.owner).toEqual(vaultProgAddr);
 
 	const decoded = solanaKitDecodeDev(rawAccountData);
 	expect(decoded.mint0).toEqual(mints[0]!);
@@ -180,6 +185,20 @@ test("updateConfig + time travel", () => {
 	expect(decoded.str).toEqual(str);
 	expect(decoded.admin).toEqual(acct1);
 });
+
+test("extend configPDA", () => {
+	ll("\n------== Extend configPDA");
+	let rawAccount = svm.getAccount(configPDA);
+	ll("account size:", rawAccount?.data.byteLength);
+
+	signerKp = user1Kp;
+	firstProgOwner = owner;
+	newSize = 1000000n;
+	configResize(signerKp, configPDA, firstProgOwner, newSize);
+	rawAccount = svm.getAccount(configPDA);
+	ll("account size:", rawAccount?.data.byteLength);
+});
+
 test("close configPDA", () => {
 	ll("\n------== Close configPDA");
 	signerKp = ownerKp;
