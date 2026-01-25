@@ -35,7 +35,7 @@ impl<'a> ConfigResize<'a> {
     log!("ConfigResize process()");
     let seeds = [
       Seed::from(Config::SEED),
-      Seed::from(first_prog_owner.key().as_ref()),
+      Seed::from(first_prog_owner.address().as_ref()),
       Seed::from(core::slice::from_ref(&bump)),
     ];
     let seed_signer = Signer::from(&seeds);
@@ -81,7 +81,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for ConfigResize<'a> {
     check_pda(config_pda)?;
 
     config_pda.check_borrow_mut()?;
-    let config: &mut Config = Config::from_account_info(&config_pda)?;
+    let config: &mut Config = Config::from_account_view(&config_pda)?;
     // if config.admin().ne(authority.key()) && config.prog_owner().ne(authority.key()) {
     //   return Err(ProgramError::IncorrectAuthority);
     // }

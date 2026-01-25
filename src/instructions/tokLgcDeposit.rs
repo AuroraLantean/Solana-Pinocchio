@@ -74,7 +74,7 @@ impl<'a> TokLgcDeposit<'a> {
     check_pda(to_wallet)?;
     log!("TokLgcDeposit 7: to_wallet is verified");
 
-    if to_ata.data_is_empty() {
+    if to_ata.is_data_empty() {
       log!("Make to_ata");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: user,
@@ -138,7 +138,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokLgcDeposit<'a> {
 
     log!("TokLgcDeposit try_from 9");
     config_pda.check_borrow_mut()?;
-    let config: &mut Config = Config::from_account_info(&config_pda)?;
+    let config: &mut Config = Config::from_account_view(&config_pda)?;
 
     if !config.mints().contains(&mint.address()) {
       return Err(Ee::MintNotAccepted.into());

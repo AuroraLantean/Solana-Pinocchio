@@ -1,6 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
   cpi::{Seed, Signer},
+  error::ProgramError,
   sysvars::{rent::Rent, Sysvar},
   AccountView, Address, ProgramResult,
 };
@@ -80,13 +81,13 @@ fn ensure_deposit_accounts(user: &AccountView, vault: &AccountView) -> ProgramRe
   log!("ensure_deposit_accounts");
   // Create when empty and fund rent-exempt.
   if vault.lamports() == 0 {
-    let (expected_vault_pda, bump) = derive_pda1(user.key(), VAULT_SEED)?;
-    if vault.key() != &expected_vault_pda {
+    let (expected_vault_pda, bump) = derive_pda1(user.address(), VAULT_SEED)?;
+    if vault.address() != &expected_vault_pda {
       return Ee::VaultPDA.e();
     }
     let signer_seeds = [
       Seed::from(VAULT_SEED),
-      Seed::from(user.key().as_ref()),
+      Seed::from(user.address().as_ref()),
       Seed::from(core::slice::from_ref(&bump)),
     ];
     let signer = Signer::from(&signer_seeds);

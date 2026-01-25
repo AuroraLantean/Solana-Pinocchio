@@ -1,9 +1,8 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  AccountView,
-  
+  error::ProgramError,
   sysvars::{rent::Rent, Sysvar},
-  ProgramResult,
+  AccountView, Address, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
@@ -20,7 +19,7 @@ pub struct Token2022InitMint<'a> {
   pub mint: &'a AccountView,
   pub mint_authority: &'a AccountView,
   pub token_program: &'a AccountView,
-  pub freeze_authority_opt: Option<&'a [u8; 32]>, // or Pubkey
+  pub freeze_authority_opt: Option<&'a Address>, // or Pubkey
   pub decimals: u8,
   pub token_name: [u8; 10],
   pub token_symbol: [u8; 6],
@@ -66,7 +65,7 @@ impl<'a> Token2022InitMint<'a> {
     CreateAccount {
       from: payer, //Keypair
       to: mint,
-      owner: token_program.key(), //address("TokenXYZ");
+      owner: token_program.address(), //address("TokenXYZ");
       lamports,
       space,
     }
@@ -78,9 +77,9 @@ impl<'a> Token2022InitMint<'a> {
     InitializeMint2 {
       mint: mint, //Keypair
       decimals: decimals,
-      mint_authority: mint_authority.key(),
+      mint_authority: mint_authority.address(),
       freeze_authority: freeze_authority_opt,
-      token_program: token_program.key(),
+      token_program: token_program.address(),
     }
     .invoke()?;
 
@@ -88,15 +87,15 @@ impl<'a> Token2022InitMint<'a> {
     // Initialize MetadataPointer extension pointing to the Mint account
     /*InitializeMetadataPointer {
       mint: mint_account,
-      authority: Some(*payer.key()),
-      metadata_address: Some(*mint_account.key()),
+      authority: Some(*payer.address()),
+      metadata_address: Some(*mint_account.address()),
     }.invoke()?;
 
         // Now initialize that account as a Token2022 Mint
     InitializeMint2 {
         mint: mint_account,
         decimals: args.decimals,
-        mint_authority: mint_authority.key(),
+        mint_authority: mint_authority.address(),
         freeze_authority: None,
     }
     .invoke(TokenProgramVariant::Token2022)?;
@@ -144,8 +143,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for Token2022InitMint<'a> {
     initialized(mint_authority)?;
     log!("Token2022InitMint try_from 3");
 
-    let freeze_authority_opt: Option<&'a [u8; 32]> = if freeze_authority_opt1 == token_program {
-      Some(freeze_authority_opt1.key())
+    let freeze_authority_opt: Option<&'a Address> = if freeze_authority_opt1 == token_program {
+      Some(freeze_authority_opt1.address())
     } else {
       None
     };

@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{AccountView, ProgramResult};
+use pinocchio::{error::ProgramError, AccountView, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{

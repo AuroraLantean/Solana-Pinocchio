@@ -3,7 +3,7 @@ use crate::{
   not_initialized, rent_exempt_mint,
 };
 use core::convert::TryFrom;
-use pinocchio::{AccountView,  ProgramResult};
+use pinocchio::{error::ProgramError, AccountView, ProgramResult};
 use pinocchio_log::log;
 
 /// Token Legacy Init ATA(Associated Token Account)

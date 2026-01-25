@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{AccountView, ProgramResult};
+use pinocchio::{error::ProgramError, AccountView, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -40,7 +40,7 @@ impl<'a> Token2022MintToken<'a> {
     check_mint22b(mint, mint_authority, token_program, decimals)?;
 
     log!("Token2022MintToken 5");
-    if ata.data_is_empty() {
+    if ata.is_data_empty() {
       log!("Make ata");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: mint_authority,
@@ -68,7 +68,7 @@ impl<'a> Token2022MintToken<'a> {
       mint_authority,
       amount,
       decimals,
-      token_program: token_program.key(),
+      token_program: token_program.address(),
     }
     .invoke()?;
     Ok(())

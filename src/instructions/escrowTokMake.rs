@@ -1,6 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
   cpi::{Seed, Signer},
+  error::ProgramError,
   sysvars::{rent::Rent, Sysvar},
   AccountView, Address, ProgramResult,
 };
@@ -52,32 +53,32 @@ impl<'a> EscrowTokMake<'a> {
       id,
     } = self;
     log!("---------== process()");
-    config_pda.can_borrow_mut_data()?;
-    let _config: &mut Config = Config::from_account_info(&config_pda)?;
+    config_pda.check_borrow_mut()?;
+    let _config: &mut Config = Config::from_account_view(&config_pda)?;
 
     /*let bump = unsafe { *(data.as_ptr() as *const u8) }.to_le_bytes();
     if bump.len() != 1 { return Err(..);  };   bump.as_ref()*/
-    let seed = [Escrow::SEED, maker.key().as_slice(), &id.to_le_bytes()];
+    let seed = [Escrow::SEED, maker.address().as_array(), &id.to_le_bytes()];
     let seeds = &seed[..];
 
     let (expected_escrow, bump) = Address::find_program_address(seeds, &ID.into()); //TODO: may incur unknown cost
-    if expected_escrow.ne(escrow_pda.key()) {
+    if expected_escrow.ne(escrow_pda.address()) {
       return Ee::EscrowPDA.e();
     }
     //let expected_escrow = checked_create_program_address(seeds, &ID)?;
     log!("EscrowTokMake EscrowPDA verified");
 
-    if escrow_pda.data_is_empty() {
+    if escrow_pda.is_data_empty() {
       log!("Make Escrow PDA 1");
       let lamports = Rent::get()?.minimum_balance(Escrow::LEN);
 
       log!("Make Escrow PDA 2");
       let id_bytes = &id.to_le_bytes();
-      //let seed = [Escrow::SEED, maker.key().as_slice(), &id.to_le_bytes()];
+      //let seed = [Escrow::SEED, maker.address().as_slice(), &id.to_le_bytes()];
       //let seeds = &seed[..];
       let seeds = [
         Seed::from(Escrow::SEED),
-        Seed::from(maker.key().as_ref()),
+        Seed::from(maker.address().as_ref()),
         Seed::from(id_bytes),
         Seed::from(core::slice::from_ref(&bump)),
       ];
@@ -97,7 +98,7 @@ impl<'a> EscrowTokMake<'a> {
     }
     log!("Escrow is made");
 
-    if escrow_ata_x.data_is_empty() {
+    if escrow_ata_x.is_data_empty() {
       log!("Make escrow_ata_x");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: maker,
@@ -128,10 +129,10 @@ impl<'a> EscrowTokMake<'a> {
     .invoke()?;
     log!("tokens sent from maker_ata_x");
 
-    let escrow: &mut Escrow = Escrow::from_account_info(&escrow_pda)?;
-    escrow.set_maker(maker.key());
-    escrow.set_mint_x(mint_x.key());
-    escrow.set_mint_y(mint_y.key());
+    let escrow: &mut Escrow = Escrow::from_account_view(&escrow_pda)?;
+    escrow.set_maker(maker.address());
+    escrow.set_mint_x(mint_x.address());
+    escrow.set_mint_y(mint_y.address());
     escrow.set_id(id)?;
     escrow.set_amount_x(amount_x)?;
     escrow.set_amount_y(amount_y)?; // unsafe { *(data.as_ptr().add(1) as *const u64) };

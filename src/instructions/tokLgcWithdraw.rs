@@ -1,6 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
   cpi::{Seed, Signer},
+  error::ProgramError,
   AccountView, ProgramResult,
 };
 use pinocchio_log::log;
@@ -44,7 +45,7 @@ impl<'a> TokLgcWithdraw<'a> {
     } = self;
     log!("TokLgcWithdraw process()");
 
-    if to_ata.data_is_empty() {
+    if to_ata.is_data_empty() {
       log!("Make to_ata");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: user,
@@ -66,7 +67,7 @@ impl<'a> TokLgcWithdraw<'a> {
 
     let signer_seeds = [
       Seed::from(VAULT_SEED),
-      Seed::from(user.key().as_ref()),
+      Seed::from(user.address().as_ref()),
       Seed::from(core::slice::from_ref(&vault_bump)),
     ];
     let seed_signer = Signer::from(&signer_seeds);
@@ -114,8 +115,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokLgcWithdraw<'a> {
     none_zero_u64(amount)?;
     ata_balc(from_ata, amount)?;
 
-    let (expected_vault, vault_bump) = derive_pda1(user.key(), VAULT_SEED)?;
-    if vault.key() != &expected_vault {
+    let (expected_vault, vault_bump) = derive_pda1(user.address(), VAULT_SEED)?;
+    if vault.address() != &expected_vault {
       return Err(Ee::VaultPDA.into());
     }
 

@@ -47,7 +47,7 @@ impl<'a> TokLgcRedeem<'a> {
     } = self;
     log!("TokLgcRedeem process()");
 
-    if to_ata.data_is_empty() {
+    if to_ata.is_data_empty() {
       log!("Make to_ata");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: user,
@@ -118,8 +118,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokLgcRedeem<'a> {
     ata_balc(from_ata, amount)?;
 
     log!("TokLgcPay try_from 9");
-    config_pda.can_borrow_mut_data()?;
-    let config: &mut Config = Config::from_account_info(&config_pda)?;
+    config_pda.check_borrow_mut()?;
+    let config: &mut Config = Config::from_account_view(&config_pda)?;
 
     if !config.mints().contains(&mint.address()) {
       return Err(Ee::MintNotAccepted.into());

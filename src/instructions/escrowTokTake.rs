@@ -1,9 +1,8 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  AccountView,
   cpi::{Seed, Signer},
-  
-  ProgramResult,
+  error::ProgramError,
+  AccountView, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_token::state::TokenAccount;
@@ -58,20 +57,20 @@ impl<'a> EscrowTokTake<'a> {
       decimal_y,
     } = self;
     log!("---------== process()");
-    config_pda.can_borrow_mut_data()?;
-    let _config: &mut Config = Config::from_account_info(&config_pda)?;
+    config_pda.check_borrow_mut()?;
+    let _config: &mut Config = Config::from_account_view(&config_pda)?;
 
-    escrow_pda.can_borrow_mut_data()?;
-    let escrow: &mut Escrow = Escrow::from_account_info(&escrow_pda)?;
+    escrow_pda.check_borrow_mut()?;
+    let escrow: &mut Escrow = Escrow::from_account_view(&escrow_pda)?;
 
     log!("Check args against EscrowPDA fields");
     //cannot convert the maker in EscrowPDA from Pubkey to AccountView! Also hide the maker
     let bump = escrow.bump();
     let maker = escrow.maker();
-    if escrow.mint_x().ne(mint_x.key()) {
+    if escrow.mint_x().ne(mint_x.address()) {
       return Ee::EscrowMintX.e();
     }
-    if escrow.mint_y().ne(mint_y.key()) {
+    if escrow.mint_y().ne(mint_y.address()) {
       return Ee::EscrowMintY.e();
     }
     if escrow.amount_x() != amount_x {
@@ -85,7 +84,7 @@ impl<'a> EscrowTokTake<'a> {
     }
 
     log!("Check Escrow ATA Y");
-    if escrow_ata_y.data_is_empty() {
+    if escrow_ata_y.is_data_empty() {
       log!("Make escrow_ata_y");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: taker,
@@ -105,7 +104,7 @@ impl<'a> EscrowTokTake<'a> {
     rent_exempt_tokacct(escrow_ata_y)?;
 
     log!("Check Taker ATA X");
-    if taker_ata_x.data_is_empty() {
+    if taker_ata_x.is_data_empty() {
       log!("Make taker_ata_x");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: taker,
@@ -187,7 +186,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for EscrowTokTake<'a> {
 
     writable(escrow_pda)?;
     writable(config_pda)?;
-    if escrow_pda.data_is_empty() {
+    if escrow_pda.is_data_empty() {
       return Err(Ee::EscrowDataEmpty.into());
     }
     log!("EscrowTokTake try_from 4");
@@ -199,7 +198,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for EscrowTokTake<'a> {
     log!("decimal_x: {}, amount_x: {}", decimal_x, amount_x);
     none_zero_u64(amount_x)?;
 
-    let escrow_ata_x_info = TokenAccount::from_account_info(escrow_ata_x)?;
+    let escrow_ata_x_info = TokenAccount::from_account_view(escrow_ata_x)?;
     if escrow_ata_x_info.amount() < amount_x {
       return Err(Ee::EscrowInsuffTokenX.into());
     } //ata_balc(escrow_ata_x, amount_x)?;
@@ -209,7 +208,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for EscrowTokTake<'a> {
     let amount_y = parse_u64(&data[10..18])?;
     log!("decimal_y: {}, amount_y: {}", decimal_y, amount_y);
     none_zero_u64(amount_y)?;
-    let taker_ata_y_info = TokenAccount::from_account_info(taker_ata_y)?;
+    let taker_ata_y_info = TokenAccount::from_account_view(taker_ata_y)?;
     if taker_ata_y_info.amount() < amount_y {
       return Err(Ee::TakerInsuffTokenY.into());
     } //ata_balc(taker_ata_y, amount_y)?;

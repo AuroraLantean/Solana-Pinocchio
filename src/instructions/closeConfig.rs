@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{AccountView, ProgramResult};
+use pinocchio::{error::ProgramError, AccountView, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{check_pda, data_len, instructions::check_signer, writable, Config};
@@ -22,12 +22,16 @@ impl<'a> CloseConfigPda<'a> {
     log!("CloseConfigPda process()");
     //set the first byte to 255
     {
-      let mut data = config_pda.try_borrow_mut_data()?;
+      let mut data = config_pda.try_borrow_mut()?;
       data[0] = 0xff;
     }
     log!("CloseConfigPda 1");
+    let dest_lam = dest.lamports();
+    let config_lam = config_pda.lamports();
+    dest.set_lamports(dest_lam + config_lam);
+    config_pda.set_lamports(0);
     //https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/pinocchio-accounts
-    *dest.try_borrow_mut_lamports()? += *config_pda.try_borrow_lamports()?;
+    //*dest.try_borrow_mut_lamports()? += *config_pda.try_borrow_lamports()?;
 
     log!("CloseConfigPda 2"); //resize the account to only the 1st byte
     config_pda.resize(1)?;
@@ -51,9 +55,9 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for CloseConfigPda<'a> {
     writable(config_pda)?;
     check_pda(config_pda)?;
 
-    config_pda.can_borrow_mut_data()?;
-    let config: &mut Config = Config::from_account_info(&config_pda)?;
-    if config.admin().ne(authority.key()) && config.prog_owner().ne(authority.key()) {
+    config_pda.check_borrow_mut()?;
+    let config: &mut Config = Config::from_account_view(&config_pda)?;
+    if config.admin().ne(authority.address()) && config.prog_owner().ne(authority.address()) {
       return Err(ProgramError::IncorrectAuthority);
     }
     Ok(Self {

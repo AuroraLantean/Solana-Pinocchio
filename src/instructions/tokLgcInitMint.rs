@@ -1,7 +1,8 @@
 use core::convert::TryFrom;
 use pinocchio::{
+  error::ProgramError,
   sysvars::{rent::Rent, Sysvar},
-  AccountView, ProgramResult,
+  AccountView, Address, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
@@ -18,7 +19,7 @@ pub struct TokenLgcInitMint<'a> {
   pub mint: &'a AccountView,
   pub mint_authority: &'a AccountView,
   pub token_program: &'a AccountView,
-  pub freeze_authority_opt: Option<&'a [u8; 32]>, // or Pubkey
+  pub freeze_authority_opt: Option<&'a Address>, // or Pubkey
   pub decimals: u8,
 }
 impl<'a> TokenLgcInitMint<'a> {
@@ -45,7 +46,7 @@ impl<'a> TokenLgcInitMint<'a> {
     CreateAccount {
       from: payer, //Keypair
       to: mint,
-      owner: token_program.key(), //address("TokenXYZ");
+      owner: token_program.address(), //address("TokenXYZ");
       lamports,
       space,
     }
@@ -57,7 +58,7 @@ impl<'a> TokenLgcInitMint<'a> {
     InitializeMint2 {
       mint, //Keypair
       decimals,
-      mint_authority: mint_authority.key(),
+      mint_authority: mint_authority.address(),
       freeze_authority: freeze_authority_opt,
     }
     .invoke()?;
@@ -91,8 +92,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokenLgcInitMint<'a> {
     initialized(mint_authority)?;
     log!("TokenLgcInitMint try_from 3");
 
-    let freeze_authority_opt: Option<&'a [u8; 32]> = if freeze_authority_opt1 == system_program {
-      Some(freeze_authority_opt1.key())
+    let freeze_authority_opt: Option<&'a Address> = if freeze_authority_opt1 == system_program {
+      Some(freeze_authority_opt1.address())
     } else {
       None
     };

@@ -26,7 +26,7 @@ fn process_instruction(
   accounts: &[AccountView],
   instruction_data: &[u8],
 ) -> ProgramResult {
-  if program_id != &crate::ID {
+  if program_id.ne(&PROG_ADDR) {
     return Err(ProgramError::IncorrectProgramId);
   }
   // `split_first` separates the first byte (discriminator) from the rest (payload).

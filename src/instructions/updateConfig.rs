@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{AccountView, Address, ProgramResult};
+use pinocchio::{error::ProgramError, AccountView, Address, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -63,7 +63,7 @@ impl<'a> UpdateConfig<'a> {
     Ok(())
   }
   pub fn only_owner(&self) -> ProgramResult {
-    if self.config.prog_owner() != self.signer.key() {
+    if self.config.prog_owner() != self.signer.address() {
       return Ee::OnlyProgOwner.e();
     }
     Ok(())
@@ -142,18 +142,18 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for UpdateConfig<'a> {
     //check Status input range
     let _status = u8_to_status(u8s[1])?;
 
-    config_pda.can_borrow_mut_data()?;
-    let config: &mut Config = Config::from_account_info(&config_pda)?;
+    config_pda.check_borrow_mut()?;
+    let config: &mut Config = Config::from_account_view(&config_pda)?;
 
-    if config.admin().ne(signer.key()) && config.prog_owner().ne(signer.key()) {
+    if config.admin().ne(signer.address()) && config.prog_owner().ne(signer.address()) {
       return Err(ProgramError::IncorrectAuthority);
     }
     // cannot use self in "0 => Self.process(),
     Ok(Self {
       signer,
       config_pda,
-      account1: account1.key(),
-      account2: account2.key(),
+      account1: account1.address(),
+      account2: account2.address(),
       u8s,
       bools,
       u32s,

@@ -1,6 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
   cpi::{Seed, Signer},
+  error::ProgramError,
   AccountView, ProgramResult,
 };
 use pinocchio_log::log;
@@ -46,22 +47,22 @@ impl<'a> EscrowTokCancel<'a> {
       atoken_program: _,
     } = self;
     log!("---------== process()");
-    config_pda.can_borrow_mut_data()?;
-    let _config: &mut Config = Config::from_account_info(&config_pda)?;
+    config_pda.check_borrow_mut()?;
+    let _config: &mut Config = Config::from_account_view(&config_pda)?;
 
-    escrow_pda.can_borrow_mut_data()?;
-    let escrow: &mut Escrow = Escrow::from_account_info(&escrow_pda)?;
+    escrow_pda.check_borrow_mut()?;
+    let escrow: &mut Escrow = Escrow::from_account_view(&escrow_pda)?;
 
     log!("Check args against EscrowPDA fields");
     let id = escrow.id();
     let bump = escrow.bump();
-    if maker.key().ne(escrow.maker()) {
+    if maker.address().ne(escrow.maker()) {
       return Ee::OnlyMaker.e();
     }
-    if escrow.mint_x().ne(mint_x.key()) {
+    if escrow.mint_x().ne(mint_x.address()) {
       return Ee::EscrowMintX.e();
     }
-    if escrow.mint_y().ne(mint_y.key()) {
+    if escrow.mint_y().ne(mint_y.address()) {
       return Ee::EscrowMintY.e();
     }
 
@@ -77,7 +78,7 @@ impl<'a> EscrowTokCancel<'a> {
 
     log!("Check if Escrow ATA Y has value");
     if escrow_ata_y.data_len() > 0 {
-      let escrow_ata_y_info = TokenAccount::from_account_info(escrow_ata_y)?;
+      let escrow_ata_y_info = TokenAccount::from_account_view(escrow_ata_y)?;
       if escrow_ata_y_info.amount() >= amount_y {
         return Ee::MakerToWithdrawTokenY.e();
       }
@@ -85,7 +86,7 @@ impl<'a> EscrowTokCancel<'a> {
     }
 
     log!("Check Maker ATA X");
-    if maker_ata_x.data_is_empty() {
+    if maker_ata_x.is_data_empty() {
       log!("Make Maker_Ata_X");
       pinocchio_associated_token_account::instructions::Create {
         funding_account: maker,
@@ -108,15 +109,15 @@ impl<'a> EscrowTokCancel<'a> {
     let id_bytes = &id.to_le_bytes();
     let signer_seeds = [
       Seed::from(Escrow::SEED),
-      Seed::from(maker.key().as_ref()),
+      Seed::from(maker.address().as_ref()),
       Seed::from(id_bytes),
       Seed::from(core::slice::from_ref(&bump)),
     ];
     let seed_signer = Signer::from(&signer_seeds);
 
     log!("Transfer Token X to Maker ATA X");
-    //escrow_pda.can_borrow_mut_data()?;
-    //escrow_ata_y.can_borrow_mut_data()?;
+    //escrow_pda.check_borrow_mut()?;
+    //escrow_ata_y.check_borrow_mut()?;
     pinocchio_token::instructions::TransferChecked {
       from: escrow_ata_x,
       mint: mint_x,
@@ -129,13 +130,13 @@ impl<'a> EscrowTokCancel<'a> {
 
     log!("Check Unknown token in Escrow ATA Y");
     if escrow_ata_y.data_len() > 0 {
-      let escrow_ata_y_info = TokenAccount::from_account_info(escrow_ata_y)?;
+      let escrow_ata_y_info = TokenAccount::from_account_view(escrow_ata_y)?;
       let unknown_amt_y = escrow_ata_y_info.amount();
       drop(escrow_ata_y_info);
 
       if unknown_amt_y > 0 {
         log!("Found unknown token in Escrow ATA Y");
-        if maker_ata_y.data_is_empty() {
+        if maker_ata_y.is_data_empty() {
           log!("Make maker_ata_y");
           pinocchio_associated_token_account::instructions::Create {
             funding_account: maker,
@@ -169,8 +170,8 @@ impl<'a> EscrowTokCancel<'a> {
       }
 
       log!("Close Escrow ATA Y");
-      //escrow_ata_y.can_borrow_mut_data()?;
-      //escrow_pda.can_borrow_mut_data()?;
+      //escrow_ata_y.check_borrow_mut()?;
+      //escrow_pda.check_borrow_mut()?;
       pinocchio_token::instructions::CloseAccount {
         account: escrow_ata_y,
         authority: escrow_pda,
@@ -183,8 +184,8 @@ impl<'a> EscrowTokCancel<'a> {
 
     if escrow_ata_x.data_len() > 0 {
       log!("Close Escrow ATA X");
-      //escrow_pda.can_borrow_mut_data()?;
-      //escrow_ata_x.can_borrow_mut_data()?;
+      //escrow_pda.check_borrow_mut()?;
+      //escrow_ata_x.check_borrow_mut()?;
       pinocchio_token::instructions::CloseAccount {
         account: escrow_ata_x,
         authority: escrow_pda,
@@ -196,12 +197,16 @@ impl<'a> EscrowTokCancel<'a> {
     log!("Close EscrowPDA 1");
     //set the first byte to 255
     {
-      let mut data = escrow_pda.try_borrow_mut_data()?;
+      let mut data = escrow_pda.try_borrow_mut()?;
       data[0] = 0xff;
     }
     log!("Close EscrowPDA 2");
+    let maker_lam = maker.lamports();
+    let escrow_lam = escrow_pda.lamports();
+    maker.set_lamports(maker_lam + escrow_lam);
+    escrow_pda.set_lamports(0);
     //https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/pinocchio-accounts
-    *maker.try_borrow_mut_lamports()? += *escrow_pda.try_borrow_lamports()?;
+    //*maker.try_borrow_mut_lamports()? += *escrow_pda.try_borrow_lamports()?;
 
     log!("Close EscrowPDA 3");
     //resize the account to only the 1st byte
@@ -239,7 +244,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for EscrowTokCancel<'a> {
 
     writable(escrow_pda)?;
     writable(config_pda)?;
-    if escrow_pda.data_is_empty() {
+    if escrow_pda.is_data_empty() {
       return Err(Ee::EscrowDataEmpty.into());
     }
     log!("EscrowTokCancel try_from 5");

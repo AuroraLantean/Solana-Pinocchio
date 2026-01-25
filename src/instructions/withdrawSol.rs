@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{AccountView, ProgramResult};
+use pinocchio::{error::ProgramError, AccountView, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -62,8 +62,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for WithdrawSol<'a> {
     let amount = parse_u64(data)?;
     none_zero_u64(amount)?;
 
-    let (expected_vault_pda, _bump) = derive_pda1(user.key(), VAULT_SEED)?;
-    if vault.key() != &expected_vault_pda {
+    let (expected_vault_pda, _bump) = derive_pda1(user.address(), VAULT_SEED)?;
+    if vault.address() != &expected_vault_pda {
       return Err(Ee::VaultPDA.into());
     }
 

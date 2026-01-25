@@ -1,6 +1,6 @@
 use pinocchio::{error::ProgramError, AccountView, Address, ProgramResult};
 
-use crate::{none_zero_u64, Ee, ID, PROG_ADDR};
+use crate::{none_zero_u64, Ee, PROG_ADDR};
 
 //Vault to hold SOL and control Tokens, and has no struct to be declared
 pub const VAULT_SEED: &[u8] = b"vault";
@@ -106,18 +106,18 @@ impl Config {
     Ok(())
   }
   //better to use setters below
-  pub fn from_account_info(pda: &AccountView) -> Result<&mut Self, ProgramResult> {
+  pub fn from_account_view(pda: &AccountView) -> Result<&mut Self, ProgramError> {
     Self::check(pda)?;
-    unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }
+    unsafe { Ok(&mut *(pda.borrow_unchecked_mut().as_ptr() as *mut Self)) }
     /*Ok(Ref::map(account_info.try_borrow_data()?, |data| unsafe {
         Self::from_bytes_unchecked(data)
     })) */
   }
   //Must: there are no mutable borrows of the account data
   #[inline]
-  pub unsafe fn from_account_info_unchecked(pda: &AccountView) -> Result<&Self, ProgramResult> {
+  pub unsafe fn from_account_info_unchecked(pda: &AccountView) -> Result<&Self, ProgramError> {
     Self::check(pda)?;
-    Ok(Self::from_bytes_unchecked(pda.borrow_data_unchecked()))
+    Ok(Self::from_bytes_unchecked(pda.borrow_unchecked_mut()))
     //Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self))
   }
   /// The caller must ensure that `bytes` contains a valid representation of `Account`, and
@@ -300,17 +300,17 @@ impl Escrow {
     }
     Ok(())
   }
-  pub fn from_account_info(pda: &AccountView) -> Result<&mut Self, ProgramError> {
+  pub fn from_account_view(pda: &AccountView) -> Result<&mut Self, ProgramError> {
     Self::check(pda)?;
-    unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }
+    unsafe { Ok(&mut *(pda.borrow_unchecked_mut().as_ptr() as *mut Self)) }
   }
   pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &Self {
     &*(bytes.as_ptr() as *const &&Escrow)
   }
   #[inline]
-  pub unsafe fn from_account_info_unchecked(pda: &AccountView) -> Result<&Self, ProgramResult> {
+  pub unsafe fn from_account_info_unchecked(pda: &AccountView) -> Result<&Self, ProgramError> {
     Self::check(pda)?;
-    Ok(Self::from_bytes_unchecked(pda.borrow_data_unchecked()))
+    Ok(Self::from_bytes_unchecked(pda.borrow_unchecked_mut()))
     //unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }
   }
 }

@@ -1,6 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
   cpi::{Seed, Signer},
+  error::ProgramError,
   sysvars::{rent::Rent, Sysvar},
   AccountView, Address, ProgramResult,
 };
@@ -8,7 +9,7 @@ use pinocchio_log::log;
 
 use crate::{
   check_sysprog, data_len, derive_pda1, get_time, instructions::check_signer, not_initialized,
-  parse_u64, rent_exempt_mint22, to32bytes, u8_to_bool, Config, Ee, ID, PROG_ADDR, VAULT_SEED,
+  parse_u64, rent_exempt_mint22, to32bytes, u8_to_bool, Config, Ee, PROG_ADDR, VAULT_SEED,
 };
 
 /// Init Config PDA
@@ -45,14 +46,14 @@ impl<'a> InitConfig<'a> {
       str_u8array,
     } = self;
     log!("InitConfig process()");
-    let lamports = Rent::get()?.minimum_balance(Config::LEN); //space.try_into().unwrap()
+    let lamports =     Rent::try_minimum_balance(config_pda., Config::LEN); //space.try_into().unwrap()
     let space = Config::LEN as u64;
 
     log!("InitConfig 4. space: {}", space);
     let (expected_config_pda, bump) = derive_pda1(prog_owner, Config::SEED)?;
 
     log!("InitConfig 5");
-    if expected_config_pda != *config_pda.key() {
+    if expected_config_pda != *config_pda.address() {
       return Ee::ConfigPDA.e();
     }
 
@@ -77,8 +78,8 @@ impl<'a> InitConfig<'a> {
     log!("InitConfig after initialization");
     let time = get_time()?;
 
-    self.config_pda.can_borrow_mut_data()?;
-    let config = Config::from_account_info(&config_pda)?;
+    self.config_pda.check_borrow_mut()?;
+    let config = Config::from_account_view(&config_pda)?;
     config.set_mints(mints);
     config.set_vault(vault);
     config.set_prog_owner(prog_owner);
@@ -116,8 +117,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for InitConfig<'a> {
     rent_exempt_mint22(mint2)?;
     rent_exempt_mint22(mint3)?;
 
-    let (vault_expected, vault_bump) = derive_pda1(prog_owner.key(), VAULT_SEED)?;
-    if vault.key() != &vault_expected {
+    let (vault_expected, vault_bump) = derive_pda1(prog_owner.address(), VAULT_SEED)?;
+    if vault.address() != &vault_expected {
       return Err(Ee::VaultPDA.into());
     }
 
@@ -132,10 +133,15 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for InitConfig<'a> {
     Ok(Self {
       signer,
       config_pda,
-      prog_owner: prog_owner.key(),
-      prog_admin: prog_admin.key(),
-      mints: [mint0.key(), mint1.key(), mint2.key(), mint3.key()],
-      vault: vault.key(),
+      prog_owner: prog_owner.address(),
+      prog_admin: prog_admin.address(),
+      mints: [
+        mint0.address(),
+        mint1.address(),
+        mint2.address(),
+        mint3.address(),
+      ],
+      vault: vault.address(),
       system_program,
       fee,
       is_authorized,
