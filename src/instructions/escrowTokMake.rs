@@ -2,10 +2,8 @@ use core::convert::TryFrom;
 use pinocchio::{
   account_info::AccountInfo,
   instruction::{Seed, Signer},
-  program_error::ProgramError,
-  pubkey::find_program_address,
   sysvars::{rent::Rent, Sysvar},
-  ProgramResult,
+  Address, ProgramResult,
 };
 use pinocchio_log::log;
 
@@ -63,7 +61,7 @@ impl<'a> EscrowTokMake<'a> {
     let seed = [Escrow::SEED, maker.key().as_slice(), &id.to_le_bytes()];
     let seeds = &seed[..];
 
-    let (expected_escrow, bump) = find_program_address(seeds, &ID); //TODO: may incur unknown cost
+    let (expected_escrow, bump) = Address::find_program_address(seeds, &ID.into()); //TODO: may incur unknown cost
     if expected_escrow.ne(escrow_pda.key()) {
       return Ee::EscrowPDA.e();
     }
@@ -92,7 +90,7 @@ impl<'a> EscrowTokMake<'a> {
         to: escrow_pda,
         lamports,
         space: Escrow::LEN as u64,
-        owner: &ID,
+        owner: &Address::new_from_array(ID),
       }
       .invoke_signed(&[seed_signer])?;
     } else {
@@ -146,7 +144,7 @@ impl<'a> EscrowTokMake<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("EscrowTokMake try_from");
@@ -156,7 +154,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokMake<'a> {
     let [maker, maker_ata_x, escrow_ata_x, mint_x, mint_y, escrow_pda, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(maker)?;
     executable(token_program)?;

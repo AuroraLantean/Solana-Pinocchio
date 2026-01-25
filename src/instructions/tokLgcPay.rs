@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
+use pinocchio::{account_info::AccountInfo,  ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -74,7 +74,7 @@ impl<'a> TokLgcPay<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcPay<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("TokLgcPay try_from");
@@ -84,7 +84,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcPay<'a> {
     let [user, user_ata, vault_ata, vault, mint, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     executable(token_program)?;

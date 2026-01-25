@@ -2,14 +2,13 @@ use core::convert::TryFrom;
 use pinocchio::{
   account_info::AccountInfo,
   instruction::{Seed, Signer},
-  program_error::ProgramError,
   ProgramResult,
 };
 use pinocchio_log::log;
-use pinocchio_system::instructions::{Allocate, AllocateWithSeed};
+use pinocchio_system::instructions::Allocate;
 
 use crate::{
-  check_pda, data_len, instructions::check_signer, none_zero_u64, parse_u64, writable, Config, ID,
+  check_pda, data_len, instructions::check_signer, none_zero_u64, parse_u64, writable, Config,
 };
 
 /// Close PDA
@@ -26,7 +25,7 @@ impl<'a> ConfigResize<'a> {
 
   pub fn process(self) -> ProgramResult {
     let ConfigResize {
-      authority,
+      authority: _,
       config_pda,
       first_prog_owner,
       system_program: _,
@@ -46,12 +45,13 @@ impl<'a> ConfigResize<'a> {
       space: new_size,
     }
     .invoke_signed(&[seed_signer])?;
+
     // AllocateWithSeed {
     //   account: config_pda,
     //   base: authority,
     //   seed: "config",
     //   space: new_size,
-    //   owner: &ID,
+    //   owner: &Address::new_from_array(ID),
     // }
     // .invoke()?;
     // Realloc {
@@ -65,7 +65,7 @@ impl<'a> ConfigResize<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for ConfigResize<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("ConfigResize try_from");
@@ -74,7 +74,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for ConfigResize<'a> {
     data_len(data, 8)?;
 
     let [authority, config_pda, first_prog_owner, system_program] = accounts else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(authority)?;
     writable(config_pda)?;
@@ -83,7 +83,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for ConfigResize<'a> {
     config_pda.can_borrow_mut_data()?;
     let config: &mut Config = Config::from_account_info(&config_pda)?;
     // if config.admin().ne(authority.key()) && config.prog_owner().ne(authority.key()) {
-    //   return Err(ProgramError::IncorrectAuthority);
+    //   return Err(ProgramResult::IncorrectAuthority);
     // }
     let new_size = parse_u64(&data[0..8])?;
     let bump = config.bump(); //data[9];

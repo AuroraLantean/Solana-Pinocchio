@@ -189,14 +189,16 @@ test("updateConfig + time travel", () => {
 test("extend configPDA", () => {
 	ll("\n------== Extend configPDA");
 	let rawAccount = svm.getAccount(configPDA);
-	ll("account size:", rawAccount?.data.byteLength);
+	const prevSize = rawAccount?.data.byteLength;
+	ll("prevSize:", prevSize);
 
 	signerKp = user1Kp;
 	firstProgOwner = owner;
 	newSize = 1000000n;
 	configResize(signerKp, configPDA, firstProgOwner, newSize);
 	rawAccount = svm.getAccount(configPDA);
-	ll("account size:", rawAccount?.data.byteLength);
+	const newSize1 = rawAccount?.data.byteLength;
+	ll("newSize1:", newSize1);
 });
 
 test("close configPDA", () => {

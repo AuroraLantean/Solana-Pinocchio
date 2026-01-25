@@ -52,7 +52,7 @@ pub fn setup_escrow_test() {
   // Deploy the escrow program
   deploy_program(
     &mut litesvm,
-    &program_id,
+    &program_id.into(),
     "target/deploy/pinocchio_vault.so",
   )
   .unwrap();

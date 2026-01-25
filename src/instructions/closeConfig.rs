@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
+use pinocchio::{account_info::AccountInfo,  ProgramResult};
 use pinocchio_log::log;
 
 use crate::{check_pda, data_len, instructions::check_signer, writable, Config};
@@ -36,7 +36,7 @@ impl<'a> CloseConfigPda<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for CloseConfigPda<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("CloseConfigPda try_from");
@@ -45,7 +45,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for CloseConfigPda<'a> {
     data_len(data, 0)?;
 
     let [authority, config_pda, dest] = accounts else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(authority)?;
     writable(config_pda)?;
@@ -54,7 +54,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for CloseConfigPda<'a> {
     config_pda.can_borrow_mut_data()?;
     let config: &mut Config = Config::from_account_info(&config_pda)?;
     if config.admin().ne(authority.key()) && config.prog_owner().ne(authority.key()) {
-      return Err(ProgramError::IncorrectAuthority);
+      return Err(ProgramResult::IncorrectAuthority);
     }
     Ok(Self {
       authority,

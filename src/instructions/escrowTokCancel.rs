@@ -2,7 +2,7 @@ use core::convert::TryFrom;
 use pinocchio::{
   account_info::AccountInfo,
   instruction::{Seed, Signer},
-  program_error::ProgramError,
+  
   ProgramResult,
 };
 use pinocchio_log::log;
@@ -213,7 +213,7 @@ impl<'a> EscrowTokCancel<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokCancel<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("EscrowTokCancel try_from");
@@ -224,7 +224,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokCancel<'a> {
     let [maker, maker_ata_x, maker_ata_y, escrow_ata_x, escrow_ata_y, mint_x, mint_y, escrow_pda, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(maker)?;
     executable(token_program)?;

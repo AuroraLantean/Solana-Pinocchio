@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
+use pinocchio::{account_info::AccountInfo,  ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -31,7 +31,7 @@ impl<'a> WithdrawSol<'a> {
 
       *vault_lamports = vault_lamports
         .checked_sub(amount)
-        .ok_or_else(|| ProgramError::InsufficientFunds)?;
+        .ok_or_else(|| ProgramResult::InsufficientFunds)?;
     }
 
     {
@@ -39,14 +39,14 @@ impl<'a> WithdrawSol<'a> {
 
       *admin_lamports = admin_lamports
         .checked_add(amount)
-        .ok_or_else(|| ProgramError::ArithmeticOverflow)?;
+        .ok_or_else(|| ProgramResult::ArithmeticOverflow)?;
     }
     log!("{} lamports withdrawn from vault", amount);
     Ok(())
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for WithdrawSol<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("WithdrawSol try_from");
@@ -54,7 +54,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for WithdrawSol<'a> {
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
     let [user, vault] = accounts else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     check_pda(vault)?;
@@ -72,14 +72,14 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for WithdrawSol<'a> {
     log!("withdraw amt: {}", amount);
     log!("vault balc: {}", vault_balc);
     if vault_balc < amount {
-      return Err(ProgramError::InsufficientFunds);
+      return Err(ProgramResult::InsufficientFunds);
     }
 
     log!("check vault balc 2");
     if vault_balc
       <= vault_min_balc
         .checked_add(amount)
-        .ok_or_else(|| ProgramError::ArithmeticOverflow)?
+        .ok_or_else(|| ProgramResult::ArithmeticOverflow)?
     {
       return Err(Ee::PdaToBeBelowRentExempt.into());
     }

@@ -2,9 +2,8 @@ use core::convert::TryFrom;
 use pinocchio::{
   account_info::AccountInfo,
   instruction::{Seed, Signer},
-  program_error::ProgramError,
   sysvars::{rent::Rent, Sysvar},
-  ProgramResult,
+  Address, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::Transfer as SystemTransfer;
@@ -50,7 +49,7 @@ impl<'a> DepositSol<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositSol<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("DepositSol try_from");
@@ -58,7 +57,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositSol<'a> {
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
     let [user, vault, system_program] = accounts else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     check_sysprog(system_program)?;
@@ -103,7 +102,7 @@ fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramRe
       to: vault,
       lamports: needed_lamports,
       space: VAULT_SIZE as u64,
-      owner: &ID,
+      owner: &Address::new_from_array(ID),
     }
     .invoke_signed(&[signer])?;
 

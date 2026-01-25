@@ -1,7 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
   account_info::AccountInfo,
-  program_error::ProgramError,
+  
   sysvars::{rent::Rent, Sysvar},
   ProgramResult,
 };
@@ -73,7 +73,7 @@ impl<'a> TokenLgcInitMint<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitMint<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("TokenLgcInitMint try_from");
@@ -83,7 +83,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitMint<'a> {
     let [payer, mint, mint_authority, token_program, freeze_authority_opt1, system_program] =
       accounts
     else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(payer)?;
     executable(token_program)?;

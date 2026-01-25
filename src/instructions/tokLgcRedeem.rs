@@ -2,9 +2,7 @@ use core::convert::TryFrom;
 use pinocchio::{
   account_info::AccountInfo,
   instruction::{Seed, Signer},
-  program_error::ProgramError,
-  pubkey::Pubkey,
-  ProgramResult,
+  Address, ProgramResult,
 };
 use pinocchio_log::log;
 
@@ -20,7 +18,7 @@ pub struct TokLgcRedeem<'a> {
   pub from_ata: &'a AccountInfo,
   pub to_ata: &'a AccountInfo,
   pub vault: &'a AccountInfo,
-  pub prog_owner: &'a Pubkey,
+  pub prog_owner: &'a Address,
   pub mint: &'a AccountInfo,
   pub token_program: &'a AccountInfo,
   pub system_program: &'a AccountInfo,
@@ -91,7 +89,7 @@ impl<'a> TokLgcRedeem<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcRedeem<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("TokLgcRedeem try_from");
@@ -101,7 +99,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcRedeem<'a> {
     let [user, from_ata, to_ata, vault, config_pda, mint, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     executable(token_program)?;

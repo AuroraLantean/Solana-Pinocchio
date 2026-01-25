@@ -2,7 +2,6 @@ use core::convert::TryFrom;
 use pinocchio::{
   account_info::AccountInfo,
   instruction::{Seed, Signer},
-  program_error::ProgramError,
   ProgramResult,
 };
 use pinocchio_log::log;
@@ -87,7 +86,7 @@ impl<'a> TokLgcWithdraw<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcWithdraw<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("TokLgcWithdraw try_from");
@@ -97,7 +96,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcWithdraw<'a> {
     let [user, from_ata, to_ata, vault, mint, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     executable(token_program)?;

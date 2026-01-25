@@ -3,7 +3,7 @@
 #![no_std]
 #![allow(unexpected_cfgs)]
 use pinocchio::{
-  account_info::AccountInfo, entrypoint, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
+  account_info::AccountInfo, entrypoint,  Address, ProgramResult,
 };
 use pinocchio_pubkey::declare_id;
 
@@ -23,17 +23,17 @@ mod litesvm_helpers;
 declare_id!("7EKqBVYSCmJbt2T8tGSmwzNKnpL29RqcJcyUr9aEEr6e"); //crate::ID
 
 fn process_instruction(
-  program_id: &Pubkey,
+  program_id: &Address,
   accounts: &[AccountInfo],
   instruction_data: &[u8],
 ) -> ProgramResult {
   if program_id != &crate::ID {
-    return Err(ProgramError::IncorrectProgramId);
+    return Err(ProgramResult::IncorrectProgramId);
   }
   // `split_first` separates the first byte (discriminator) from the rest (payload).
   let (discriminator, data) = instruction_data
     .split_first()
-    .ok_or_else(|| ProgramError::InvalidInstructionData)?;
+    .ok_or_else(|| ProgramResult::InvalidInstructionData)?;
 
   //reads the first byte as a discriminator to determine which method to call (here: 0 = DepositSol, 1 = WithdrawSol).
   match discriminator {

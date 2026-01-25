@@ -2,10 +2,8 @@ use core::convert::TryFrom;
 use pinocchio::{
   account_info::AccountInfo,
   instruction::{Seed, Signer},
-  program_error::ProgramError,
-  pubkey::Pubkey,
   sysvars::{rent::Rent, Sysvar},
-  ProgramResult,
+  Address, ProgramResult,
 };
 use pinocchio_log::log;
 
@@ -18,10 +16,10 @@ use crate::{
 pub struct InitConfig<'a> {
   pub signer: &'a AccountInfo,
   pub config_pda: &'a AccountInfo,
-  pub prog_owner: &'a Pubkey,
-  pub prog_admin: &'a Pubkey,
-  pub mints: [&'a Pubkey; 4],
-  pub vault: &'a Pubkey,
+  pub prog_owner: &'a Address,
+  pub prog_admin: &'a Address,
+  pub mints: [&'a Address; 4],
+  pub vault: &'a Address,
   pub system_program: &'a AccountInfo,
   pub fee: u64,
   pub is_authorized: bool,
@@ -73,7 +71,7 @@ impl<'a> InitConfig<'a> {
       to: config_pda,
       lamports,
       space,
-      owner: &ID,
+      owner: &Address::new_from_array(ID),
     }
     .invoke_signed(&[seed_signer])?;
 
@@ -97,7 +95,7 @@ impl<'a> InitConfig<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("InitConfig try_from");
@@ -107,7 +105,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
     let [signer, config_pda, mint0, mint1, mint2, mint3, vault, prog_owner, prog_admin, system_program] =
       accounts
     else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(signer)?;
     check_sysprog(system_program)?;

@@ -1,7 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{
-  account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
-};
+use pinocchio::{account_info::AccountInfo, Address, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -13,8 +11,8 @@ use crate::{
 pub struct UpdateConfig<'a> {
   pub signer: &'a AccountInfo,
   pub config_pda: &'a AccountInfo,
-  pub account1: &'a Pubkey,
-  pub account2: &'a Pubkey,
+  pub account1: &'a Address,
+  pub account2: &'a Address,
   pub bools: [bool; 4],
   pub u8s: [u8; 4],
   pub u32s: [u32; 4],
@@ -39,7 +37,7 @@ impl<'a> UpdateConfig<'a> {
     log!("UpdateConfig add_tokens()");
     let mutated_state = (self.config.token_balance())
       .checked_add(self.u64s[1])
-      .ok_or_else(|| ProgramError::ArithmeticOverflow)?;
+      .ok_or_else(|| ProgramResult::ArithmeticOverflow)?;
     self.config.set_token_balance(mutated_state);
     Ok(())
   }
@@ -82,7 +80,7 @@ impl<'a> UpdateConfig<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("UpdateConfig try_from");
@@ -90,7 +88,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
     let [signer, config_pda, account1, account2] = accounts else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     log!("check accounts");
     check_signer(signer)?;
@@ -148,7 +146,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let config: &mut Config = Config::from_account_info(&config_pda)?;
 
     if config.admin().ne(signer.key()) && config.prog_owner().ne(signer.key()) {
-      return Err(ProgramError::IncorrectAuthority);
+      return Err(ProgramResult::IncorrectAuthority);
     }
     // cannot use self in "0 => Self.process(),
     Ok(Self {

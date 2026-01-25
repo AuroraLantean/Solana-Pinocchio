@@ -2,9 +2,8 @@ use core::convert::TryFrom;
 use pinocchio::{
   account_info::AccountInfo,
   instruction::{Seed, Signer},
-  program_error::ProgramError,
   sysvars::{rent::Rent, Sysvar},
-  ProgramResult,
+  Address, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
@@ -66,7 +65,7 @@ impl<'a> TokLgcDeposit<'a> {
         to: to_wallet,
         lamports: needed_lamports,
         space: VAULT_SIZE as u64,
-        owner: &ID,
+        owner: &Address::new_from_array(ID),
       }
       .invoke_signed(&[seed_signer])?;
       log!("TokLgcDeposit 6b");
@@ -107,7 +106,7 @@ impl<'a> TokLgcDeposit<'a> {
   }
 }
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
-  type Error = ProgramError;
+  type Error = ProgramResult;
 
   fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
     log!("TokLgcDeposit try_from");
@@ -117,7 +116,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
     let [user, from_ata, to_ata, to_wallet, mint, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramError::NotEnoughAccountKeys);
+      return Err(ProgramResult::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     executable(token_program)?;
