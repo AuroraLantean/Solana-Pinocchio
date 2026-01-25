@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{account_info::AccountInfo,  ProgramResult};
+use pinocchio::{AccountView, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -9,13 +9,13 @@ use crate::{
 
 /// Token2022 Mint Tokens
 pub struct Token2022MintToken<'a> {
-  pub mint_authority: &'a AccountInfo, //signer
-  pub to_wallet: &'a AccountInfo,
-  pub mint: &'a AccountInfo,
-  pub ata: &'a AccountInfo,
-  pub token_program: &'a AccountInfo,
-  pub system_program: &'a AccountInfo,
-  pub atoken_program: &'a AccountInfo,
+  pub mint_authority: &'a AccountView, //signer
+  pub to_wallet: &'a AccountView,
+  pub mint: &'a AccountView,
+  pub ata: &'a AccountView,
+  pub token_program: &'a AccountView,
+  pub system_program: &'a AccountView,
+  pub atoken_program: &'a AccountView,
   pub decimals: u8,
   pub amount: u64,
 }
@@ -74,10 +74,10 @@ impl<'a> Token2022MintToken<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022MintToken<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for Token2022MintToken<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("Token2022MintToken try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
@@ -85,7 +85,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Token2022MintToken<'a> {
     let [mint_authority, to_wallet, mint, ata, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(mint_authority)?;
     executable(token_program)?;

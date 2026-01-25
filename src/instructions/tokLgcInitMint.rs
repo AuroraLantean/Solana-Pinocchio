@@ -1,9 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  account_info::AccountInfo,
-  
   sysvars::{rent::Rent, Sysvar},
-  ProgramResult,
+  AccountView, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
@@ -16,10 +14,10 @@ use pinocchio_token::{instructions::InitializeMint2, state::Mint};
 
 //TokenLgc Init Mint Account
 pub struct TokenLgcInitMint<'a> {
-  pub payer: &'a AccountInfo, //signer
-  pub mint: &'a AccountInfo,
-  pub mint_authority: &'a AccountInfo,
-  pub token_program: &'a AccountInfo,
+  pub payer: &'a AccountView, //signer
+  pub mint: &'a AccountView,
+  pub mint_authority: &'a AccountView,
+  pub token_program: &'a AccountView,
   pub freeze_authority_opt: Option<&'a [u8; 32]>, // or Pubkey
   pub decimals: u8,
 }
@@ -72,10 +70,10 @@ impl<'a> TokenLgcInitMint<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitMint<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokenLgcInitMint<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("TokenLgcInitMint try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
@@ -83,7 +81,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitMint<'a> {
     let [payer, mint, mint_authority, token_program, freeze_authority_opt1, system_program] =
       accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(payer)?;
     executable(token_program)?;

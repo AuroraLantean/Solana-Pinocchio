@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{account_info::AccountInfo,  ProgramResult};
+use pinocchio::{AccountView,  ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -10,15 +10,15 @@ use crate::{
 
 /// TokLgc: Users to Pay Tokens to VaultAdmin
 pub struct TokLgcPay<'a> {
-  pub user: &'a AccountInfo, //signer
-  pub user_ata: &'a AccountInfo,
-  pub vault_ata: &'a AccountInfo,
-  pub vault: &'a AccountInfo,
-  pub mint: &'a AccountInfo,
-  pub config_pda: &'a AccountInfo,
-  pub token_program: &'a AccountInfo,
-  pub system_program: &'a AccountInfo,
-  pub atoken_program: &'a AccountInfo,
+  pub user: &'a AccountView, //signer
+  pub user_ata: &'a AccountView,
+  pub vault_ata: &'a AccountView,
+  pub vault: &'a AccountView,
+  pub mint: &'a AccountView,
+  pub config_pda: &'a AccountView,
+  pub token_program: &'a AccountView,
+  pub system_program: &'a AccountView,
+  pub atoken_program: &'a AccountView,
   pub decimals: u8,
   pub amount: u64,
 }
@@ -73,10 +73,10 @@ impl<'a> TokLgcPay<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcPay<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokLgcPay<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("TokLgcPay try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
@@ -84,7 +84,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcPay<'a> {
     let [user, user_ata, vault_ata, vault, mint, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     executable(token_program)?;

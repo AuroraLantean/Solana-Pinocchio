@@ -1,9 +1,9 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  account_info::AccountInfo,
-  instruction::{Seed, Signer},
+  cpi::{Seed, Signer},
+  error::ProgramError,
   sysvars::{rent::Rent, Sysvar},
-  Address, ProgramResult,
+  AccountView, Address, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
@@ -11,19 +11,20 @@ use pinocchio_system::instructions::CreateAccount;
 use crate::{
   ata_balc, check_ata, check_atoken_gpvbd, check_decimals, check_mint0a, check_pda, check_sysprog,
   data_len, derive_pda1, executable, instructions::check_signer, none_zero_u64, parse_u64,
-  rent_exempt_mint, rent_exempt_tokacct, writable, Config, Ee, ID, VAULT_SEED, VAULT_SIZE,
+  rent_exempt_mint, rent_exempt_tokacct, writable, Config, Ee, ID, PROG_ADDR, VAULT_SEED,
+  VAULT_SIZE,
 };
 
 /// TokLgc: Users to Deposit Tokens
 pub struct TokLgcDeposit<'a> {
-  pub user: &'a AccountInfo, //signer
-  pub from_ata: &'a AccountInfo,
-  pub to_ata: &'a AccountInfo,
-  pub to_wallet: &'a AccountInfo,
-  pub mint: &'a AccountInfo,
-  pub token_program: &'a AccountInfo,
-  pub system_program: &'a AccountInfo,
-  pub atoken_program: &'a AccountInfo,
+  pub user: &'a AccountView, //signer
+  pub from_ata: &'a AccountView,
+  pub to_ata: &'a AccountView,
+  pub to_wallet: &'a AccountView,
+  pub mint: &'a AccountView,
+  pub token_program: &'a AccountView,
+  pub system_program: &'a AccountView,
+  pub atoken_program: &'a AccountView,
   pub decimals: u8,
   pub amount: u64,
 }
@@ -47,13 +48,13 @@ impl<'a> TokLgcDeposit<'a> {
 
     if to_wallet.lamports() == 0 {
       log!("TokLgcDeposit 6: make to_wallet");
-      let (expected_vault_pda, bump) = derive_pda1(user.key(), VAULT_SEED)?;
-      if to_wallet.key() != &expected_vault_pda {
+      let (expected_vault_pda, bump) = derive_pda1(user.address(), VAULT_SEED)?;
+      if to_wallet.address() != &expected_vault_pda {
         return Ee::VaultPDA.e();
       }
       let signer_seeds = [
         Seed::from(VAULT_SEED),
-        Seed::from(user.key().as_ref()),
+        Seed::from(user.address().as_ref()),
         Seed::from(core::slice::from_ref(&bump)),
       ];
       let seed_signer = Signer::from(&signer_seeds);
@@ -65,7 +66,7 @@ impl<'a> TokLgcDeposit<'a> {
         to: to_wallet,
         lamports: needed_lamports,
         space: VAULT_SIZE as u64,
-        owner: &Address::new_from_array(ID),
+        owner: &PROG_ADDR,
       }
       .invoke_signed(&[seed_signer])?;
       log!("TokLgcDeposit 6b");
@@ -105,10 +106,10 @@ impl<'a> TokLgcDeposit<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokLgcDeposit<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("TokLgcDeposit try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
@@ -116,7 +117,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
     let [user, from_ata, to_ata, to_wallet, mint, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     executable(token_program)?;
@@ -136,10 +137,10 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcDeposit<'a> {
     ata_balc(from_ata, amount)?;
 
     log!("TokLgcDeposit try_from 9");
-    config_pda.can_borrow_mut_data()?;
+    config_pda.check_borrow_mut()?;
     let config: &mut Config = Config::from_account_info(&config_pda)?;
 
-    if !config.mints().contains(&mint.key()) {
+    if !config.mints().contains(&mint.address()) {
       return Err(Ee::MintNotAccepted.into());
     }
     log!("TokLgcDeposit try_from 10");

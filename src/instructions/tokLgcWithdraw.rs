@@ -1,8 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  account_info::AccountInfo,
-  instruction::{Seed, Signer},
-  ProgramResult,
+  cpi::{Seed, Signer},
+  AccountView, ProgramResult,
 };
 use pinocchio_log::log;
 
@@ -14,14 +13,14 @@ use crate::{
 
 /// TokLgc: Users to Withdraw Tokens
 pub struct TokLgcWithdraw<'a> {
-  pub user: &'a AccountInfo, //signer
-  pub from_ata: &'a AccountInfo,
-  pub to_ata: &'a AccountInfo,
-  pub vault: &'a AccountInfo,
-  pub mint: &'a AccountInfo,
-  pub token_program: &'a AccountInfo,
-  pub system_program: &'a AccountInfo,
-  pub atoken_program: &'a AccountInfo,
+  pub user: &'a AccountView, //signer
+  pub from_ata: &'a AccountView,
+  pub to_ata: &'a AccountView,
+  pub vault: &'a AccountView,
+  pub mint: &'a AccountView,
+  pub token_program: &'a AccountView,
+  pub system_program: &'a AccountView,
+  pub atoken_program: &'a AccountView,
   pub vault_bump: u8,
   pub decimals: u8,
   pub amount: u64,
@@ -85,10 +84,10 @@ impl<'a> TokLgcWithdraw<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcWithdraw<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokLgcWithdraw<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("TokLgcWithdraw try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
@@ -96,7 +95,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcWithdraw<'a> {
     let [user, from_ata, to_ata, vault, mint, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     executable(token_program)?;

@@ -5,7 +5,7 @@ use solana_signer::Signer;
 //use solana_message::Message;
 use solana_sdk::{inner_instruction, transaction::Transaction};
 //use solana_signer::Signer;
-//use solana_system_interface::instruction::transfer;
+//use solana_system_interface::cpi::transfer;
 //use solana_transaction::Transaction;
 
 #[test]

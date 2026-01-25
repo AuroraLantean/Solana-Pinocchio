@@ -3,18 +3,18 @@ use crate::{
   not_initialized, rent_exempt_mint,
 };
 use core::convert::TryFrom;
-use pinocchio::{account_info::AccountInfo,  ProgramResult};
+use pinocchio::{AccountView,  ProgramResult};
 use pinocchio_log::log;
 
 /// Token Legacy Init ATA(Associated Token Account)
 pub struct TokenLgcInitAta<'a> {
-  pub payer: &'a AccountInfo,
-  pub to_wallet: &'a AccountInfo,
-  pub mint: &'a AccountInfo,
-  pub ata: &'a AccountInfo,
-  pub token_program: &'a AccountInfo,
-  pub system_program: &'a AccountInfo,
-  pub atoken_program: &'a AccountInfo,
+  pub payer: &'a AccountView,
+  pub to_wallet: &'a AccountView,
+  pub mint: &'a AccountView,
+  pub ata: &'a AccountView,
+  pub token_program: &'a AccountView,
+  pub system_program: &'a AccountView,
+  pub atoken_program: &'a AccountView,
 }
 impl<'a> TokenLgcInitAta<'a> {
   pub const DISCRIMINATOR: &'a u8 = &3;
@@ -48,17 +48,17 @@ impl<'a> TokenLgcInitAta<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokenLgcInitAta<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokenLgcInitAta<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("TokenLgcInitAta try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
     let [payer, to_wallet, mint, ata, token_program, system_program, atoken_program] = accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(payer)?;
     executable(token_program)?;

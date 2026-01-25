@@ -1,7 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  account_info::AccountInfo,
-  instruction::{Seed, Signer},
+  AccountView,
+  cpi::{Seed, Signer},
   
   ProgramResult,
 };
@@ -16,18 +16,18 @@ use crate::{
 //TODO: add Token2022 interface
 /// Take Escrow Token Offer
 pub struct EscrowTokTake<'a> {
-  pub taker: &'a AccountInfo, //signer
-  pub taker_ata_x: &'a AccountInfo,
-  pub taker_ata_y: &'a AccountInfo,
-  pub escrow_ata_x: &'a AccountInfo,
-  pub escrow_ata_y: &'a AccountInfo,
-  pub mint_x: &'a AccountInfo,
-  pub mint_y: &'a AccountInfo,
-  pub escrow_pda: &'a AccountInfo,
-  pub config_pda: &'a AccountInfo,
-  pub token_program: &'a AccountInfo,
-  pub system_program: &'a AccountInfo,
-  pub atoken_program: &'a AccountInfo,
+  pub taker: &'a AccountView, //signer
+  pub taker_ata_x: &'a AccountView,
+  pub taker_ata_y: &'a AccountView,
+  pub escrow_ata_x: &'a AccountView,
+  pub escrow_ata_y: &'a AccountView,
+  pub mint_x: &'a AccountView,
+  pub mint_y: &'a AccountView,
+  pub escrow_pda: &'a AccountView,
+  pub config_pda: &'a AccountView,
+  pub token_program: &'a AccountView,
+  pub system_program: &'a AccountView,
+  pub atoken_program: &'a AccountView,
   pub amount_x: u64,
   pub amount_y: u64,
   pub id: u64,
@@ -65,7 +65,7 @@ impl<'a> EscrowTokTake<'a> {
     let escrow: &mut Escrow = Escrow::from_account_info(&escrow_pda)?;
 
     log!("Check args against EscrowPDA fields");
-    //cannot convert the maker in EscrowPDA from Pubkey to AccountInfo! Also hide the maker
+    //cannot convert the maker in EscrowPDA from Pubkey to AccountView! Also hide the maker
     let bump = escrow.bump();
     let maker = escrow.maker();
     if escrow.mint_x().ne(mint_x.key()) {
@@ -158,10 +158,10 @@ impl<'a> EscrowTokTake<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokTake<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for EscrowTokTake<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("EscrowTokTake try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
@@ -169,7 +169,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokTake<'a> {
     let [taker, taker_ata_x, taker_ata_y, escrow_ata_x, escrow_ata_y, mint_x, mint_y, escrow_pda, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(taker)?;
     executable(token_program)?;

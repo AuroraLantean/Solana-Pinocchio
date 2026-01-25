@@ -1,6 +1,6 @@
-use pinocchio::{account_info::AccountInfo, Address, ProgramResult};
+use pinocchio::{error::ProgramError, AccountView, Address, ProgramResult};
 
-use crate::{none_zero_u64, Ee, ID};
+use crate::{none_zero_u64, Ee, ID, PROG_ADDR};
 
 //Vault to hold SOL and control Tokens, and has no struct to be declared
 pub const VAULT_SEED: &[u8] = b"vault";
@@ -92,19 +92,21 @@ impl Config {
       }
   }*/
   //----------== read
-  pub fn check(pda: &AccountInfo) -> ProgramResult {
+  pub fn check(pda: &AccountView) -> ProgramResult {
     if pda.data_len() != Self::LEN {
       return Ee::ConfigDataLengh.e();
     }
-    if pda.owner() != &ID {
-      return Ee::ConfigIsForeign.e();
+    unsafe {
+      if pda.owner().ne(&PROG_ADDR) {
+        return Ee::ConfigIsForeign.e();
+      }
     }
     // CHECK alignment for the most restrictive field (u64 in this case)... Alignment requirement checking can be removed ONLY IF you know all numbers are using u8 arrays
     /*if (pda.borrow_mut_data_unchecked().as_ptr() as usize) % core::mem::align_of::<Self>() != 0 { return Err();  }*/
     Ok(())
   }
   //better to use setters below
-  pub fn from_account_info(pda: &AccountInfo) -> Result<&mut Self, ProgramResult> {
+  pub fn from_account_info(pda: &AccountView) -> Result<&mut Self, ProgramResult> {
     Self::check(pda)?;
     unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }
     /*Ok(Ref::map(account_info.try_borrow_data()?, |data| unsafe {
@@ -113,7 +115,7 @@ impl Config {
   }
   //Must: there are no mutable borrows of the account data
   #[inline]
-  pub unsafe fn from_account_info_unchecked(pda: &AccountInfo) -> Result<&Self, ProgramResult> {
+  pub unsafe fn from_account_info_unchecked(pda: &AccountView) -> Result<&Self, ProgramResult> {
     Self::check(pda)?;
     Ok(Self::from_bytes_unchecked(pda.borrow_data_unchecked()))
     //Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self))
@@ -287,16 +289,18 @@ impl Escrow {
   pub fn set_bump(&mut self, amt: u8) {
     self.bump = amt;
   }
-  pub fn check(pda: &AccountInfo) -> ProgramResult {
+  pub fn check(pda: &AccountView) -> ProgramResult {
     if pda.data_len() != Self::LEN {
       return Ee::EscrowDataLengh.e();
     }
-    if pda.owner() != &ID {
-      return Ee::EscrowIsForeign.e();
+    unsafe {
+      if pda.owner().ne(&PROG_ADDR) {
+        return Ee::EscrowIsForeign.e();
+      }
     }
     Ok(())
   }
-  pub fn from_account_info(pda: &AccountInfo) -> Result<&mut Self, ProgramResult> {
+  pub fn from_account_info(pda: &AccountView) -> Result<&mut Self, ProgramError> {
     Self::check(pda)?;
     unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }
   }
@@ -304,7 +308,7 @@ impl Escrow {
     &*(bytes.as_ptr() as *const &&Escrow)
   }
   #[inline]
-  pub unsafe fn from_account_info_unchecked(pda: &AccountInfo) -> Result<&Self, ProgramResult> {
+  pub unsafe fn from_account_info_unchecked(pda: &AccountView) -> Result<&Self, ProgramResult> {
     Self::check(pda)?;
     Ok(Self::from_bytes_unchecked(pda.borrow_data_unchecked()))
     //unsafe { Ok(&mut *(pda.borrow_mut_data_unchecked().as_ptr() as *mut Self)) }

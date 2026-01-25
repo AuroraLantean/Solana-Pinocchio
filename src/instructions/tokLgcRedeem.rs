@@ -1,8 +1,8 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  account_info::AccountInfo,
-  instruction::{Seed, Signer},
-  Address, ProgramResult,
+  cpi::{Seed, Signer},
+  error::ProgramError,
+  AccountView, Address, ProgramResult,
 };
 use pinocchio_log::log;
 
@@ -14,15 +14,15 @@ use crate::{
 
 /// TokLgc: Users to Redeem Tokens from VaultPDA
 pub struct TokLgcRedeem<'a> {
-  pub user: &'a AccountInfo, //signer
-  pub from_ata: &'a AccountInfo,
-  pub to_ata: &'a AccountInfo,
-  pub vault: &'a AccountInfo,
+  pub user: &'a AccountView, //signer
+  pub from_ata: &'a AccountView,
+  pub to_ata: &'a AccountView,
+  pub vault: &'a AccountView,
   pub prog_owner: &'a Address,
-  pub mint: &'a AccountInfo,
-  pub token_program: &'a AccountInfo,
-  pub system_program: &'a AccountInfo,
-  pub atoken_program: &'a AccountInfo,
+  pub mint: &'a AccountView,
+  pub token_program: &'a AccountView,
+  pub system_program: &'a AccountView,
+  pub atoken_program: &'a AccountView,
   pub vault_bump: u8,
   pub decimals: u8,
   pub amount: u64,
@@ -88,10 +88,10 @@ impl<'a> TokLgcRedeem<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcRedeem<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for TokLgcRedeem<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("TokLgcRedeem try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
@@ -99,7 +99,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcRedeem<'a> {
     let [user, from_ata, to_ata, vault, config_pda, mint, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     executable(token_program)?;
@@ -121,13 +121,13 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for TokLgcRedeem<'a> {
     config_pda.can_borrow_mut_data()?;
     let config: &mut Config = Config::from_account_info(&config_pda)?;
 
-    if !config.mints().contains(&mint.key()) {
+    if !config.mints().contains(&mint.address()) {
       return Err(Ee::MintNotAccepted.into());
     }
     check_vault(vault, config.vault())?;
     /*let (expected_vault, vault_bump) = derive_pda1(config.prog_owner(), VAULT_SEED)?;
     log!("TokLgcPay try_from 9");
-    if vault.key() != &expected_vault {
+    if vault.address() != &expected_vault {
       return Err(Ee::VaultPDA.into());
     }*/
 

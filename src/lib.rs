@@ -2,9 +2,7 @@
 - takes in the program ID, accounts, and instruction data, then reads the first byte as a discriminator to determine which method to call*/
 #![no_std]
 #![allow(unexpected_cfgs)]
-use pinocchio::{
-  account_info::AccountInfo, entrypoint,  Address, ProgramResult,
-};
+use pinocchio::{entrypoint, error::ProgramError, AccountView, Address, ProgramResult};
 use pinocchio_pubkey::declare_id;
 
 //#[cfg(not(feature = "no-entrypoint"))]
@@ -21,19 +19,20 @@ mod litesvm1;
 mod litesvm_helpers;
 
 declare_id!("7EKqBVYSCmJbt2T8tGSmwzNKnpL29RqcJcyUr9aEEr6e"); //crate::ID
+pub const PROG_ADDR: Address = Address::new_from_array(ID);
 
 fn process_instruction(
   program_id: &Address,
-  accounts: &[AccountInfo],
+  accounts: &[AccountView],
   instruction_data: &[u8],
 ) -> ProgramResult {
   if program_id != &crate::ID {
-    return Err(ProgramResult::IncorrectProgramId);
+    return Err(ProgramError::IncorrectProgramId);
   }
   // `split_first` separates the first byte (discriminator) from the rest (payload).
   let (discriminator, data) = instruction_data
     .split_first()
-    .ok_or_else(|| ProgramResult::InvalidInstructionData)?;
+    .ok_or_else(|| ProgramError::InvalidInstructionData)?;
 
   //reads the first byte as a discriminator to determine which method to call (here: 0 = DepositSol, 1 = WithdrawSol).
   match discriminator {

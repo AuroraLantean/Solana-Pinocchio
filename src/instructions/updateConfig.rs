@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{account_info::AccountInfo, Address, ProgramResult};
+use pinocchio::{AccountView, Address, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -9,8 +9,8 @@ use crate::{
 
 /// Update Config PDA
 pub struct UpdateConfig<'a> {
-  pub signer: &'a AccountInfo,
-  pub config_pda: &'a AccountInfo,
+  pub signer: &'a AccountView,
+  pub config_pda: &'a AccountView,
   pub account1: &'a Address,
   pub account2: &'a Address,
   pub bools: [bool; 4],
@@ -37,7 +37,7 @@ impl<'a> UpdateConfig<'a> {
     log!("UpdateConfig add_tokens()");
     let mutated_state = (self.config.token_balance())
       .checked_add(self.u64s[1])
-      .ok_or_else(|| ProgramResult::ArithmeticOverflow)?;
+      .ok_or_else(|| ProgramError::ArithmeticOverflow)?;
     self.config.set_token_balance(mutated_state);
     Ok(())
   }
@@ -79,16 +79,16 @@ impl<'a> UpdateConfig<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for UpdateConfig<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("UpdateConfig try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
     let [signer, config_pda, account1, account2] = accounts else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     log!("check accounts");
     check_signer(signer)?;
@@ -146,7 +146,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for UpdateConfig<'a> {
     let config: &mut Config = Config::from_account_info(&config_pda)?;
 
     if config.admin().ne(signer.key()) && config.prog_owner().ne(signer.key()) {
-      return Err(ProgramResult::IncorrectAuthority);
+      return Err(ProgramError::IncorrectAuthority);
     }
     // cannot use self in "0 => Self.process(),
     Ok(Self {

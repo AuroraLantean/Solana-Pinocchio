@@ -1,9 +1,7 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  account_info::AccountInfo,
-  instruction::{Seed, Signer},
-  
-  ProgramResult,
+  cpi::{Seed, Signer},
+  AccountView, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_token::state::TokenAccount;
@@ -16,18 +14,18 @@ use crate::{
 //TODO: add Token2022 interface
 /// Make Cancel Escrow
 pub struct EscrowTokCancel<'a> {
-  pub maker: &'a AccountInfo, //signer
-  pub maker_ata_x: &'a AccountInfo,
-  pub maker_ata_y: &'a AccountInfo,
-  pub escrow_ata_x: &'a AccountInfo,
-  pub escrow_ata_y: &'a AccountInfo,
-  pub mint_x: &'a AccountInfo,
-  pub mint_y: &'a AccountInfo,
-  pub escrow_pda: &'a AccountInfo,
-  pub config_pda: &'a AccountInfo,
-  pub token_program: &'a AccountInfo,
-  pub system_program: &'a AccountInfo,
-  pub atoken_program: &'a AccountInfo,
+  pub maker: &'a AccountView, //signer
+  pub maker_ata_x: &'a AccountView,
+  pub maker_ata_y: &'a AccountView,
+  pub escrow_ata_x: &'a AccountView,
+  pub escrow_ata_y: &'a AccountView,
+  pub mint_x: &'a AccountView,
+  pub mint_y: &'a AccountView,
+  pub escrow_pda: &'a AccountView,
+  pub config_pda: &'a AccountView,
+  pub token_program: &'a AccountView,
+  pub system_program: &'a AccountView,
+  pub atoken_program: &'a AccountView,
 }
 impl<'a> EscrowTokCancel<'a> {
   pub const DISCRIMINATOR: &'a u8 = &18;
@@ -212,10 +210,10 @@ impl<'a> EscrowTokCancel<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokCancel<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for EscrowTokCancel<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("EscrowTokCancel try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
@@ -224,7 +222,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for EscrowTokCancel<'a> {
     let [maker, maker_ata_x, maker_ata_y, escrow_ata_x, escrow_ata_y, mint_x, mint_y, escrow_pda, config_pda, token_program, system_program, atoken_program] =
       accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(maker)?;
     executable(token_program)?;

@@ -1,15 +1,15 @@
 //use num_derive::FromPrimitive;
 use pinocchio::{
-  account_info::AccountInfo,
+  error::{ProgramError, ToStr},
   sysvars::{clock::Clock, rent::Rent, Sysvar},
-  Address, ProgramResult,
+  AccountView, Address, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_token::state::{Mint, TokenAccount};
 use pinocchio_token_2022::state::{Mint as Mint22, TokenAccount as TokenAccount22};
 use thiserror::Error;
 
-use crate::{Status, ID};
+use crate::{Status, PROG_ADDR};
 
 //TODO: put errors in error.rs ... https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/pinocchio-errors
 #[derive(Clone, Debug, Eq, Error, PartialEq)] //FromPrimitive
@@ -249,17 +249,17 @@ pub enum Ee {
 }
 impl Ee {
   pub fn e(self) -> ProgramResult {
-    Err(ProgramResult::Custom(self as u32))
+    Err(ProgramError::Custom(self as u32))
   }
 }
-impl From<Ee> for ProgramResult {
+impl From<Ee> for ProgramError {
   fn from(e: Ee) -> Self {
-    ProgramResult::Custom(e as u32)
+    ProgramError::Custom(e as u32)
   }
 }
 //Deserialize Errors from Raw Values
 impl TryFrom<u32> for Ee {
-  type Error = ProgramResult;
+  type Error = ProgramError;
   fn try_from(error: u32) -> Result<Self, Self::Error> {
     match error {
       0 => Ok(Ee::MethodDiscriminator),
@@ -376,7 +376,7 @@ impl TryFrom<u32> for Ee {
 }
 //Human Readable Errors; TODO: arrange below
 impl ToStr for Ee {
-  fn to_str<E>(&self) -> &'static str {
+  fn to_str(&self) -> &'static str {
     match self {
       Ee::MethodDiscriminator => "MethodDiscriminator",
       Ee::Xyz001 => "Xyz001",
@@ -501,42 +501,44 @@ impl ToStr for Ee {
 }
 
 //----------------== Account Verification
-pub fn check_signer(account: &AccountInfo) -> ProgramResult {
+pub fn check_signer(account: &AccountView) -> ProgramResult {
   if !account.is_signer() {
-    return Err(ProgramResult::MissingRequiredSignature);
+    return Err(ProgramError::MissingRequiredSignature);
   }
   Ok(())
 }
-pub fn check_escrow_mints(mint_x: &AccountInfo, mint_y: &AccountInfo) -> ProgramResult {
-  if mint_x.key() == mint_y.key() {
+pub fn check_escrow_mints(mint_x: &AccountView, mint_y: &AccountView) -> ProgramResult {
+  if mint_x.address() == mint_y.address() {
     return Ee::MintsAreTheSame.e();
   }
   Ok(())
 }
-pub fn check_mint0a(mint: &AccountInfo, token_program: &AccountInfo) -> ProgramResult {
-  //if !mint.is_owned_by(mint_authority)
+pub fn check_mint0a(mint: &AccountView, token_program: &AccountView) -> ProgramResult {
+  //if !mint.owned_by(mint_authority)
   if mint.data_len() != pinocchio_token::state::Mint::LEN {
     return Ee::MintDataLen.e();
   }
-  if !token_program.key().eq(&pinocchio_token::ID) {
+  if !token_program.address().eq(&pinocchio_token::ID) {
     return Ee::TokenProgram.e();
   }
-  if mint.owner() != &pinocchio_token::ID {
-    return Ee::MintOrTokenProgram.e();
+  unsafe {
+    if mint.owner().ne(&pinocchio_token::ID) {
+      return Ee::MintOrTokenProgram.e();
+    }
   }
   Ok(())
 }
 
 pub fn check_mint0b(
-  mint: &AccountInfo,
-  mint_authority: &AccountInfo,
-  token_program: &AccountInfo,
+  mint: &AccountView,
+  mint_authority: &AccountView,
+  token_program: &AccountView,
   decimals: u8,
 ) -> ProgramResult {
-  let mint_info = pinocchio_token::state::Mint::from_account_info(mint)?;
+  let mint_info = pinocchio_token::state::Mint::from_account_view(mint)?;
   if mint_info
     .mint_authority()
-    .is_some_and(|authority| !mint_authority.key().eq(authority))
+    .is_some_and(|authority| !mint_authority.address().eq(authority))
   {
     return Ee::MintOrMintAuthority.e();
   }
@@ -548,30 +550,32 @@ pub fn check_mint0b(
   Ok(())
 }
 
-pub fn check_mint22a(mint: &AccountInfo, token_program: &AccountInfo) -> ProgramResult {
-  //if !mint.is_owned_by(mint_authority)
+pub fn check_mint22a(mint: &AccountView, token_program: &AccountView) -> ProgramResult {
+  //if !mint.owned_by(mint_authority)
   if mint.data_len() != pinocchio_token_2022::state::Mint::BASE_LEN {
     return Ee::MintDataLen.e();
   }
-  if !token_program.key().eq(&pinocchio_token_2022::ID) {
+  if !token_program.address().eq(&pinocchio_token_2022::ID) {
     return Ee::TokenProgram.e();
   }
-  if mint.owner() != &pinocchio_token_2022::ID {
-    return Ee::MintOrTokenProgram.e();
+  unsafe {
+    if mint.owner().ne(&pinocchio_token_2022::ID) {
+      return Ee::MintOrTokenProgram.e();
+    }
   }
   Ok(())
 }
 pub fn check_mint22b(
-  mint: &AccountInfo,
-  mint_authority: &AccountInfo,
-  token_program: &AccountInfo,
+  mint: &AccountView,
+  mint_authority: &AccountView,
+  token_program: &AccountView,
   decimals: u8,
 ) -> ProgramResult {
-  let mint_info = pinocchio_token_2022::state::Mint::from_account_info(mint)?;
+  let mint_info = pinocchio_token_2022::state::Mint::from_account_view(mint)?;
 
   if mint_info
     .mint_authority()
-    .is_some_and(|authority| !mint_authority.key().eq(authority))
+    .is_some_and(|authority| !mint_authority.address().eq(authority))
   {
     return Ee::MintOrMintAuthority.e();
   }
@@ -584,21 +588,21 @@ pub fn check_mint22b(
 }
 
 //----------------== ATA
-pub fn ata_balc(from_ata: &AccountInfo, amount: u64) -> ProgramResult {
-  let from_ata_info = TokenAccount::from_account_info(from_ata)?;
+pub fn ata_balc(from_ata: &AccountView, amount: u64) -> ProgramResult {
+  let from_ata_info = TokenAccount::from_account_view(from_ata)?;
   if from_ata_info.amount() < amount {
-    return Err(ProgramResult::InsufficientFunds);
+    return Err(ProgramError::InsufficientFunds);
   }
   Ok(())
 }
-pub fn ata_balc22(from_ata: &AccountInfo, amount: u64) -> ProgramResult {
-  let from_ata_info = TokenAccount22::from_account_info(from_ata)?;
+pub fn ata_balc22(from_ata: &AccountView, amount: u64) -> ProgramResult {
+  let from_ata_info = TokenAccount22::from_account_view(from_ata)?;
   if from_ata_info.amount() < amount {
-    return Err(ProgramResult::InsufficientFunds);
+    return Err(ProgramError::InsufficientFunds);
   }
   Ok(())
 }
-pub fn check_ata(ata: &AccountInfo, owner: &AccountInfo, mint: &AccountInfo) -> ProgramResult {
+pub fn check_ata(ata: &AccountView, owner: &AccountView, mint: &AccountView) -> ProgramResult {
   let ata_len = ata.data_len();
   if ata_len == 0 {
     return Ee::AtaHasNoData.e();
@@ -606,53 +610,57 @@ pub fn check_ata(ata: &AccountInfo, owner: &AccountInfo, mint: &AccountInfo) -> 
   if ata_len.ne(&pinocchio_token::state::TokenAccount::LEN) {
     return Ee::AtaDataLen.e();
   }
-  let ata_info = pinocchio_token::state::TokenAccount::from_account_info(ata)?;
-  if !ata_info.owner().eq(owner.key()) {
+  let ata_info = pinocchio_token::state::TokenAccount::from_account_view(ata)?;
+  if !ata_info.owner().eq(owner.address()) {
     return Ee::AtaOrOwner.e();
   }
-  if !ata_info.mint().eq(mint.key()) {
+  if !ata_info.mint().eq(mint.address()) {
     return Ee::AtaOrMint.e();
   }
   Ok(())
 }
-pub fn check_ata22(ata: &AccountInfo, owner: &AccountInfo, mint: &AccountInfo) -> ProgramResult {
+pub fn check_ata22(ata: &AccountView, owner: &AccountView, mint: &AccountView) -> ProgramResult {
   // token2022 ata has first 165 bytes the same as the legacy ata, but then some more data //log!("ata22 len:{}", ata.data_len());
   let ata_len = ata.data_len();
   if ata_len == 0 {
     return Ee::AtaHasNoData.e();
   }
-  let ata_info = TokenAccount22::from_account_info(ata)?;
-  if !ata_info.owner().eq(owner.key()) {
+  let ata_info = TokenAccount22::from_account_view(ata)?;
+  if !ata_info.owner().eq(owner.address()) {
     return Ee::AtaOrOwner.e();
   }
-  if !ata_info.mint().eq(mint.key()) {
+  if !ata_info.mint().eq(mint.address()) {
     return Ee::AtaOrMint.e();
   }
   Ok(())
 }
 pub fn check_ata_x1(
-  authority: &AccountInfo,
-  token_program: &AccountInfo,
-  mint: &AccountInfo,
-  ata: &AccountInfo,
+  authority: &AccountView,
+  token_program: &AccountView,
+  mint: &AccountView,
+  ata: &AccountView,
 ) -> ProgramResult {
   if Address::find_program_address(
-    &[authority.key(), token_program.key(), mint.key()],
+    &[
+      authority.address().as_array(),
+      token_program.address().as_array(),
+      mint.address().as_array(),
+    ],
     &pinocchio_associated_token_account::ID,
   )
   .0
-  .ne(ata.key())
+  .ne(ata.address())
   {
     return Ee::AtaCheckX1.e();
   }
   Ok(())
 }
 pub fn check_ata_escrow(
-  ata: &AccountInfo,
-  owner: &AccountInfo,
-  mint: &AccountInfo,
+  ata: &AccountView,
+  owner: &AccountView,
+  mint: &AccountView,
 ) -> ProgramResult {
-  // if !owner.is_owned_by(&ID) {
+  // if !owner.owned_by(&ID) {
   //   return Ee::ToWalletForeignPDA.e();
   // } ... escrow as owner may not exist yet
   let ata_len = ata.data_len();
@@ -662,57 +670,57 @@ pub fn check_ata_escrow(
   if ata_len.ne(&pinocchio_token::state::TokenAccount::LEN) {
     return Ee::AtaDataLen.e();
   }
-  let ata_info = pinocchio_token::state::TokenAccount::from_account_info(ata)?;
-  if !ata_info.owner().eq(owner.key()) {
+  let ata_info = pinocchio_token::state::TokenAccount::from_account_view(ata)?;
+  if !ata_info.owner().eq(owner.address()) {
     return Ee::AtaOrOwner.e();
   }
-  if !ata_info.mint().eq(mint.key()) {
+  if !ata_info.mint().eq(mint.address()) {
     return Ee::AtaOrMint.e();
   }
   Ok(())
 }
 //----------------== PDAs and Other Accounts
-pub fn derive_pda1(user: &Address, bstr: &[u8]) -> Result<(Address, u8), ProgramResult> {
+pub fn derive_pda1(user: &Address, bstr: &[u8]) -> Result<(Address, u8), ProgramError> {
   log!("derive_pda1");
-  //Address::find_program_address(&[b"vault", user.key().as_ref()], &ID)
+  //Address::find_program_address(&[b"vault", user.address().as_ref()], &ID)
   // let (pda, _bump) =
-  Address::try_find_program_address(&[bstr, user.as_ref()], &ID.into())
-    .ok_or_else(|| ProgramResult::InvalidSeeds)
+  Address::try_find_program_address(&[bstr, user.as_ref()], &PROG_ADDR)
+    .ok_or_else(|| ProgramError::InvalidSeeds)
 }
 /*let pda = pubkey::create_program_address(
     &[PDA_SEED, &[self.datas.bump as u8]],
-    &Address::new_from_array(ID),
+    &PROG_ADDR,
 ) */
-pub fn check_pda(account: &AccountInfo) -> ProgramResult {
+pub fn check_pda(account: &AccountView) -> ProgramResult {
   if account.lamports() == 0 {
     return Ee::PdaNoLamport.e();
   }
-  if !account.is_owned_by(&ID) {
+  if !account.owned_by(&PROG_ADDR) {
     return Ee::ForeignPDA.e();
   }
   Ok(())
 }
-pub fn check_vault(input_vault: &AccountInfo, config_vault: &[u8; 32]) -> ProgramResult {
+pub fn check_vault(input_vault: &AccountView, config_vault: &Address) -> ProgramResult {
   if input_vault.lamports() == 0 {
     return Ee::ToWalletNoLamport.e();
   }
-  if !input_vault.is_owned_by(&ID) {
+  if !input_vault.owned_by(&PROG_ADDR) {
     return Ee::ToWalletForeignPDA.e();
   }
-  if input_vault.key() != config_vault {
+  if input_vault.address() != config_vault {
     return Ee::ToWallet.e();
   }
   Ok(())
 }
-pub fn check_sysprog(system_program: &AccountInfo) -> ProgramResult {
-  if !system_program.key().eq(&pinocchio_system::ID) {
+pub fn check_sysprog(system_program: &AccountView) -> ProgramResult {
+  if !system_program.address().eq(&pinocchio_system::ID) {
     return Ee::SystemProgram.e();
   }
   Ok(())
 }
 pub const ATOKENGPVBD: Address = pinocchio_associated_token_account::ID;
-pub fn check_atoken_gpvbd(atoken_program: &AccountInfo) -> ProgramResult {
-  if !atoken_program.key().eq(&ATOKENGPVBD) {
+pub fn check_atoken_gpvbd(atoken_program: &AccountView) -> ProgramResult {
+  if !atoken_program.address().eq(&ATOKENGPVBD) {
     return Ee::AtokenGPvbd.e();
   }
   Ok(())
@@ -720,13 +728,13 @@ pub fn check_atoken_gpvbd(atoken_program: &AccountInfo) -> ProgramResult {
 //pub const SYSTEMPROGRAM: pinocchio_pubkey::reexport::Pubkey = solana_system_interface::program::ID;
 
 //----------------== Check Account Properties
-pub fn writable(account: &AccountInfo) -> ProgramResult {
+pub fn writable(account: &AccountView) -> ProgramResult {
   if !account.is_writable() {
     return Ee::NotWritable.e();
   }
   Ok(())
 }
-pub fn executable(account: &AccountInfo) -> ProgramResult {
+pub fn executable(account: &AccountView) -> ProgramResult {
   if !account.executable() {
     return Ee::NotExecutable.e();
   }
@@ -734,51 +742,51 @@ pub fn executable(account: &AccountInfo) -> ProgramResult {
 }
 //TODO: Mint and ATA from TokenLgc works. For mint and ATA from Token2022?
 /// acc_type: 0 Mint, 1 TokenAccount
-pub fn rent_exempt_mint(account: &AccountInfo) -> ProgramResult {
+pub fn rent_exempt_mint(account: &AccountView) -> ProgramResult {
   if account.lamports() < Rent::get()?.minimum_balance(Mint::LEN) {
     return Ee::NoRentExemptMint.e();
   }
   Ok(())
 }
-pub fn rent_exempt_mint22(account: &AccountInfo) -> ProgramResult {
+pub fn rent_exempt_mint22(account: &AccountView) -> ProgramResult {
   if account.lamports() < Rent::get()?.minimum_balance(Mint22::BASE_LEN) {
     return Ee::NoRentExemptMint22.e();
   }
   Ok(())
 }
-pub fn rent_exempt_tokacct(account: &AccountInfo) -> ProgramResult {
+pub fn rent_exempt_tokacct(account: &AccountView) -> ProgramResult {
   if account.lamports() < Rent::get()?.minimum_balance(TokenAccount::LEN) {
     return Ee::NoRentExemptTokAcct22.e();
   }
   Ok(())
 }
-pub fn rent_exempt_tokacct22(account: &AccountInfo) -> ProgramResult {
+pub fn rent_exempt_tokacct22(account: &AccountView) -> ProgramResult {
   if account.lamports() < Rent::get()?.minimum_balance(TokenAccount22::BASE_LEN) {
     return Ee::NoRentExemptTokAcct22.e();
   }
   Ok(())
 }
-pub fn rent_exempt(account: &AccountInfo) -> Result<(u64, u64), ProgramResult> {
+pub fn rent_exempt(account: &AccountView) -> Result<(u64, u64), ProgramError> {
   let min_balance = Rent::get()?.minimum_balance(account.data_len());
   let current = account.lamports();
   if current < min_balance {
-    return Err(ProgramResult::AccountNotRentExempt);
+    return Err(ProgramError::AccountNotRentExempt);
   }
   Ok((current, min_balance))
 }
-pub fn not_initialized(account: &AccountInfo) -> ProgramResult {
+pub fn not_initialized(account: &AccountView) -> ProgramResult {
   if account.lamports() > 0 {
-    return Err(ProgramResult::AccountAlreadyInitialized);
+    return Err(ProgramError::AccountAlreadyInitialized);
   }
   Ok(())
 }
-pub fn initialized(account: &AccountInfo) -> ProgramResult {
+pub fn initialized(account: &AccountView) -> ProgramResult {
   if account.lamports() == 0 {
-    return Err(ProgramResult::UninitializedAccount);
+    return Err(ProgramError::UninitializedAccount);
   }
   Ok(())
 }
-pub fn empty_data(account: &AccountInfo) -> ProgramResult {
+pub fn empty_data(account: &AccountView) -> ProgramResult {
   if account.data_len() == 0 {
     return Ok(());
   }
@@ -792,8 +800,8 @@ pub fn data_len(data: &[u8], expected: usize) -> ProgramResult {
   }
   Ok(())
 }
-pub fn check_decimals(mint: &AccountInfo, decimals: u8) -> ProgramResult {
-  let mint_info = pinocchio_token::state::Mint::from_account_info(mint)?;
+pub fn check_decimals(mint: &AccountView, decimals: u8) -> ProgramResult {
+  let mint_info = pinocchio_token::state::Mint::from_account_view(mint)?;
   if decimals != mint_info.decimals() {
     return Ee::DecimalsValue.e();
   }
@@ -827,42 +835,42 @@ pub fn none_zero_u8(uint: u8) -> ProgramResult {
   Ok(())
 }
 /// Parse a u64 from u8 array
-pub fn parse_u64(data: &[u8]) -> Result<u64, ProgramResult> {
+pub fn parse_u64(data: &[u8]) -> Result<u64, ProgramError> {
   let bytes: [u8; 8] = data.try_into().or_else(|_e| Err(Ee::ByteSizeForU64))?;
 
   let amt = u64::from_le_bytes(bytes);
   // let amount = u64::from_le_bytes([data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]]);
   Ok(amt)
 }
-pub fn parse_u32(data: &[u8]) -> Result<u32, ProgramResult> {
+pub fn parse_u32(data: &[u8]) -> Result<u32, ProgramError> {
   let bytes: [u8; 4] = data.try_into().or_else(|_e| Err(Ee::ByteSizeForU32))?;
 
   let amt = u32::from_le_bytes(bytes);
   // let amount = u64::from_le_bytes([data[0], data[1], data[2], data[3]]);
   Ok(amt)
 }
-pub fn to32bytes(byte_slice: &[u8]) -> Result<&[u8; 32], ProgramResult> {
+pub fn to32bytes(byte_slice: &[u8]) -> Result<&[u8; 32], ProgramError> {
   let bytes: &[u8; 32] = byte_slice.try_into().map_err(|_| Ee::ByteSliceSize32)?;
   //let mut str_u8array = [0u8; 32];
   //str_u8array.copy_from_slice(&data[10..42]);
   return Ok(bytes);
 }
-pub fn to10bytes(byte_slice: &[u8]) -> Result<&[u8; 10], ProgramResult> {
+pub fn to10bytes(byte_slice: &[u8]) -> Result<&[u8; 10], ProgramError> {
   let bytes: &[u8; 10] = byte_slice.try_into().map_err(|_| Ee::ByteSliceSize10)?;
   return Ok(bytes);
 }
-pub fn to6bytes(byte_slice: &[u8]) -> Result<&[u8; 6], ProgramResult> {
+pub fn to6bytes(byte_slice: &[u8]) -> Result<&[u8; 6], ProgramError> {
   let bytes: &[u8; 6] = byte_slice.try_into().map_err(|_| Ee::ByteSliceSize6)?;
   return Ok(bytes);
 }
-pub fn u8_to_bool(v: u8) -> Result<bool, ProgramResult> {
+pub fn u8_to_bool(v: u8) -> Result<bool, ProgramError> {
   match v {
     0 => Ok(false),
     1 => Ok(true),
     _ => Err(Ee::ByteForBool.into()),
   }
 }
-pub fn u8_to_status(v: u8) -> Result<Status, ProgramResult> {
+pub fn u8_to_status(v: u8) -> Result<Status, ProgramError> {
   match v {
     0 => Ok(Status::Waiting),
     1 => Ok(Status::Active),
@@ -873,9 +881,9 @@ pub fn u8_to_status(v: u8) -> Result<Status, ProgramResult> {
   }
 }
 //----------------== Balance
-pub fn sol_balc(from: &AccountInfo, amount: u64) -> ProgramResult {
+pub fn sol_balc(from: &AccountView, amount: u64) -> ProgramResult {
   if from.lamports() < amount {
-    return Err(ProgramResult::InsufficientFunds);
+    return Err(ProgramError::InsufficientFunds);
   }
   Ok(())
 }
@@ -885,10 +893,10 @@ const TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET: usize = 165;
 pub const TOKEN_2022_MINT_DISCRIMINATOR: u8 = 0x01;
 pub const TOKEN_2022_TOKEN_ACCOUNT_DISCRIMINATOR: u8 = 0x02;
 
-pub fn check_mint_interface(mint: &AccountInfo) -> ProgramResult {
-  if !mint.is_owned_by(&pinocchio_token_2022::ID) {
+pub fn check_mint_interface(mint: &AccountView) -> ProgramResult {
+  if !mint.owned_by(&pinocchio_token_2022::ID) {
     //legacy token
-    if !mint.is_owned_by(&pinocchio_token::ID) {
+    if !mint.owned_by(&pinocchio_token::ID) {
       return Ee::MintOrTokenProgram.e();
     } else {
       if mint.data_len().ne(&pinocchio_token::state::Mint::LEN) {
@@ -897,7 +905,7 @@ pub fn check_mint_interface(mint: &AccountInfo) -> ProgramResult {
     }
   } else {
     //Token2022
-    let data = mint.try_borrow_data()?;
+    let data = mint.try_borrow()?;
 
     if data.len().ne(&pinocchio_token::state::Mint::LEN) {
       if data.len().le(&TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET) {
@@ -911,10 +919,10 @@ pub fn check_mint_interface(mint: &AccountInfo) -> ProgramResult {
   Ok(())
 }
 
-pub fn check_tokacct_interface(ata: &AccountInfo) -> ProgramResult {
-  if !ata.is_owned_by(&pinocchio_token_2022::ID) {
+pub fn check_tokacct_interface(ata: &AccountView) -> ProgramResult {
+  if !ata.owned_by(&pinocchio_token_2022::ID) {
     //Legacy ATA
-    if !ata.is_owned_by(&pinocchio_token::ID) {
+    if !ata.owned_by(&pinocchio_token::ID) {
       return Ee::ForeignAta.e();
     } else {
       if ata
@@ -926,7 +934,7 @@ pub fn check_tokacct_interface(ata: &AccountInfo) -> ProgramResult {
     }
   } else {
     //Token2022 ATA
-    let data = ata.try_borrow_data()?;
+    let data = ata.try_borrow()?;
 
     if data.len().ne(&pinocchio_token::state::TokenAccount::LEN) {
       if data.len().le(&TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET) {
@@ -940,7 +948,7 @@ pub fn check_tokacct_interface(ata: &AccountInfo) -> ProgramResult {
   Ok(())
 }
 
-pub fn get_time() -> Result<u32, ProgramResult> {
+pub fn get_time() -> Result<u32, ProgramError> {
   let clock = Clock::get().map_err(|_| Ee::ClockGet)?;
   let time = clock.unix_timestamp as u32;
   log!("Solana time: {}", time);

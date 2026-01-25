@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{account_info::AccountInfo,  ProgramResult};
+use pinocchio::{AccountView, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -9,8 +9,8 @@ use crate::{
 
 //  vault is owned by the program, matches the PDA derived from user. The withdrawn amount is everything above the rent minimum.
 pub struct WithdrawSol<'a> {
-  pub user: &'a AccountInfo,
-  pub vault: &'a AccountInfo,
+  pub user: &'a AccountView,
+  pub vault: &'a AccountView,
   pub amount: u64,
 }
 impl<'a> WithdrawSol<'a> {
@@ -31,7 +31,7 @@ impl<'a> WithdrawSol<'a> {
 
       *vault_lamports = vault_lamports
         .checked_sub(amount)
-        .ok_or_else(|| ProgramResult::InsufficientFunds)?;
+        .ok_or_else(|| ProgramError::InsufficientFunds)?;
     }
 
     {
@@ -39,22 +39,22 @@ impl<'a> WithdrawSol<'a> {
 
       *admin_lamports = admin_lamports
         .checked_add(amount)
-        .ok_or_else(|| ProgramResult::ArithmeticOverflow)?;
+        .ok_or_else(|| ProgramError::ArithmeticOverflow)?;
     }
     log!("{} lamports withdrawn from vault", amount);
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for WithdrawSol<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for WithdrawSol<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("WithdrawSol try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
     let [user, vault] = accounts else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     check_pda(vault)?;
@@ -72,14 +72,14 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for WithdrawSol<'a> {
     log!("withdraw amt: {}", amount);
     log!("vault balc: {}", vault_balc);
     if vault_balc < amount {
-      return Err(ProgramResult::InsufficientFunds);
+      return Err(ProgramError::InsufficientFunds);
     }
 
     log!("check vault balc 2");
     if vault_balc
       <= vault_min_balc
         .checked_add(amount)
-        .ok_or_else(|| ProgramResult::ArithmeticOverflow)?
+        .ok_or_else(|| ProgramError::ArithmeticOverflow)?
     {
       return Err(Ee::PdaToBeBelowRentExempt.into());
     }

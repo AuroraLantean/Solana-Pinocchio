@@ -517,11 +517,11 @@ test("Make & Cancel Token Escrow", () => {
 test.skip("copy accounts from devnet", async () => {
 	//https://litesvm.github.io/litesvm/tutorial.html#copying-accounts-from-a-live-environment
 	const connection = new Connection("https://api.devnet.solana.com");
-	const accountInfo = await connection.getAccountInfo(usdcMint);
+	const AccountView = await connection.getAccountInfo(usdcMint);
 	// the rent epoch goes above 2**53 which breaks web3.js, so just set it to 0;
-	if (!accountInfo) throw new Error("accountInfo is null");
-	accountInfo.rentEpoch = 0;
-	svm.setAccount(usdcMint, accountInfo);
+	if (!AccountView) throw new Error("AccountView is null");
+	AccountView.rentEpoch = 0;
+	svm.setAccount(usdcMint, AccountView);
 	const rawAccount = svm.getAccount(usdcMint);
 	expect(rawAccount).not.toBeNull();
 });

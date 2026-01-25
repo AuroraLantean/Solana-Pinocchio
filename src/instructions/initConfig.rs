@@ -1,26 +1,25 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  account_info::AccountInfo,
-  instruction::{Seed, Signer},
+  cpi::{Seed, Signer},
   sysvars::{rent::Rent, Sysvar},
-  Address, ProgramResult,
+  AccountView, Address, ProgramResult,
 };
 use pinocchio_log::log;
 
 use crate::{
   check_sysprog, data_len, derive_pda1, get_time, instructions::check_signer, not_initialized,
-  parse_u64, rent_exempt_mint22, to32bytes, u8_to_bool, Config, Ee, ID, VAULT_SEED,
+  parse_u64, rent_exempt_mint22, to32bytes, u8_to_bool, Config, Ee, ID, PROG_ADDR, VAULT_SEED,
 };
 
 /// Init Config PDA
 pub struct InitConfig<'a> {
-  pub signer: &'a AccountInfo,
-  pub config_pda: &'a AccountInfo,
+  pub signer: &'a AccountView,
+  pub config_pda: &'a AccountView,
   pub prog_owner: &'a Address,
   pub prog_admin: &'a Address,
   pub mints: [&'a Address; 4],
   pub vault: &'a Address,
-  pub system_program: &'a AccountInfo,
+  pub system_program: &'a AccountView,
   pub fee: u64,
   pub is_authorized: bool,
   pub status: u8,
@@ -71,7 +70,7 @@ impl<'a> InitConfig<'a> {
       to: config_pda,
       lamports,
       space,
-      owner: &Address::new_from_array(ID),
+      owner: &PROG_ADDR,
     }
     .invoke_signed(&[seed_signer])?;
 
@@ -94,10 +93,10 @@ impl<'a> InitConfig<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for InitConfig<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("InitConfig try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
@@ -105,7 +104,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for InitConfig<'a> {
     let [signer, config_pda, mint0, mint1, mint2, mint3, vault, prog_owner, prog_admin, system_program] =
       accounts
     else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(signer)?;
     check_sysprog(system_program)?;

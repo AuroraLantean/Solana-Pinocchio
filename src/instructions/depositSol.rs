@@ -1,9 +1,8 @@
 use core::convert::TryFrom;
 use pinocchio::{
-  account_info::AccountInfo,
-  instruction::{Seed, Signer},
+  cpi::{Seed, Signer},
   sysvars::{rent::Rent, Sysvar},
-  Address, ProgramResult,
+  AccountView, Address, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::Transfer as SystemTransfer;
@@ -11,7 +10,7 @@ use pinocchio_system::instructions::Transfer as SystemTransfer;
 use crate::{
   check_sysprog,
   instructions::{check_pda, check_signer, derive_pda1, parse_u64},
-  none_zero_u64, sol_balc, Ee, ID, VAULT_SEED, VAULT_SIZE,
+  none_zero_u64, sol_balc, Ee, ID, PROG_ADDR, VAULT_SEED, VAULT_SIZE,
 };
 
 // Deposit SOL to program PDA
@@ -21,8 +20,8 @@ use crate::{
 
 //Deposit Accounts
 pub struct DepositSol<'a> {
-  pub user: &'a AccountInfo,
-  pub vault: &'a AccountInfo,
+  pub user: &'a AccountView,
+  pub vault: &'a AccountView,
   pub amount: u64,
 }
 impl<'a> DepositSol<'a> {
@@ -48,16 +47,16 @@ impl<'a> DepositSol<'a> {
     Ok(())
   }
 }
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositSol<'a> {
-  type Error = ProgramResult;
+impl<'a> TryFrom<(&'a [u8], &'a [AccountView])> for DepositSol<'a> {
+  type Error = ProgramError;
 
-  fn try_from(value: (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
+  fn try_from(value: (&'a [u8], &'a [AccountView])) -> Result<Self, Self::Error> {
     log!("DepositSol try_from");
     let (data, accounts) = value;
     log!("accounts len: {}, data len: {}", accounts.len(), data.len());
 
     let [user, vault, system_program] = accounts else {
-      return Err(ProgramResult::NotEnoughAccountKeys);
+      return Err(ProgramError::NotEnoughAccountKeys);
     };
     check_signer(user)?;
     check_sysprog(system_program)?;
@@ -77,7 +76,7 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositSol<'a> {
 }
 
 /// Ensure the vault exists; if not, create it with PDA seeds. user must be a signer, vault must be writable, and rent minimum must be respected for creation.
-fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramResult {
+fn ensure_deposit_accounts(user: &AccountView, vault: &AccountView) -> ProgramResult {
   log!("ensure_deposit_accounts");
   // Create when empty and fund rent-exempt.
   if vault.lamports() == 0 {
@@ -102,7 +101,7 @@ fn ensure_deposit_accounts(user: &AccountInfo, vault: &AccountInfo) -> ProgramRe
       to: vault,
       lamports: needed_lamports,
       space: VAULT_SIZE as u64,
-      owner: &Address::new_from_array(ID),
+      owner: &PROG_ADDR,
     }
     .invoke_signed(&[signer])?;
 
