@@ -2,7 +2,7 @@ use core::convert::TryFrom;
 use pinocchio::{
   cpi::{Seed, Signer},
   error::ProgramError,
-  sysvars::{rent::Rent, Sysvar},
+  sysvars::rent::Rent,
   AccountView, Address, ProgramResult,
 };
 use pinocchio_log::log;
@@ -70,7 +70,8 @@ impl<'a> EscrowTokMake<'a> {
 
     if escrow_pda.is_data_empty() {
       log!("Make Escrow PDA 1");
-      let lamports = Rent::get()?.minimum_balance(Escrow::LEN);
+      let rent = Rent::from_account_view(escrow_pda)?;
+      let lamports = Rent::try_minimum_balance(&rent, Escrow::LEN)?;
 
       log!("Make Escrow PDA 2");
       let id_bytes = &id.to_le_bytes();

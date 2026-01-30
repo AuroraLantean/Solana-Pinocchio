@@ -190,10 +190,11 @@ impl<'a> EscrowTokWithdraw<'a> {
       data[0] = 0xff;
     }
     log!("Close EscrowPDA 2");
-
-    let maker_lam = maker.lamports();
-    let escrow_lam = escrow_pda.lamports();
-    maker.set_lamports(maker_lam + escrow_lam);
+    let sum_lam = maker
+      .lamports()
+      .checked_add(escrow_pda.lamports())
+      .ok_or_else(|| ProgramError::ArithmeticOverflow)?;
+    maker.set_lamports(sum_lam);
     escrow_pda.set_lamports(0);
     //https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/pinocchio-accounts
     //*maker.try_borrow_mut_lamports()? += *escrow_pda.try_borrow_lamports()?;

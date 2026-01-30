@@ -2,8 +2,8 @@ use core::convert::TryFrom;
 use pinocchio::{
   cpi::{Seed, Signer},
   error::ProgramError,
-  sysvars::{rent::Rent, Sysvar},
-  AccountView, Address, ProgramResult,
+  sysvars::rent::Rent,
+  AccountView, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
@@ -11,8 +11,7 @@ use pinocchio_system::instructions::CreateAccount;
 use crate::{
   ata_balc, check_ata, check_atoken_gpvbd, check_decimals, check_mint0a, check_pda, check_sysprog,
   data_len, derive_pda1, executable, instructions::check_signer, none_zero_u64, parse_u64,
-  rent_exempt_mint, rent_exempt_tokacct, writable, Config, Ee, ID, PROG_ADDR, VAULT_SEED,
-  VAULT_SIZE,
+  rent_exempt_mint, rent_exempt_tokacct, writable, Config, Ee, PROG_ADDR, VAULT_SEED, VAULT_SIZE,
 };
 
 /// TokLgc: Users to Deposit Tokens
@@ -58,8 +57,9 @@ impl<'a> TokLgcDeposit<'a> {
         Seed::from(core::slice::from_ref(&bump)),
       ];
       let seed_signer = Signer::from(&signer_seeds);
-      // Make the account rent-exempt.
-      let needed_lamports = Rent::get()?.minimum_balance(VAULT_SIZE);
+
+      let rent = Rent::from_account_view(to_wallet)?;
+      let needed_lamports = Rent::try_minimum_balance(&rent, VAULT_SIZE)?;
 
       CreateAccount {
         from: user,

@@ -27,19 +27,17 @@ impl<'a> WithdrawSol<'a> {
 
     // Transfer SOL from vault to user
     {
-      let mut vault_lamports = vault.try_borrow_mut_lamports()?;
-
-      *vault_lamports = vault_lamports
+      let from_lam = vault
+        .lamports()
         .checked_sub(amount)
         .ok_or_else(|| ProgramError::InsufficientFunds)?;
-    }
+      vault.set_lamports(from_lam);
 
-    {
-      let mut admin_lamports = user.try_borrow_mut_lamports()?;
-
-      *admin_lamports = admin_lamports
+      let sum_lam = user
+        .lamports()
         .checked_add(amount)
         .ok_or_else(|| ProgramError::ArithmeticOverflow)?;
+      user.set_lamports(sum_lam);
     }
     log!("{} lamports withdrawn from vault", amount);
     Ok(())

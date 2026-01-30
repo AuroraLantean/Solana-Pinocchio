@@ -1,16 +1,15 @@
-use core::convert::TryFrom;
-use pinocchio::{
-  cpi::{Seed, Signer},
-  error::ProgramError,
-  sysvars::{rent::Rent, Sysvar},
-  AccountView, Address, ProgramResult,
-};
-use pinocchio_log::log;
-
 use crate::{
   check_sysprog, data_len, derive_pda1, get_time, instructions::check_signer, not_initialized,
   parse_u64, rent_exempt_mint22, to32bytes, u8_to_bool, Config, Ee, PROG_ADDR, VAULT_SEED,
 };
+use core::convert::TryFrom;
+use pinocchio::{
+  cpi::{Seed, Signer},
+  error::ProgramError,
+  sysvars::rent::Rent,
+  AccountView, Address, ProgramResult,
+};
+use pinocchio_log::log;
 
 /// Init Config PDA
 pub struct InitConfig<'a> {
@@ -46,7 +45,8 @@ impl<'a> InitConfig<'a> {
       str_u8array,
     } = self;
     log!("InitConfig process()");
-    let lamports =     Rent::try_minimum_balance(config_pda., Config::LEN); //space.try_into().unwrap()
+    let config_rent = Rent::from_account_view(config_pda)?;
+    let lamports = Rent::try_minimum_balance(&config_rent, Config::LEN)?;
     let space = Config::LEN as u64;
 
     log!("InitConfig 4. space: {}", space);

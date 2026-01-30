@@ -1,9 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{
-  error::ProgramError,
-  sysvars::{rent::Rent, Sysvar},
-  AccountView, Address, ProgramResult,
-};
+use pinocchio::{error::ProgramError, sysvars::rent::Rent, AccountView, Address, ProgramResult};
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
 
@@ -56,7 +52,8 @@ impl<'a> Token2022InitMint<'a> {
       + token_uri.len();
     let _total_mint_size = Mint::BASE_LEN + EXTENSIONS_PADDING_AND_OFFSET + extension_size;
 
-    let lamports = Rent::get()?.minimum_balance(Mint::BASE_LEN);
+    let rent = Rent::from_account_view(mint)?;
+    let lamports = Rent::try_minimum_balance(&rent, Mint::BASE_LEN)?;
     let space = Mint::BASE_LEN as u64;
     log!("lamports: {}, space: {}", lamports, space);
     //let mint = Keypair::new();

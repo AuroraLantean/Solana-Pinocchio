@@ -8,7 +8,7 @@ pub const ACCOUNT_DISCRIMINATOR_SIZE: usize = 8;
 pub const VAULT_SIZE: usize = ACCOUNT_DISCRIMINATOR_SIZE + size_of::<u64>(); //SOL amount
 
 //TODO: Bytemuck is a great library that makes it easy to read and write byte arrays as structs.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
 pub struct Config {
   mint0: Address,         // 32
@@ -210,7 +210,7 @@ impl From<u8> for Status {
 } //Status::Uninitialized as u8
 
 //------------==
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 #[repr(C)] //0..8 	Discriminator 	8 bytes
 pub struct Escrow {
   maker: Address, //32; PDA needs at least 1 Address to keep PDA addresses from being exhausted by all users using u64. This also gives each user his own Escrow id.

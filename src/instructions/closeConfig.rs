@@ -26,9 +26,11 @@ impl<'a> CloseConfigPda<'a> {
       data[0] = 0xff;
     }
     log!("CloseConfigPda 1");
-    let dest_lam = dest.lamports();
-    let config_lam = config_pda.lamports();
-    dest.set_lamports(dest_lam + config_lam);
+    let sum_lam = dest
+      .lamports()
+      .checked_add(config_pda.lamports())
+      .ok_or_else(|| ProgramError::ArithmeticOverflow)?;
+    dest.set_lamports(sum_lam);
     config_pda.set_lamports(0);
     //https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/pinocchio-accounts
     //*dest.try_borrow_mut_lamports()? += *config_pda.try_borrow_lamports()?;

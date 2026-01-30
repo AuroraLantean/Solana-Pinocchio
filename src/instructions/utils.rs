@@ -743,36 +743,50 @@ pub fn executable(account: &AccountView) -> ProgramResult {
 //TODO: Mint and ATA from TokenLgc works. For mint and ATA from Token2022?
 /// acc_type: 0 Mint, 1 TokenAccount
 pub fn rent_exempt_mint(account: &AccountView) -> ProgramResult {
-  if account.lamports() < Rent::get()?.minimum_balance(Mint::LEN) {
+  let rent = Rent::from_account_view(account)?;
+  let lamports = Rent::try_minimum_balance(&rent, Mint::LEN)?;
+
+  if account.lamports() < lamports {
     return Ee::NoRentExemptMint.e();
   }
   Ok(())
 }
 pub fn rent_exempt_mint22(account: &AccountView) -> ProgramResult {
-  if account.lamports() < Rent::get()?.minimum_balance(Mint22::BASE_LEN) {
+  let rent = Rent::from_account_view(account)?;
+  let lamports = Rent::try_minimum_balance(&rent, Mint22::BASE_LEN)?;
+
+  if account.lamports() < lamports {
     return Ee::NoRentExemptMint22.e();
   }
   Ok(())
 }
 pub fn rent_exempt_tokacct(account: &AccountView) -> ProgramResult {
-  if account.lamports() < Rent::get()?.minimum_balance(TokenAccount::LEN) {
+  let rent = Rent::from_account_view(account)?;
+  let lamports = Rent::try_minimum_balance(&rent, TokenAccount::LEN)?;
+
+  if account.lamports() < lamports {
     return Ee::NoRentExemptTokAcct22.e();
   }
   Ok(())
 }
 pub fn rent_exempt_tokacct22(account: &AccountView) -> ProgramResult {
-  if account.lamports() < Rent::get()?.minimum_balance(TokenAccount22::BASE_LEN) {
+  let rent = Rent::from_account_view(account)?;
+  let lamports = Rent::try_minimum_balance(&rent, TokenAccount22::BASE_LEN)?;
+
+  if account.lamports() < lamports {
     return Ee::NoRentExemptTokAcct22.e();
   }
   Ok(())
 }
 pub fn rent_exempt(account: &AccountView) -> Result<(u64, u64), ProgramError> {
-  let min_balance = Rent::get()?.minimum_balance(account.data_len());
+  let rent = Rent::from_account_view(account)?;
+  let min_lam = Rent::try_minimum_balance(&rent, account.data_len())?;
+
   let current = account.lamports();
-  if current < min_balance {
+  if current < min_lam {
     return Err(ProgramError::AccountNotRentExempt);
   }
-  Ok((current, min_balance))
+  Ok((current, min_lam))
 }
 pub fn not_initialized(account: &AccountView) -> ProgramResult {
   if account.lamports() > 0 {

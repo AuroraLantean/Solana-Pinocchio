@@ -2,8 +2,8 @@ use core::convert::TryFrom;
 use pinocchio::{
   cpi::{Seed, Signer},
   error::ProgramError,
-  sysvars::{rent::Rent, Sysvar},
-  AccountView, Address, ProgramResult,
+  sysvars::rent::Rent,
+  AccountView, ProgramResult,
 };
 use pinocchio_log::log;
 use pinocchio_system::instructions::Transfer as SystemTransfer;
@@ -11,7 +11,7 @@ use pinocchio_system::instructions::Transfer as SystemTransfer;
 use crate::{
   check_sysprog,
   instructions::{check_pda, check_signer, derive_pda1, parse_u64},
-  none_zero_u64, sol_balc, Ee, ID, PROG_ADDR, VAULT_SEED, VAULT_SIZE,
+  none_zero_u64, sol_balc, Ee, PROG_ADDR, VAULT_SEED, VAULT_SIZE,
 };
 
 // Deposit SOL to program PDA
@@ -93,7 +93,8 @@ fn ensure_deposit_accounts(user: &AccountView, vault: &AccountView) -> ProgramRe
     let signer = Signer::from(&signer_seeds);
 
     // Make the account rent-exempt.
-    let needed_lamports = Rent::get()?.minimum_balance(VAULT_SIZE);
+    let rent = Rent::from_account_view(vault)?;
+    let needed_lamports = Rent::try_minimum_balance(&rent, VAULT_SIZE)?;
     log!("needed_lamports: {}", needed_lamports);
     log!("VAULT_SIZE: {}", VAULT_SIZE);
 

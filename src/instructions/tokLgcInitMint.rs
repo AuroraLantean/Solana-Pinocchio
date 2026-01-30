@@ -1,9 +1,5 @@
 use core::convert::TryFrom;
-use pinocchio::{
-  error::ProgramError,
-  sysvars::{rent::Rent, Sysvar},
-  AccountView, Address, ProgramResult,
-};
+use pinocchio::{error::ProgramError, sysvars::rent::Rent, AccountView, Address, ProgramResult};
 use pinocchio_log::log;
 use pinocchio_system::instructions::CreateAccount;
 
@@ -36,7 +32,9 @@ impl<'a> TokenLgcInitMint<'a> {
     } = self;
     log!("TokenLgcInitMint process()");
 
-    let lamports = Rent::get()?.minimum_balance(Mint::LEN);
+    let rent = Rent::from_account_view(mint)?;
+    let lamports = Rent::try_minimum_balance(&rent, Mint::LEN)?;
+
     log!("TokenLgcInitMint 6");
     let space = Mint::LEN as u64;
     log!("lamports: {}, space: {}", lamports, space);
